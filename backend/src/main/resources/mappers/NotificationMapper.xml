@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tencent.tdesign.mapper.NotificationMapper">
+  <select id="selectById" resultType="com.tencent.tdesign.entity.Notification">
+    SELECT id,
+      title,
+      summary,
+      content,
+      priority,
+      status,
+      type,
+      cover_url,
+      attachment_url,
+      attachment_name,
+      publish_at,
+      created_at,
+      updated_at,
+      created_by_id,
+      created_by_name
+    FROM notifications
+    WHERE id = #{id}
+  </select>
+
+  <select id="selectPageByStatus" resultType="com.tencent.tdesign.entity.Notification">
+    SELECT id,
+      title,
+      summary,
+      content,
+      priority,
+      status,
+      type,
+      cover_url,
+      attachment_url,
+      attachment_name,
+      publish_at,
+      created_at,
+      updated_at,
+      created_by_id,
+      created_by_name
+    FROM notifications
+    WHERE status IN
+    <foreach collection="statuses" item="status" open="(" separator="," close=")">
+      #{status}
+    </foreach>
+    ORDER BY updated_at DESC
+    LIMIT #{limit} OFFSET #{offset}
+  </select>
+
+  <select id="countByStatus" resultType="long">
+    SELECT COUNT(1)
+    FROM notifications
+    WHERE status IN
+    <foreach collection="statuses" item="status" open="(" separator="," close=")">
+      #{status}
+    </foreach>
+  </select>
+
+  <select id="selectLatestPublished" resultType="com.tencent.tdesign.entity.Notification">
+    SELECT id,
+      title,
+      summary,
+      content,
+      priority,
+      status,
+      type,
+      cover_url,
+      attachment_url,
+      attachment_name,
+      publish_at,
+      created_at,
+      updated_at,
+      created_by_id,
+      created_by_name
+    FROM notifications
+    WHERE status = 'published'
+    ORDER BY publish_at DESC
+    LIMIT #{limit}
+  </select>
+
+  <insert id="insert" parameterType="com.tencent.tdesign.entity.Notification">
+    INSERT INTO notifications (
+      title,
+      summary,
+      content,
+      priority,
+      status,
+      type,
+      cover_url,
+      attachment_url,
+      attachment_name,
+      publish_at,
+      created_at,
+      updated_at,
+      created_by_id,
+      created_by_name
+    )
+    VALUES (
+      #{title},
+      #{summary},
+      #{content},
+      #{priority},
+      #{status},
+      #{type},
+      #{coverUrl},
+      #{attachmentUrl},
+      #{attachmentName},
+      #{publishAt},
+      #{createdAt},
+      #{updatedAt},
+      #{createdById},
+      #{createdByName}
+    )
+  </insert>
+
+  <update id="update" parameterType="com.tencent.tdesign.entity.Notification">
+    UPDATE notifications
+    SET
+      title = #{title},
+      summary = #{summary},
+      content = #{content},
+      priority = #{priority},
+      status = #{status},
+      type = #{type},
+      cover_url = #{coverUrl},
+      attachment_url = #{attachmentUrl},
+      attachment_name = #{attachmentName},
+      publish_at = #{publishAt},
+      created_at = #{createdAt},
+      updated_at = #{updatedAt},
+      created_by_id = #{createdById},
+      created_by_name = #{createdByName}
+    WHERE id = #{id}
+  </update>
+
+  <delete id="deleteById">
+    DELETE FROM notifications
+    WHERE id = #{id}
+  </delete>
+</mapper>

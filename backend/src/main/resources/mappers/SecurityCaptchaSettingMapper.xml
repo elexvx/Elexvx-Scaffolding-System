@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tencent.tdesign.mapper.SecurityCaptchaSettingMapper">
+  <select id="selectTop" resultType="com.tencent.tdesign.entity.SecurityCaptchaSetting">
+    SELECT id, captcha_type, drag_captcha_width, drag_captcha_height, drag_captcha_threshold, image_captcha_length, image_captcha_noise_lines, captcha_enabled
+    FROM security_captcha_settings
+    ORDER BY id ASC
+    LIMIT 1
+  </select>
+
+  <insert id="insert" parameterType="com.tencent.tdesign.entity.SecurityCaptchaSetting" useGeneratedKeys="true" keyProperty="id">
+    INSERT INTO security_captcha_settings (
+      captcha_type, drag_captcha_width, drag_captcha_height, drag_captcha_threshold, image_captcha_length, image_captcha_noise_lines, captcha_enabled
+    ) VALUES (
+      #{captchaType}, #{dragCaptchaWidth}, #{dragCaptchaHeight}, #{dragCaptchaThreshold}, #{imageCaptchaLength}, #{imageCaptchaNoiseLines}, #{captchaEnabled}
+    )
+  </insert>
+
+  <update id="update" parameterType="com.tencent.tdesign.entity.SecurityCaptchaSetting">
+    UPDATE security_captcha_settings
+    SET
+      captcha_type = #{captchaType},
+      drag_captcha_width = #{dragCaptchaWidth},
+      drag_captcha_height = #{dragCaptchaHeight},
+      drag_captcha_threshold = #{dragCaptchaThreshold},
+      image_captcha_length = #{imageCaptchaLength},
+      image_captcha_noise_lines = #{imageCaptchaNoiseLines},
+      captcha_enabled = #{captchaEnabled}
+    WHERE id = #{id}
+  </update>
+</mapper>

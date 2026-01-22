@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tencent.tdesign.mapper.UiThemeSettingMapper">
+  <select id="selectTop" resultType="com.tencent.tdesign.entity.UiThemeSetting">
+    SELECT id, auto_theme, light_start_time, dark_start_time, mode, brand_theme
+    FROM ui_theme_settings
+    ORDER BY id ASC
+    LIMIT 1
+  </select>
+
+  <insert id="insert" parameterType="com.tencent.tdesign.entity.UiThemeSetting" useGeneratedKeys="true" keyProperty="id">
+    INSERT INTO ui_theme_settings (
+      auto_theme, light_start_time, dark_start_time, mode, brand_theme
+    ) VALUES (
+      #{autoTheme}, #{lightStartTime}, #{darkStartTime}, #{mode}, #{brandTheme}
+    )
+  </insert>
+
+  <update id="update" parameterType="com.tencent.tdesign.entity.UiThemeSetting">
+    UPDATE ui_theme_settings
+    SET
+      auto_theme = #{autoTheme},
+      light_start_time = #{lightStartTime},
+      dark_start_time = #{darkStartTime},
+      mode = #{mode},
+      brand_theme = #{brandTheme}
+    WHERE id = #{id}
+  </update>
+</mapper>

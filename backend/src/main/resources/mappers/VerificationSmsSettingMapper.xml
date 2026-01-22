@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tencent.tdesign.mapper.VerificationSmsSettingMapper">
+  <select id="selectTop" resultType="com.tencent.tdesign.entity.VerificationSmsSetting">
+    SELECT id, sms_enabled, sms_provider, sms_aliyun_enabled, sms_aliyun_access_key_id, sms_aliyun_access_key_secret, sms_aliyun_sign_name, sms_aliyun_template_code, sms_aliyun_region_id, sms_aliyun_endpoint, sms_tencent_enabled, sms_tencent_secret_id, sms_tencent_secret_key, sms_tencent_sign_name, sms_tencent_template_id, sms_tencent_region, sms_tencent_endpoint, sms_sdk_app_id
+    FROM verification_sms_settings
+    ORDER BY id ASC
+    LIMIT 1
+  </select>
+
+  <insert id="insert" parameterType="com.tencent.tdesign.entity.VerificationSmsSetting" useGeneratedKeys="true" keyProperty="id">
+    INSERT INTO verification_sms_settings (
+      sms_enabled, sms_provider, sms_aliyun_enabled, sms_aliyun_access_key_id, sms_aliyun_access_key_secret, sms_aliyun_sign_name, sms_aliyun_template_code, sms_aliyun_region_id, sms_aliyun_endpoint, sms_tencent_enabled, sms_tencent_secret_id, sms_tencent_secret_key, sms_tencent_sign_name, sms_tencent_template_id, sms_tencent_region, sms_tencent_endpoint, sms_sdk_app_id
+    ) VALUES (
+      #{smsEnabled}, #{smsProvider}, #{smsAliyunEnabled}, #{smsAliyunAccessKeyId}, #{smsAliyunAccessKeySecret}, #{smsAliyunSignName}, #{smsAliyunTemplateCode}, #{smsAliyunRegionId}, #{smsAliyunEndpoint}, #{smsTencentEnabled}, #{smsTencentSecretId}, #{smsTencentSecretKey}, #{smsTencentSignName}, #{smsTencentTemplateId}, #{smsTencentRegion}, #{smsTencentEndpoint}, #{smsSdkAppId}
+    )
+  </insert>
+
+  <update id="update" parameterType="com.tencent.tdesign.entity.VerificationSmsSetting">
+    UPDATE verification_sms_settings
+    SET
+      sms_enabled = #{smsEnabled},
+      sms_provider = #{smsProvider},
+      sms_aliyun_enabled = #{smsAliyunEnabled},
+      sms_aliyun_access_key_id = #{smsAliyunAccessKeyId},
+      sms_aliyun_access_key_secret = #{smsAliyunAccessKeySecret},
+      sms_aliyun_sign_name = #{smsAliyunSignName},
+      sms_aliyun_template_code = #{smsAliyunTemplateCode},
+      sms_aliyun_region_id = #{smsAliyunRegionId},
+      sms_aliyun_endpoint = #{smsAliyunEndpoint},
+      sms_tencent_enabled = #{smsTencentEnabled},
+      sms_tencent_secret_id = #{smsTencentSecretId},
+      sms_tencent_secret_key = #{smsTencentSecretKey},
+      sms_tencent_sign_name = #{smsTencentSignName},
+      sms_tencent_template_id = #{smsTencentTemplateId},
+      sms_tencent_region = #{smsTencentRegion},
+      sms_tencent_endpoint = #{smsTencentEndpoint},
+      sms_sdk_app_id = #{smsSdkAppId}
+    WHERE id = #{id}
+  </update>
+</mapper>

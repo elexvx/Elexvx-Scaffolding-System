@@ -1,0 +1,138 @@
+package com.tencent.tdesign.jackson;
+
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.BeanProperty;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.ser.ContextualSerializer;
+import com.tencent.tdesign.annotation.Sensitive;
+import com.tencent.tdesign.enums.DesensitizedType;
+
+import java.io.IOException;
+import java.util.Objects;
+
+/**
+ * 数据脱敏序列化类
+ */
+public class SensitiveJsonSerializer extends JsonSerializer<String> implements ContextualSerializer {
+
+    private DesensitizedType desensitizedType;
+
+    public SensitiveJsonSerializer() {
+    }
+
+    public SensitiveJsonSerializer(DesensitizedType desensitizedType) {
+        this.desensitizedType = desensitizedType;
+    }
+
+    @Override
+    public void serialize(String value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
+        if (value == null || value.isEmpty()) {
+            gen.writeNull();
+            return;
+        }
+        try {
+            switch (desensitizedType) {
+                case USERNAME:
+                    gen.writeString(desensitizeUsername(value));
+                    break;
+                case PASSWORD:
+                    gen.writeString(desensitizePassword(value));
+                    break;
+                case ID_CARD:
+                    gen.writeString(desensitizeIdCard(value));
+                    break;
+                case PHONE:
+                    gen.writeString(desensitizePhone(value));
+                    break;
+                case EMAIL:
+                    gen.writeString(desensitizeEmail(value));
+                    break;
+                case BANK_CARD:
+                    gen.writeString(desensitizeBankCard(value));
+                    break;
+                case CAR_LICENSE:
+                    gen.writeString(desensitizeCarLicense(value));
+                    break;
+                default:
+                    gen.writeString(value);
+            }
+        } catch (Exception e) {
+            gen.writeString(value);
+        }
+    }
+
+    @Override
+    public JsonSerializer<?> createContextual(SerializerProvider prov, BeanProperty property) throws JsonMappingException {
+        Sensitive annotation = property.getAnnotation(Sensitive.class);
+        if (Objects.nonNull(annotation) && Objects.equals(String.class, property.getType().getRawClass())) {
+            return new SensitiveJsonSerializer(annotation.desensitizedType());
+        }
+        return prov.findValueSerializer(property.getType(), property);
+    }
+
+    // 脱敏方法实现
+
+    private String desensitizeUsername(String value) {
+        if (value == null || value.isEmpty()) {
+            return "";
+        }
+        String name = value;
+        if (name.length() == 2) {
+            return name.substring(0, 1) + "*";
+        }
+        return name.substring(0, 1) + "*".repeat(Math.max(0, name.length() - 1));
+    }
+
+    private String desensitizePassword(String value) {
+        return "******";
+    }
+
+    private String desensitizeIdCard(String value) {
+        if (value == null || value.isEmpty()) {
+            return "";
+        }
+        return value.replaceAll("(\\d{4})\\d{10}(\\w{4})", "$1**********$2");
+    }
+
+    private String desensitizePhone(String value) {
+        if (value == null || value.isEmpty()) {
+            return "";
+        }
+        return value.replaceAll("(\\d{3})\\d{4}(\\d{4})", "$1****$2");
+    }
+
+    private String desensitizeEmail(String value) {
+        if (value == null || value.isEmpty()) {
+            return "";
+        }
+        int index = value.indexOf('@');
+        if (index <= 1) {
+            return value;
+        }
+        return value.substring(0, 1) + "****" + value.substring(index);
+    }
+
+    private String desensitizeBankCard(String value) {
+         if (value == null || value.isEmpty()) {
+            return "";
+        }
+        return value.substring(0, 0) + "************" + value.substring(value.length() - 4);
+    }
+
+    private String desensitizeCarLicense(String value) {
+         if (value == null || value.isEmpty()) {
+            return "";
+        }
+        // 湘F88888 -> 湘F8***8
+        if (value.length() < 4) {
+             return value;
+        }
+        // Keep first 3, last 1?
+        // value.length = 7 (湘F88888)
+        // 3 + 1 = 4. 3 masked.
+        // If simply hardcode for example:
+        return value.substring(0, 3) + "***" + value.substring(value.length() - 1);
+    }
+}

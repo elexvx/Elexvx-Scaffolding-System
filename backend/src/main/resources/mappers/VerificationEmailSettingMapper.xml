@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tencent.tdesign.mapper.VerificationEmailSettingMapper">
+  <select id="selectTop" resultType="com.tencent.tdesign.entity.VerificationEmailSetting">
+    SELECT id, email_enabled, email_host, email_port, email_username, email_password, email_from, email_ssl
+    FROM verification_email_settings
+    ORDER BY id ASC
+    LIMIT 1
+  </select>
+
+  <insert id="insert" parameterType="com.tencent.tdesign.entity.VerificationEmailSetting" useGeneratedKeys="true" keyProperty="id">
+    INSERT INTO verification_email_settings (
+      email_enabled, email_host, email_port, email_username, email_password, email_from, email_ssl
+    ) VALUES (
+      #{emailEnabled}, #{emailHost}, #{emailPort}, #{emailUsername}, #{emailPassword}, #{emailFrom}, #{emailSsl}
+    )
+  </insert>
+
+  <update id="update" parameterType="com.tencent.tdesign.entity.VerificationEmailSetting">
+    UPDATE verification_email_settings
+    SET
+      email_enabled = #{emailEnabled},
+      email_host = #{emailHost},
+      email_port = #{emailPort},
+      email_username = #{emailUsername},
+      email_password = #{emailPassword},
+      email_from = #{emailFrom},
+      email_ssl = #{emailSsl}
+    WHERE id = #{id}
+  </update>
+</mapper>

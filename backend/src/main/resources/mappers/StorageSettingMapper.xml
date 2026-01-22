@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tencent.tdesign.mapper.StorageSettingMapper">
+  <select id="selectTop" resultType="com.tencent.tdesign.entity.StorageSetting">
+    SELECT id,
+      provider,
+      bucket,
+      region,
+      endpoint,
+      access_key,
+      secret_key,
+      custom_domain,
+      path_prefix,
+      public_read
+    FROM storage_settings
+    ORDER BY id ASC
+    LIMIT 1
+  </select>
+
+  <insert id="insert" parameterType="com.tencent.tdesign.entity.StorageSetting" useGeneratedKeys="true" keyProperty="id">
+    INSERT INTO storage_settings (
+      provider,
+      bucket,
+      region,
+      endpoint,
+      access_key,
+      secret_key,
+      custom_domain,
+      path_prefix,
+      public_read
+    )
+    VALUES (
+      #{provider},
+      #{bucket},
+      #{region},
+      #{endpoint},
+      #{accessKey},
+      #{secretKey},
+      #{customDomain},
+      #{pathPrefix},
+      #{publicRead}
+    )
+  </insert>
+
+  <update id="update" parameterType="com.tencent.tdesign.entity.StorageSetting">
+    UPDATE storage_settings
+    SET
+      provider = #{provider},
+      bucket = #{bucket},
+      region = #{region},
+      endpoint = #{endpoint},
+      access_key = #{accessKey},
+      secret_key = #{secretKey},
+      custom_domain = #{customDomain},
+      path_prefix = #{pathPrefix},
+      public_read = #{publicRead}
+    WHERE id = #{id}
+  </update>
+</mapper>

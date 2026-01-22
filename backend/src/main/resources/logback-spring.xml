@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!-- 彩色日志依赖的渲染类 -->
+    <conversionRule conversionWord="clr" converterClass="org.springframework.boot.logging.logback.ColorConverter" />
+    <conversionRule conversionWord="wex" converterClass="org.springframework.boot.logging.logback.WhitespaceThrowableProxyConverter" />
+    <conversionRule conversionWord="wEx" converterClass="org.springframework.boot.logging.logback.ExtendedWhitespaceThrowableProxyConverter" />
+
+    <!-- 控制台输出配置 -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <!-- 
+                精准实现用户颜色要求：
+                INFO  -> \033[34m (蓝色)
+                WARN  -> \033[33m (黄色)
+                ERROR -> \033[31m (红色)
+                类名   -> \033[36m (青色/Cyan)
+            -->
+            <pattern>%d{HH:mm:ss.SSS} %replace(%replace(%replace(%5level){'INFO', "\033[34minfo\033[0m"}){'WARN', "\033[33mwarning\033[0m"}){'ERROR', "\033[31merror\033[0m"} %clr(%-40.40logger{39}){cyan} : %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}</pattern>
+        </encoder>
+    </appender>
+
+    <!-- 日志输出级别控制 -->
+    <root level="WARN">
+        <appender-ref ref="CONSOLE" />
+    </root>
+
+    <!-- 抑制不重要的框架日志输出，减少干扰 -->
+    <logger name="org.springframework" level="WARN" />
+    <logger name="org.hibernate" level="WARN" />
+    <logger name="com.alibaba.druid" level="WARN" />
+    <logger name="org.apache.catalina" level="WARN" />
+    <logger name="org.apache.shiro" level="WARN" />
+    <logger name="org.thymeleaf" level="WARN" />
+    <logger name="com.zaxxer.hikari" level="WARN" />
+    <logger name="io.lettuce" level="WARN" />
+    <logger name="io.netty" level="WARN" />
+    
+    <!-- 业务代码保持 INFO 级别 -->
+    <logger name="com.tencent.tdesign" level="INFO" />
+
+</configuration>

@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tencent.tdesign.mapper.MessageMapper">
+  <select id="listByUserId" resultType="com.tencent.tdesign.entity.MessageEntity">
+    SELECT id,
+      to_user_id,
+      content,
+      type,
+      status,
+      collected,
+      quality,
+      created_at
+    FROM messages
+    WHERE to_user_id = #{userId}
+    ORDER BY created_at DESC
+  </select>
+
+  <select id="selectById" resultType="com.tencent.tdesign.entity.MessageEntity">
+    SELECT id,
+      to_user_id,
+      content,
+      type,
+      status,
+      collected,
+      quality,
+      created_at
+    FROM messages
+    WHERE id = #{id}
+  </select>
+
+  <insert id="insert" parameterType="com.tencent.tdesign.entity.MessageEntity">
+    INSERT INTO messages (
+      id,
+      to_user_id,
+      content,
+      type,
+      status,
+      collected,
+      quality,
+      created_at
+    )
+    VALUES (
+      #{id},
+      #{toUserId},
+      #{content},
+      #{type},
+      #{status},
+      #{collected},
+      #{quality},
+      #{createdAt}
+    )
+  </insert>
+
+  <insert id="insertBatch">
+    INSERT INTO messages (
+      id,
+      to_user_id,
+      content,
+      type,
+      status,
+      collected,
+      quality,
+      created_at
+    )
+    VALUES
+    <foreach collection="list" item="item" separator=",">
+      (
+        #{item.id},
+        #{item.toUserId},
+        #{item.content},
+        #{item.type},
+        #{item.status},
+        #{item.collected},
+        #{item.quality},
+        #{item.createdAt}
+      )
+    </foreach>
+  </insert>
+
+  <update id="update" parameterType="com.tencent.tdesign.entity.MessageEntity">
+    UPDATE messages
+    SET
+      to_user_id = #{toUserId},
+      content = #{content},
+      type = #{type},
+      status = #{status},
+      collected = #{collected},
+      quality = #{quality},
+      created_at = #{createdAt}
+    WHERE id = #{id}
+  </update>
+
+  <delete id="deleteById">
+    DELETE FROM messages
+    WHERE id = #{id}
+  </delete>
+</mapper>

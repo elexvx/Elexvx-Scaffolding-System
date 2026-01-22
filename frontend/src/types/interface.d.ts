@@ -1,0 +1,67 @@
+import type { TabValue } from 'tdesign-vue-next';
+import type { Component, DefineComponent, FunctionalComponent } from 'vue';
+import type { LocationQueryRaw, RouteMeta, RouteRecordName } from 'vue-router';
+
+export interface MenuRoute {
+  // TODO: menuitem 组件实际支持 string 类型但是类型错误，暂时使用 any 类型避免打包错误待组件类型修复
+  path: any;
+  title?: string | Record<string, string>;
+  name?: string;
+  icon?: string | Component | FunctionalComponent | DefineComponent;
+  redirect?: string;
+  children: MenuRoute[];
+  meta: RouteMeta;
+}
+
+export type ModeType = 'dark' | 'light';
+
+export interface UserInfo {
+  id?: number;
+  guid?: string;
+  name: string;
+  avatar?: string;
+  roles: string[];
+  permissions?: string[];
+  assignedRoles?: string[];
+  roleSimulated?: boolean;
+}
+
+export interface LoginResponse {
+  status: 'ok' | 'pending';
+  token?: string;
+  expiresIn?: number; // token 过期时间（秒）
+  requestId?: string;
+  requestKey?: string;
+}
+
+export interface NotificationItem {
+  id: string;
+  content: string;
+  type: string;
+  status: boolean;
+  collected: boolean;
+  date: string;
+  quality: string;
+}
+
+export interface TRouterInfo {
+  path: string;
+  query?: LocationQueryRaw;
+  routeIdx?: number;
+  title?: string | Record<string, string>;
+  name?: RouteRecordName;
+  isAlive?: boolean;
+  isHome?: boolean;
+  meta?: any;
+}
+
+export interface TTabRouterType {
+  isRefreshing: boolean;
+  tabRouterList: Array<TRouterInfo>;
+}
+
+export interface TTabRemoveOptions {
+  value: TabValue;
+  index: number;
+  e: MouseEvent;
+}

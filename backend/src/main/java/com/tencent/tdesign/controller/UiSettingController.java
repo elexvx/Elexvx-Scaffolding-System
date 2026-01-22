@@ -1,0 +1,234 @@
+package com.tencent.tdesign.controller;
+
+import cn.dev33.satoken.stp.StpUtil;
+import com.tencent.tdesign.annotation.RepeatSubmit;
+import com.tencent.tdesign.dto.EmailSendRequest;
+import com.tencent.tdesign.dto.UiSettingRequest;
+import com.tencent.tdesign.entity.SecuritySetting;
+import com.tencent.tdesign.entity.UiSetting;
+import com.tencent.tdesign.entity.VerificationSetting;
+import com.tencent.tdesign.service.EmailSenderService;
+import com.tencent.tdesign.service.ObjectStorageService;
+import com.tencent.tdesign.service.OperationLogService;
+import com.tencent.tdesign.service.SecuritySettingService;
+import com.tencent.tdesign.service.UiSettingService;
+import com.tencent.tdesign.service.VerificationSettingService;
+import com.tencent.tdesign.util.PermissionUtil;
+import com.tencent.tdesign.vo.ApiResponse;
+import com.tencent.tdesign.vo.UiSettingResponse;
+import java.io.IOException;
+import java.util.Map;
+import jakarta.validation.Valid;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+@RestController
+@RequestMapping("/system/ui")
+public class UiSettingController {
+  private final UiSettingService uiSettingService;
+  private final OperationLogService operationLogService;
+  private final ObjectStorageService storageService;
+  private final EmailSenderService emailSenderService;
+  private final VerificationSettingService verificationSettingService;
+  private final SecuritySettingService securitySettingService;
+
+  public UiSettingController(
+    UiSettingService uiSettingService,
+    OperationLogService operationLogService,
+    ObjectStorageService storageService,
+    EmailSenderService emailSenderService,
+    VerificationSettingService verificationSettingService,
+    SecuritySettingService securitySettingService
+  ) {
+    this.uiSettingService = uiSettingService;
+    this.operationLogService = operationLogService;
+    this.storageService = storageService;
+    this.emailSenderService = emailSenderService;
+    this.verificationSettingService = verificationSettingService;
+    this.securitySettingService = securitySettingService;
+  }
+
+  @GetMapping
+  public ApiResponse<UiSettingResponse> get() {
+    // 允许所有登录用户获取系统 UI 配置
+    UiSetting setting = uiSettingService.getOrCreate();
+    VerificationSetting verificationSetting = verificationSettingService.getDecryptedCopy();
+    SecuritySetting securitySetting = securitySettingService.getOrCreate();
+    boolean canViewVerificationSensitive = false;
+    boolean canViewSecuritySensitive = false;
+    if (StpUtil.isLogin()) {
+      // 登录用户可查看更完整的系统配置，未登录用户仅返回基础字段（避免刷新时触发登录失效）。
+      boolean isAdmin = StpUtil.hasRole("admin");
+      canViewVerificationSensitive = isAdmin
+        || StpUtil.hasPermission("system:SystemVerification:query")
+        || StpUtil.hasPermission("system:SystemVerification:update");
+      canViewSecuritySensitive = isAdmin
+        || StpUtil.hasPermission("system:SystemSecurity:query")
+        || StpUtil.hasPermission("system:SystemSecurity:update");
+    }
+
+    UiSettingResponse response = new UiSettingResponse();
+    response.setFooterCompany(setting.getFooterCompany());
+    response.setFooterIcp(setting.getFooterIcp());
+    response.setWebsiteName(setting.getWebsiteName());
+    response.setCopyrightStartYear(setting.getCopyrightStartYear());
+    response.setAppVersion(setting.getAppVersion());
+    response.setLogoExpandedUrl(setting.getLogoExpandedUrl());
+    response.setLogoCollapsedUrl(setting.getLogoCollapsedUrl());
+    response.setLoginBgUrl(setting.getLoginBgUrl());
+    response.setFaviconUrl(setting.getFaviconUrl());
+    response.setQrCodeUrl(setting.getQrCodeUrl());
+    response.setAllowMultiDeviceLogin(setting.getAllowMultiDeviceLogin());
+    response.setLogRetentionDays(setting.getLogRetentionDays());
+    response.setAiAssistantEnabled(setting.getAiAssistantEnabled());
+    response.setMaintenanceEnabled(setting.getMaintenanceEnabled());
+    response.setMaintenanceMessage(setting.getMaintenanceMessage());
+    response.setDefaultHome(setting.getDefaultHome());
+    response.setAutoTheme(setting.getAutoTheme());
+    response.setLightStartTime(setting.getLightStartTime());
+    response.setDarkStartTime(setting.getDarkStartTime());
+    response.setShowFooter(setting.getShowFooter());
+    response.setIsSidebarCompact(setting.getIsSidebarCompact());
+    response.setShowBreadcrumb(setting.getShowBreadcrumb());
+    response.setMenuAutoCollapsed(setting.getMenuAutoCollapsed());
+    response.setMode(setting.getMode());
+    response.setLayout(setting.getLayout());
+    response.setSplitMenu(setting.getSplitMenu());
+    response.setSideMode(setting.getSideMode());
+    response.setIsFooterAside(setting.getIsFooterAside());
+    response.setIsSidebarFixed(setting.getIsSidebarFixed());
+    response.setIsHeaderFixed(setting.getIsHeaderFixed());
+    response.setIsUseTabsRouter(setting.getIsUseTabsRouter());
+    response.setShowHeader(setting.getShowHeader());
+    response.setBrandTheme(setting.getBrandTheme());
+    response.setUserAgreement(setting.getUserAgreement());
+    response.setPrivacyAgreement(setting.getPrivacyAgreement());
+
+    response.setSmsEnabled(verificationSetting.getSmsEnabled());
+    response.setSmsProvider(verificationSetting.getSmsProvider());
+    response.setSmsAliyunEnabled(verificationSetting.getSmsAliyunEnabled());
+    response.setSmsAliyunAccessKeyId(verificationSetting.getSmsAliyunAccessKeyId());
+    response.setSmsAliyunAccessKeySecret(verificationSetting.getSmsAliyunAccessKeySecret());
+    response.setSmsAliyunSignName(verificationSetting.getSmsAliyunSignName());
+    response.setSmsAliyunTemplateCode(verificationSetting.getSmsAliyunTemplateCode());
+    response.setSmsAliyunRegionId(verificationSetting.getSmsAliyunRegionId());
+    response.setSmsAliyunEndpoint(verificationSetting.getSmsAliyunEndpoint());
+    response.setSmsTencentEnabled(verificationSetting.getSmsTencentEnabled());
+    response.setSmsTencentSecretId(verificationSetting.getSmsTencentSecretId());
+    response.setSmsTencentSecretKey(verificationSetting.getSmsTencentSecretKey());
+    response.setSmsTencentSignName(verificationSetting.getSmsTencentSignName());
+    response.setSmsTencentTemplateId(verificationSetting.getSmsTencentTemplateId());
+    response.setSmsTencentRegion(verificationSetting.getSmsTencentRegion());
+    response.setSmsTencentEndpoint(verificationSetting.getSmsTencentEndpoint());
+    response.setSmsSdkAppId(verificationSetting.getSmsSdkAppId());
+    response.setEmailEnabled(verificationSetting.getEmailEnabled());
+    response.setEmailHost(verificationSetting.getEmailHost());
+    response.setEmailPort(verificationSetting.getEmailPort());
+    response.setEmailUsername(verificationSetting.getEmailUsername());
+    response.setEmailPassword(verificationSetting.getEmailPassword());
+    response.setEmailFrom(verificationSetting.getEmailFrom());
+    response.setEmailSsl(verificationSetting.getEmailSsl());
+
+    response.setSessionTimeoutMinutes(securitySetting.getSessionTimeoutMinutes());
+    response.setTokenTimeoutMinutes(securitySetting.getTokenTimeoutMinutes());
+    response.setTokenRefreshGraceMinutes(securitySetting.getTokenRefreshGraceMinutes());
+    response.setCaptchaEnabled(securitySetting.getCaptchaEnabled());
+    response.setCaptchaType(securitySetting.getCaptchaType());
+    response.setDragCaptchaWidth(securitySetting.getDragCaptchaWidth());
+    response.setDragCaptchaHeight(securitySetting.getDragCaptchaHeight());
+    response.setDragCaptchaThreshold(securitySetting.getDragCaptchaThreshold());
+    response.setImageCaptchaLength(securitySetting.getImageCaptchaLength());
+    response.setImageCaptchaNoiseLines(securitySetting.getImageCaptchaNoiseLines());
+    response.setPasswordMinLength(securitySetting.getPasswordMinLength());
+    response.setPasswordRequireUppercase(securitySetting.getPasswordRequireUppercase());
+    response.setPasswordRequireLowercase(securitySetting.getPasswordRequireLowercase());
+    response.setPasswordRequireSpecial(securitySetting.getPasswordRequireSpecial());
+    response.setPasswordAllowSequential(securitySetting.getPasswordAllowSequential());
+
+    if (!canViewVerificationSensitive) {
+      response.setSmsProvider(null);
+      response.setSmsAliyunAccessKeyId(null);
+      response.setSmsAliyunAccessKeySecret(null);
+      response.setSmsAliyunSignName(null);
+      response.setSmsAliyunTemplateCode(null);
+      response.setSmsAliyunRegionId(null);
+      response.setSmsAliyunEndpoint(null);
+      response.setSmsTencentSecretId(null);
+      response.setSmsTencentSecretKey(null);
+      response.setSmsTencentSignName(null);
+      response.setSmsTencentTemplateId(null);
+      response.setSmsTencentRegion(null);
+      response.setSmsTencentEndpoint(null);
+      response.setSmsSdkAppId(null);
+      response.setEmailHost(null);
+      response.setEmailPort(null);
+      response.setEmailUsername(null);
+      response.setEmailPassword(null);
+      response.setEmailFrom(null);
+      response.setEmailSsl(null);
+    }
+
+    if (!canViewSecuritySensitive) {
+      response.setSessionTimeoutMinutes(null);
+      response.setTokenTimeoutMinutes(null);
+      response.setTokenRefreshGraceMinutes(null);
+      response.setCaptchaEnabled(null);
+      response.setCaptchaType(null);
+      response.setDragCaptchaWidth(null);
+      response.setDragCaptchaHeight(null);
+      response.setDragCaptchaThreshold(null);
+      response.setImageCaptchaLength(null);
+      response.setImageCaptchaNoiseLines(null);
+      response.setPasswordMinLength(null);
+      response.setPasswordRequireUppercase(null);
+      response.setPasswordRequireLowercase(null);
+      response.setPasswordRequireSpecial(null);
+      response.setPasswordAllowSequential(null);
+    }
+
+    return ApiResponse.success(response);
+  }
+
+  @PostMapping
+  @RepeatSubmit
+  public ApiResponse<UiSettingResponse> save(@RequestBody UiSettingRequest req) {
+    PermissionUtil.checkAny("system:SystemVerification:update", "system:SystemPersonalize:update", "system:SystemSecurity:update");
+    uiSettingService.save(req);
+    verificationSettingService.applyRequest(req);
+    securitySettingService.applyRequest(req);
+    operationLogService.log("UPDATE", "系统设置", "更新系统个性化设置");
+    return get();
+  }
+
+  @PostMapping("/email/test")
+  @RepeatSubmit
+  public ApiResponse<Boolean> testEmail(@RequestBody @Valid EmailSendRequest req) {
+    StpUtil.checkLogin();
+    VerificationSetting setting = verificationSettingService.getDecryptedCopy();
+    if (setting == null || !Boolean.TRUE.equals(setting.getEmailEnabled())) {
+      throw new IllegalArgumentException("邮箱验证已禁用");
+    }
+    emailSenderService.sendTest(setting, req.getEmail());
+    operationLogService.log("TEST", "系统设置", "发送测试邮件");
+    return ApiResponse.success(true);
+  }
+
+  @PostMapping("/upload")
+  @RepeatSubmit
+  public ApiResponse<Map<String, String>> upload(
+    @RequestParam("file") MultipartFile file,
+    @RequestParam(value = "page", required = false) String page
+  ) throws IOException {
+    PermissionUtil.checkAdmin();
+    if (file == null || file.isEmpty()) {
+      return ApiResponse.failure(400, "上传文件不能为空");
+    }
+    
+    try {
+      String url = storageService.upload(file, "system", page);
+      return ApiResponse.success(Map.of("url", url));
+    } catch (Exception e) {
+      return ApiResponse.failure(500, "系统文件保存失败: " + e.getMessage());
+    }
+  }
+}

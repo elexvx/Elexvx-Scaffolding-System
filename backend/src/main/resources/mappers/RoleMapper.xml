@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tencent.tdesign.mapper.RoleMapper">
+  <sql id="BaseSelect">
+    SELECT id, name, description
+    FROM roles
+  </sql>
+
+  <select id="selectAll" resultType="com.tencent.tdesign.entity.RoleEntity">
+    <include refid="BaseSelect" />
+    ORDER BY id ASC
+  </select>
+
+  <select id="selectById" resultType="com.tencent.tdesign.entity.RoleEntity">
+    <include refid="BaseSelect" />
+    WHERE id = #{id}
+  </select>
+
+  <select id="selectByName" resultType="com.tencent.tdesign.entity.RoleEntity">
+    <include refid="BaseSelect" />
+    WHERE name = #{name}
+  </select>
+
+  <select id="countByName" resultType="long">
+    SELECT COUNT(1)
+    FROM roles
+    WHERE name = #{name}
+  </select>
+
+  <insert id="insert" parameterType="com.tencent.tdesign.entity.RoleEntity" useGeneratedKeys="true" keyProperty="id">
+    INSERT INTO roles (name, description)
+    VALUES (#{name}, #{description})
+  </insert>
+
+  <update id="update" parameterType="com.tencent.tdesign.entity.RoleEntity">
+    UPDATE roles
+    SET name = #{name},
+      description = #{description}
+    WHERE id = #{id}
+  </update>
+
+  <delete id="deleteById">
+    DELETE FROM roles WHERE id = #{id}
+  </delete>
+</mapper>

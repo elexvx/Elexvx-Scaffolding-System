@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tencent.tdesign.mapper.UiLoginSettingMapper">
+  <select id="selectTop" resultType="com.tencent.tdesign.entity.UiLoginSetting">
+    SELECT id, login_bg_url, allow_multi_device_login
+    FROM ui_login_settings
+    ORDER BY id ASC
+    LIMIT 1
+  </select>
+
+  <insert id="insert" parameterType="com.tencent.tdesign.entity.UiLoginSetting" useGeneratedKeys="true" keyProperty="id">
+    INSERT INTO ui_login_settings (
+      login_bg_url, allow_multi_device_login
+    ) VALUES (
+      #{loginBgUrl}, #{allowMultiDeviceLogin}
+    )
+  </insert>
+
+  <update id="update" parameterType="com.tencent.tdesign.entity.UiLoginSetting">
+    UPDATE ui_login_settings
+    SET
+      login_bg_url = #{loginBgUrl},
+      allow_multi_device_login = #{allowMultiDeviceLogin}
+    WHERE id = #{id}
+  </update>
+</mapper>

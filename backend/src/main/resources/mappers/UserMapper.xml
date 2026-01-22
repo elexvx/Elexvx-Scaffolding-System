@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tencent.tdesign.mapper.UserMapper">
+  <sql id="BaseSelect">
+    SELECT id,
+      account,
+      guid,
+      name,
+      password_hash,
+      mobile,
+      phone,
+      email,
+      id_card,
+      seat,
+      entity,
+      leader,
+      position,
+      join_day,
+      team,
+      gender,
+      nickname,
+      province,
+      city,
+      district,
+      address,
+      introduction,
+      avatar,
+      tags
+    FROM users
+  </sql>
+
+  <select id="selectById" resultType="com.tencent.tdesign.entity.UserEntity">
+    <include refid="BaseSelect" />
+    WHERE id = #{id}
+  </select>
+
+  <select id="selectByAccount" resultType="com.tencent.tdesign.entity.UserEntity">
+    <include refid="BaseSelect" />
+    WHERE account = #{account}
+  </select>
+
+  <select id="selectByMobile" resultType="com.tencent.tdesign.entity.UserEntity">
+    <include refid="BaseSelect" />
+    WHERE mobile = #{mobile}
+  </select>
+
+  <select id="selectByPhone" resultType="com.tencent.tdesign.entity.UserEntity">
+    <include refid="BaseSelect" />
+    WHERE phone = #{phone}
+  </select>
+
+  <select id="selectByEmail" resultType="com.tencent.tdesign.entity.UserEntity">
+    <include refid="BaseSelect" />
+    WHERE email = #{email}
+  </select>
+
+  <select id="selectAll" resultType="com.tencent.tdesign.entity.UserEntity">
+    <include refid="BaseSelect" />
+    ORDER BY id ASC
+  </select>
+
+  <select id="selectAllIds" resultType="long">
+    SELECT id FROM users ORDER BY id ASC
+  </select>
+
+  <select id="selectPage" resultType="com.tencent.tdesign.entity.UserEntity">
+    <include refid="BaseSelect" />
+    <where>
+      <if test="keyword != null and keyword != ''">
+        AND (account LIKE CONCAT('%', #{keyword}, '%')
+          OR name LIKE CONCAT('%', #{keyword}, '%'))
+      </if>
+    </where>
+    ORDER BY id ASC
+    LIMIT #{limit} OFFSET #{offset}
+  </select>
+
+  <select id="countByKeyword" resultType="long">
+    SELECT COUNT(1)
+    FROM users
+    <where>
+      <if test="keyword != null and keyword != ''">
+        AND (account LIKE CONCAT('%', #{keyword}, '%')
+          OR name LIKE CONCAT('%', #{keyword}, '%'))
+      </if>
+    </where>
+  </select>
+
+  <select id="countByAccount" resultType="long">
+    SELECT COUNT(1)
+    FROM users
+    WHERE account = #{account}
+  </select>
+
+  <select id="countByEmailIgnoreCase" resultType="long">
+    SELECT COUNT(1)
+    FROM users
+    WHERE LOWER(email) = LOWER(#{email})
+  </select>
+
+  <select id="countByIdCard" resultType="long">
+    SELECT COUNT(1)
+    FROM users
+    WHERE id_card = #{idCard}
+  </select>
+
+  <insert id="insert" parameterType="com.tencent.tdesign.entity.UserEntity" useGeneratedKeys="true" keyProperty="id">
+    INSERT INTO users (
+      account,
+      guid,
+      name,
+      password_hash,
+      mobile,
+      phone,
+      email,
+      id_card,
+      seat,
+      entity,
+      leader,
+      position,
+      join_day,
+      team,
+      gender,
+      nickname,
+      province,
+      city,
+      district,
+      address,
+      introduction,
+      avatar,
+      tags
+    )
+    VALUES (
+      #{account},
+      #{guid},
+      #{name},
+      #{passwordHash},
+      #{mobile},
+      #{phone},
+      #{email},
+      #{idCard},
+      #{seat},
+      #{entity},
+      #{leader},
+      #{position},
+      #{joinDay},
+      #{team},
+      #{gender},
+      #{nickname},
+      #{province},
+      #{city},
+      #{district},
+      #{address},
+      #{introduction},
+      #{avatar},
+      #{tags}
+    )
+  </insert>
+
+  <update id="update" parameterType="com.tencent.tdesign.entity.UserEntity">
+    UPDATE users
+    SET
+      account = #{account},
+      guid = #{guid},
+      name = #{name},
+      password_hash = #{passwordHash},
+      mobile = #{mobile},
+      phone = #{phone},
+      email = #{email},
+      id_card = #{idCard},
+      seat = #{seat},
+      entity = #{entity},
+      leader = #{leader},
+      position = #{position},
+      join_day = #{joinDay},
+      team = #{team},
+      gender = #{gender},
+      nickname = #{nickname},
+      province = #{province},
+      city = #{city},
+      district = #{district},
+      address = #{address},
+      introduction = #{introduction},
+      avatar = #{avatar},
+      tags = #{tags}
+    WHERE id = #{id}
+  </update>
+
+  <delete id="deleteById">
+    DELETE FROM users WHERE id = #{id}
+  </delete>
+</mapper>

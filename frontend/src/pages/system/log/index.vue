@@ -1,0 +1,221 @@
+<template>
+  <t-card title="操作日志" :bordered="false">
+    <t-space direction="vertical" style="width: 100%">
+      <t-space style="flex-wrap: wrap">
+        <t-input
+          v-model="keyword"
+          type="search"
+          clearable
+          placeholder="搜索账号/模块/详情/IP/设备"
+          style="width: 260px"
+          @enter="search"
+        />
+        <t-select v-model="action" :options="actionOptions" clearable placeholder="操作类型" style="width: 160px" />
+        <t-date-range-picker
+          v-model="dateRange"
+          clearable
+          format="YYYY-MM-DD"
+          value-type="YYYY-MM-DD"
+          :placeholder="['开始日期', '结束日期']"
+        />
+        <t-button theme="primary" @click="search">查询</t-button>
+        <t-button variant="outline" @click="resetFilters">重置</t-button>
+        <t-button variant="outline" :loading="exporting" @click="exportCsv">导出</t-button>
+      </t-space>
+
+      <t-table
+        row-key="id"
+        :data="rows"
+        :columns="columns"
+        :pagination="pagination"
+        :loading="loading"
+        @page-change="onPageChange"
+      >
+        <template #action="{ row }">
+          <t-tag :theme="actionTheme(row.action)" variant="light">{{ actionLabel(row.action) }}</t-tag>
+        </template>
+      </t-table>
+    </t-space>
+  </t-card>
+</template>
+<script setup lang="ts">
+import type { PageInfo, PrimaryTableCol, SelectOption } from 'tdesign-vue-next';
+import { MessagePlugin } from 'tdesign-vue-next';
+import { onMounted, reactive, ref } from 'vue';
+
+import { request } from '@/utils/request';
+
+interface LogRow {
+  id: number;
+  action: string;
+  module?: string;
+  detail?: string;
+  account?: string;
+  ipAddress?: string;
+  deviceInfo?: string;
+  createdAt?: string;
+}
+
+interface PageResult<T> {
+  list: T[];
+  total: number;
+}
+
+type TagTheme = 'default' | 'success' | 'primary' | 'warning' | 'danger';
+
+const keyword = ref('');
+const action = ref('');
+const dateRange = ref<string[]>([]);
+const loading = ref(false);
+const exporting = ref(false);
+
+const rows = ref<LogRow[]>([]);
+
+const pagination = reactive({
+  current: 1,
+  pageSize: 10,
+  total: 0,
+  showJumper: true,
+  showSizer: true,
+});
+
+const actionOptions: SelectOption[] = [
+  { label: '登录', value: 'LOGIN' },
+  { label: '新增', value: 'CREATE' },
+  { label: '修改', value: 'UPDATE' },
+  { label: '删除', value: 'DELETE' },
+];
+
+const columns: PrimaryTableCol[] = [
+  {
+    colKey: 'serial-number',
+    title: '序号',
+    width: 80,
+    fixed: 'left',
+    cell: (_h, { rowIndex }) => String((pagination.current - 1) * pagination.pageSize + rowIndex + 1),
+  },
+  { colKey: 'createdAt', title: '时间', width: 180 },
+  { colKey: 'action', title: '操作', width: 100 },
+  { colKey: 'module', title: '模块', width: 140, ellipsis: true },
+  { colKey: 'detail', title: '详情', width: 280, ellipsis: true },
+  { colKey: 'account', title: '账号', width: 140, ellipsis: true },
+  { colKey: 'ipAddress', title: 'IP', width: 140, ellipsis: true },
+  { colKey: 'deviceInfo', title: '设备信息', minWidth: 260, ellipsis: true },
+];
+
+const actionLabel = (value?: string) => {
+  if (!value) return '-';
+  const map: Record<string, string> = {
+    LOGIN: '登录',
+    CREATE: '新增',
+    UPDATE: '修改',
+    DELETE: '删除',
+  };
+  return map[value] || value;
+};
+
+const actionTheme = (value?: string): TagTheme => {
+  const map: Record<string, TagTheme> = {
+    LOGIN: 'primary',
+    CREATE: 'success',
+    UPDATE: 'warning',
+    DELETE: 'danger',
+  };
+  return (value && map[value]) || 'default';
+};
+
+const resolveDateParams = () => {
+  const start = dateRange.value?.[0];
+  const end = dateRange.value?.[1];
+  return { start, end };
+};
+
+const reload = async () => {
+  loading.value = true;
+  try {
+    const { start, end } = resolveDateParams();
+    const res = await request.get<PageResult<LogRow>>({
+      url: '/system/log/page',
+      params: {
+        keyword: keyword.value || undefined,
+        action: action.value || undefined,
+        start: start || undefined,
+        end: end || undefined,
+        page: pagination.current - 1,
+        size: pagination.pageSize,
+      },
+    });
+    rows.value = res.list || [];
+    pagination.total = res.total || 0;
+  } finally {
+    loading.value = false;
+  }
+};
+
+const search = () => {
+  pagination.current = 1;
+  reload();
+};
+
+const onPageChange = (pi: PageInfo) => {
+  pagination.current = pi.current;
+  pagination.pageSize = pi.pageSize;
+  reload();
+};
+
+const resetFilters = () => {
+  keyword.value = '';
+  action.value = '';
+  dateRange.value = [];
+  pagination.current = 1;
+  reload();
+};
+
+const resolveFilename = (disposition?: string) => {
+  if (!disposition) return 'operation-logs.csv';
+  const match = disposition.match(/filename\*=UTF-8''([^;]+)|filename="?([^";]+)"?/i);
+  const raw = match?.[1] || match?.[2];
+  if (!raw) return 'operation-logs.csv';
+  try {
+    return decodeURIComponent(raw);
+  } catch {
+    return raw;
+  }
+};
+
+const exportCsv = async () => {
+  exporting.value = true;
+  try {
+    const { start, end } = resolveDateParams();
+    const res: any = await request.get(
+      {
+        url: '/system/log/export',
+        params: {
+          keyword: keyword.value || undefined,
+          action: action.value || undefined,
+          start: start || undefined,
+          end: end || undefined,
+        },
+        responseType: 'blob',
+      },
+      { isTransformResponse: false, isReturnNativeResponse: true },
+    );
+    const blob = res?.data instanceof Blob ? res.data : new Blob([res?.data || ''], { type: 'text/csv' });
+    const filename = resolveFilename(res?.headers?.['content-disposition']);
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    link.click();
+    window.URL.revokeObjectURL(url);
+  } catch (err: any) {
+    MessagePlugin.error(String(err?.message || '导出失败'));
+  } finally {
+    exporting.value = false;
+  }
+};
+
+onMounted(() => {
+  reload();
+});
+</script>

@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tencent.tdesign.mapper.AiProviderMapper">
+  <sql id="BaseSelect">
+    SELECT id,
+      name,
+      vendor,
+      base_url,
+      endpoint_path,
+      model,
+      api_key,
+      api_version,
+      temperature,
+      max_tokens,
+      is_default AS is_default_provider,
+      enabled,
+      extra_headers,
+      remark,
+      last_test_status,
+      last_test_message,
+      last_tested_at,
+      created_at,
+      updated_at
+    FROM ai_provider_settings
+  </sql>
+
+  <select id="selectAll" resultType="com.tencent.tdesign.entity.AiProviderSetting">
+    <include refid="BaseSelect" />
+    ORDER BY id ASC
+  </select>
+
+  <select id="selectById" resultType="com.tencent.tdesign.entity.AiProviderSetting">
+    <include refid="BaseSelect" />
+    WHERE id = #{id}
+  </select>
+
+  <select id="selectFirstDefaultEnabled" resultType="com.tencent.tdesign.entity.AiProviderSetting">
+    <include refid="BaseSelect" />
+    WHERE is_default = 1 AND enabled = 1
+    ORDER BY id ASC
+    LIMIT 1
+  </select>
+
+  <select id="selectFirstEnabled" resultType="com.tencent.tdesign.entity.AiProviderSetting">
+    <include refid="BaseSelect" />
+    WHERE enabled = 1
+    ORDER BY id ASC
+    LIMIT 1
+  </select>
+
+  <insert id="insert" parameterType="com.tencent.tdesign.entity.AiProviderSetting" useGeneratedKeys="true" keyProperty="id">
+    INSERT INTO ai_provider_settings (
+      name,
+      vendor,
+      base_url,
+      endpoint_path,
+      model,
+      api_key,
+      api_version,
+      temperature,
+      max_tokens,
+      is_default,
+      enabled,
+      extra_headers,
+      remark,
+      last_test_status,
+      last_test_message,
+      last_tested_at,
+      created_at,
+      updated_at
+    )
+    VALUES (
+      #{name},
+      #{vendor},
+      #{baseUrl},
+      #{endpointPath},
+      #{model},
+      #{apiKey},
+      #{apiVersion},
+      #{temperature},
+      #{maxTokens},
+      #{isDefaultProvider},
+      #{enabled},
+      #{extraHeaders},
+      #{remark},
+      #{lastTestStatus},
+      #{lastTestMessage},
+      #{lastTestedAt},
+      #{createdAt},
+      #{updatedAt}
+    )
+  </insert>
+
+  <update id="update" parameterType="com.tencent.tdesign.entity.AiProviderSetting">
+    UPDATE ai_provider_settings
+    SET
+      name = #{name},
+      vendor = #{vendor},
+      base_url = #{baseUrl},
+      endpoint_path = #{endpointPath},
+      model = #{model},
+      api_key = #{apiKey},
+      api_version = #{apiVersion},
+      temperature = #{temperature},
+      max_tokens = #{maxTokens},
+      is_default = #{isDefaultProvider},
+      enabled = #{enabled},
+      extra_headers = #{extraHeaders},
+      remark = #{remark},
+      last_test_status = #{lastTestStatus},
+      last_test_message = #{lastTestMessage},
+      last_tested_at = #{lastTestedAt},
+      created_at = #{createdAt},
+      updated_at = #{updatedAt}
+    WHERE id = #{id}
+  </update>
+
+  <delete id="deleteById">
+    DELETE FROM ai_provider_settings WHERE id = #{id}
+  </delete>
+
+  <update id="clearDefaultExcept">
+    UPDATE ai_provider_settings
+    SET is_default = 0
+    WHERE is_default = 1
+    <if test="excludeId != null">
+      AND id != #{excludeId}
+    </if>
+  </update>
+</mapper>

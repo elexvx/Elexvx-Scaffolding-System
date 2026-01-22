@@ -1,0 +1,141 @@
+package com.tencent.tdesign.controller;
+
+import cn.dev33.satoken.annotation.SaCheckLogin;
+import com.tencent.tdesign.annotation.RepeatSubmit;
+import com.tencent.tdesign.dto.FileUploadCompleteRequest;
+import com.tencent.tdesign.dto.FileUploadInitRequest;
+import com.tencent.tdesign.service.FileChunkUploadService;
+import com.tencent.tdesign.service.ObjectStorageService;
+import com.tencent.tdesign.vo.ApiResponse;
+import com.tencent.tdesign.vo.FileUploadSessionResponse;
+import java.io.IOException;
+import java.util.Map;
+import java.util.Set;
+import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+
+@RestController
+@RequestMapping("/system/file")
+@SaCheckLogin
+public class FileUploadController {
+  private static final Logger log = LoggerFactory.getLogger(FileUploadController.class);
+  private static final long MAX_FILE_SIZE = 10L * 1024 * 1024 * 1024;
+  private static final Set<String> ALLOWED_EXTENSIONS = Set.of(
+    "pdf",
+    "doc",
+    "docx",
+    "xls",
+    "xlsx",
+    "csv",
+    "ppt",
+    "pptx",
+    "png",
+    "jpg",
+    "jpeg",
+    "gif",
+    "webp",
+    "bmp"
+  );
+  private final ObjectStorageService storageService;
+  private final FileChunkUploadService chunkUploadService;
+
+  public FileUploadController(ObjectStorageService storageService, FileChunkUploadService chunkUploadService) {
+    this.storageService = storageService;
+    this.chunkUploadService = chunkUploadService;
+  }
+
+  @PostMapping("/upload")
+  @RepeatSubmit
+  public ApiResponse<Map<String, String>> upload(
+    @RequestParam("file") MultipartFile file,
+    @RequestParam(value = "page", required = false) String page
+  ) throws IOException {
+    if (file == null || file.isEmpty()) {
+      return ApiResponse.failure(400, "上传文件不能为空");
+    }
+
+    try {
+      String original = file.getOriginalFilename();
+      if (file.getSize() > MAX_FILE_SIZE) {
+        return ApiResponse.failure(413, "上传文件过大，请上传 10GB 以内文件");
+      }
+      String ext = fileExtension(original);
+      if (ext == null || !ALLOWED_EXTENSIONS.contains(ext)) {
+        return ApiResponse.failure(400, "文件格式不支持");
+      }
+      log.info("开始处理文件上传: {}, size: {} bytes", original, file.getSize());
+      String url = storageService.upload(file, "business", page);
+      log.info("文件上传成功: {}, url: {}", original, url);
+      return ApiResponse.success(Map.of("url", url));
+    } catch (Exception e) {
+      log.error("文件上传过程中发生错误", e);
+      return ApiResponse.failure(500, "文件保存失败: " + e.getMessage());
+    }
+  }
+
+  @PostMapping("/upload/init")
+  @RepeatSubmit
+  public ApiResponse<FileUploadSessionResponse> initUpload(@RequestBody @Valid FileUploadInitRequest request) {
+    String ext = fileExtension(request.getFileName());
+    if (ext == null || !ALLOWED_EXTENSIONS.contains(ext)) {
+      return ApiResponse.failure(400, "文件格式不支持");
+    }
+    return ApiResponse.success(chunkUploadService.initSession(request));
+  }
+
+  @GetMapping("/upload/status")
+  public ApiResponse<FileUploadSessionResponse> uploadStatus(@RequestParam String uploadId) {
+    return ApiResponse.success(chunkUploadService.getStatus(uploadId));
+  }
+
+  @PostMapping("/upload/chunk")
+  @RepeatSubmit
+  public ApiResponse<Boolean> uploadChunk(
+    @RequestParam String uploadId,
+    @RequestParam int chunkIndex,
+    @RequestParam("chunk") MultipartFile chunk
+  ) {
+    chunkUploadService.saveChunk(uploadId, chunkIndex, chunk);
+    return ApiResponse.success(true);
+  }
+
+  @PostMapping("/upload/complete")
+  @RepeatSubmit
+  public ApiResponse<Map<String, String>> completeUpload(@RequestBody @Valid FileUploadCompleteRequest request) {
+    String url = chunkUploadService.finalizeUpload(request.getUploadId(), request.getFolder(), request.getPage());
+    return ApiResponse.success(Map.of("url", url));
+  }
+
+  @PostMapping("/upload/cancel")
+  @RepeatSubmit
+  public ApiResponse<Boolean> cancelUpload(
+    @RequestParam(required = false) String uploadId,
+    @RequestBody(required = false) Map<String, Object> body
+  ) {
+    if (uploadId == null && body != null) {
+      Object raw = body.get("uploadId");
+      if (raw != null) uploadId = String.valueOf(raw);
+    }
+    if (uploadId == null || uploadId.isBlank()) {
+      return ApiResponse.failure(400, "uploadId 不能为空");
+    }
+    return ApiResponse.success(chunkUploadService.cancel(uploadId));
+  }
+
+  private String fileExtension(String name) {
+    if (name == null) return null;
+    String n = name.trim();
+    int dot = n.lastIndexOf('.');
+    if (dot < 0 || dot == n.length() - 1) return null;
+    String ext = n.substring(dot + 1).toLowerCase();
+    return ext.isEmpty() ? null : ext;
+  }
+}

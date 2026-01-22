@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tencent.tdesign.mapper.UiBrandSettingMapper">
+  <select id="selectTop" resultType="com.tencent.tdesign.entity.UiBrandSetting">
+    SELECT id, website_name, app_version, logo_expanded_url, logo_collapsed_url, favicon_url, qr_code_url
+    FROM ui_brand_settings
+    ORDER BY id ASC
+    LIMIT 1
+  </select>
+
+  <insert id="insert" parameterType="com.tencent.tdesign.entity.UiBrandSetting" useGeneratedKeys="true" keyProperty="id">
+    INSERT INTO ui_brand_settings (
+      website_name, app_version, logo_expanded_url, logo_collapsed_url, favicon_url, qr_code_url
+    ) VALUES (
+      #{websiteName}, #{appVersion}, #{logoExpandedUrl}, #{logoCollapsedUrl}, #{faviconUrl}, #{qrCodeUrl}
+    )
+  </insert>
+
+  <update id="update" parameterType="com.tencent.tdesign.entity.UiBrandSetting">
+    UPDATE ui_brand_settings
+    SET
+      website_name = #{websiteName},
+      app_version = #{appVersion},
+      logo_expanded_url = #{logoExpandedUrl},
+      logo_collapsed_url = #{logoCollapsedUrl},
+      favicon_url = #{faviconUrl},
+      qr_code_url = #{qrCodeUrl}
+    WHERE id = #{id}
+  </update>
+</mapper>

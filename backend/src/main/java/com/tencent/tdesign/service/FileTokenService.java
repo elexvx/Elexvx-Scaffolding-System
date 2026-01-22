@@ -1,0 +1,156 @@
+package com.tencent.tdesign.service;
+
+import com.tencent.tdesign.entity.StorageSetting;
+import java.net.URI;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.SecureRandom;
+import java.util.Base64;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
+import javax.crypto.Cipher;
+import javax.crypto.spec.GCMParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
+
+@Service
+public class FileTokenService {
+  private static final Logger log = LoggerFactory.getLogger(FileTokenService.class);
+  private static final byte TOKEN_VERSION = 1;
+  private static final int IV_SIZE = 12;
+
+  private final SecretKeySpec key;
+  private final SecureRandom random = new SecureRandom();
+  private final String publicPrefix;
+
+  public FileTokenService(
+    @Value("${tdesign.file.token-secret:}") String secret,
+    @Value("${server.servlet.context-path:/api}") String contextPath
+  ) {
+    String effective = (secret == null) ? "" : secret.trim();
+    if (effective.isEmpty()) {
+      effective = "tdesign-file-token-secret";
+      log.warn("File token secret is empty; using default. Set tdesign.file.token-secret to override.");
+    }
+    this.key = new SecretKeySpec(sha256(effective), "AES");
+    String prefix = (contextPath == null) ? "" : contextPath.trim();
+    if (prefix.isEmpty() || "/".equals(prefix)) {
+      prefix = "";
+    }
+    this.publicPrefix = prefix + "/files/";
+  }
+
+  public String buildAccessUrl(StorageSetting.Provider provider, String objectKey) {
+    String token = encrypt(new TokenPayload(provider, objectKey));
+    return publicPrefix + token;
+  }
+
+  public String extractToken(String url) {
+    if (url == null || url.isBlank()) return null;
+    String clean = url.trim();
+    int q = clean.indexOf('?');
+    if (q >= 0) clean = clean.substring(0, q);
+    try {
+      if (clean.startsWith("http://") || clean.startsWith("https://")) {
+        URI uri = new URI(clean);
+        if (uri.getPath() != null) clean = uri.getPath();
+      }
+    } catch (Exception ignore) {
+    }
+    int idx = clean.indexOf("/files/");
+    if (idx >= 0) {
+      return clean.substring(idx + "/files/".length());
+    }
+    return null;
+  }
+
+  public TokenPayload decrypt(String token) {
+    if (token == null || token.isBlank()) throw new IllegalArgumentException("Empty file token");
+    byte[] raw = Base64.getUrlDecoder().decode(token);
+    ByteBuffer buffer = ByteBuffer.wrap(raw);
+    byte version = buffer.get();
+    if (version != TOKEN_VERSION) {
+      throw new IllegalArgumentException("Unsupported token version");
+    }
+    byte[] iv = new byte[IV_SIZE];
+    buffer.get(iv);
+    byte[] encrypted = new byte[buffer.remaining()];
+    buffer.get(encrypted);
+    try {
+      Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+      cipher.init(Cipher.DECRYPT_MODE, key, new GCMParameterSpec(128, iv));
+      byte[] plain = cipher.doFinal(encrypted);
+      String payload = new String(plain, StandardCharsets.UTF_8);
+      return TokenPayload.fromToken(payload);
+    } catch (Exception e) {
+      throw new IllegalArgumentException("Invalid file token");
+    }
+  }
+
+  private String encrypt(TokenPayload payload) {
+    try {
+      byte[] iv = new byte[IV_SIZE];
+      random.nextBytes(iv);
+      Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+      cipher.init(Cipher.ENCRYPT_MODE, key, new GCMParameterSpec(128, iv));
+      byte[] encrypted = cipher.doFinal(payload.toToken().getBytes(StandardCharsets.UTF_8));
+      ByteBuffer buffer = ByteBuffer.allocate(1 + iv.length + encrypted.length);
+      buffer.put(TOKEN_VERSION);
+      buffer.put(iv);
+      buffer.put(encrypted);
+      return Base64.getUrlEncoder().withoutPadding().encodeToString(buffer.array());
+    } catch (Exception e) {
+      throw new IllegalStateException("Failed to encrypt file token");
+    }
+  }
+
+  private byte[] sha256(String value) {
+    try {
+      MessageDigest digest = MessageDigest.getInstance("SHA-256");
+      return digest.digest(value.getBytes(StandardCharsets.UTF_8));
+    } catch (Exception e) {
+      throw new IllegalStateException("Unable to initialize file token secret");
+    }
+  }
+
+  public static class TokenPayload {
+    private final StorageSetting.Provider provider;
+    private final String objectKey;
+
+    public TokenPayload(StorageSetting.Provider provider, String objectKey) {
+      if (provider == null || objectKey == null || objectKey.isBlank()) {
+        throw new IllegalArgumentException("Invalid token payload");
+      }
+      this.provider = provider;
+      this.objectKey = objectKey;
+    }
+
+    public StorageSetting.Provider getProvider() {
+      return provider;
+    }
+
+    public String getObjectKey() {
+      return objectKey;
+    }
+
+    private String toToken() {
+      String encodedKey = Base64.getUrlEncoder().withoutPadding()
+        .encodeToString(objectKey.getBytes(StandardCharsets.UTF_8));
+      return "v1|" + provider.name() + "|" + encodedKey;
+    }
+
+    private static TokenPayload fromToken(String raw) {
+      String[] parts = raw.split("\\|", 3);
+      if (parts.length != 3 || !"v1".equals(parts[0])) {
+        throw new IllegalArgumentException("Invalid token payload");
+      }
+      StorageSetting.Provider provider = StorageSetting.Provider.valueOf(parts[1]);
+      byte[] decoded = Base64.getUrlDecoder().decode(parts[2]);
+      String key = new String(decoded, StandardCharsets.UTF_8);
+      return new TokenPayload(provider, key);
+    }
+  }
+}

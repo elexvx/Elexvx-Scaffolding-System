@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tencent.tdesign.mapper.WatermarkSettingMapper">
+  <select id="selectTop" resultType="com.tencent.tdesign.entity.WatermarkSetting">
+    SELECT id, type, content, image_url, opacity, size, gap_x, gap_y, rotate, enabled
+    FROM watermark_settings
+    ORDER BY id ASC
+    LIMIT 1
+  </select>
+
+  <insert id="insert" parameterType="com.tencent.tdesign.entity.WatermarkSetting" useGeneratedKeys="true" keyProperty="id">
+    INSERT INTO watermark_settings (
+      type,
+      content,
+      image_url,
+      opacity,
+      size,
+      gap_x,
+      gap_y,
+      rotate,
+      enabled
+    )
+    VALUES (
+      #{type},
+      #{content},
+      #{imageUrl},
+      #{opacity},
+      #{size},
+      #{gapX},
+      #{gapY},
+      #{rotate},
+      #{enabled}
+    )
+  </insert>
+
+  <update id="update" parameterType="com.tencent.tdesign.entity.WatermarkSetting">
+    UPDATE watermark_settings
+    SET
+      type = #{type},
+      content = #{content},
+      image_url = #{imageUrl},
+      opacity = #{opacity},
+      size = #{size},
+      gap_x = #{gapX},
+      gap_y = #{gapY},
+      rotate = #{rotate},
+      enabled = #{enabled}
+    WHERE id = #{id}
+  </update>
+</mapper>

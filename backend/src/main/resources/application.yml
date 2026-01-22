@@ -1,0 +1,99 @@
+server:
+  port: 8080 # 服务端口
+  servlet:
+    context-path: /api # 应用上下文路径
+
+spring:
+  main:
+    banner-mode: console
+    log-startup-info: false # suppress startup info logs
+  datasource:
+    # 数据库连接 URL
+    url: ${MYSQL_URL:jdbc:mysql://localhost:3306/tdesign?createDatabaseIfNotExist=true&useSSL=false&characterEncoding=utf8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true}
+    # 数据库用户名
+    username: ${MYSQL_USER:root}
+    # 数据库密码
+    password: ${MYSQL_PASSWORD:151505}
+    # 数据库连接池类型
+    type: com.alibaba.druid.pool.DruidDataSource
+    # Druid 连接池配置
+    druid:
+      filters: slf4j
+      stat-view-servlet:
+        enabled: false
+        url-pattern: /druid/*
+        login-username: admin
+        login-password: admin
+        allow: ""
+        deny: ""
+        reset-enable: false
+      web-stat-filter:
+        enabled: false
+        url-pattern: /*
+        exclusions: "*.js,*.gif,*.jpg,*.png,*.css,*.ico,/druid/*"
+      filter:
+        stat:
+          enabled: false
+          log-slow-sql: true
+          slow-sql-millis: 3000
+        wall:
+          enabled: false
+  flyway:
+    enabled: false
+  servlet:
+    multipart:
+      # 单个文件大小限制
+      max-file-size: 20MB
+      # 单次请求总文件大小限制
+      max-request-size: 20MB
+  data:
+    redis:
+      repositories:
+        enabled: false
+
+# Sa-Token 权限认证配置
+sa-token:
+  token-name: Authorization # token 名称 (同时也是 cookie 名称)
+  timeout: 2592000 # token 有效期，单位s 默认30天
+  is-concurrent: true # 是否允许同一账号并发登录 (为 true 时允许一起登录, 为 false 时新登录挤掉旧登录)
+  is-share: false # 在多人登录同一账号时，是否共享一个 token (为 false 时每次登录产生新 token)
+  is-log: false # 是否打印操作日志
+
+# MyBatis 配置
+mybatis:
+  mapper-locations: classpath:/mappers/**/*.xml # Mapper XML 文件位置
+  configuration:
+    map-underscore-to-camel-case: true # 开启驼峰命名转换
+
+# 自定义配置
+tdesign:
+  file:
+    token-secret: ${FILE_TOKEN_SECRET:tdesign-file-token-secret}
+  security:
+    captcha:
+      enabled: true # 是否启用验证码
+  # Redis 配置
+  # 如需启用 Redis 监控功能，请将 enabled 设置为 true
+  # 并根据实际情况修改 host、port、password 等配置
+  redis:
+    # 是否启用 Redis 功能，默认为 false（不启用）
+    enabled: true
+    # Redis 服务器地址
+    host: 127.0.0.1
+    # Redis 服务器端口
+    port: 6379
+    # Redis 密码，如果没有设置密码请保持为空字符串
+    password: ""
+    # 连接超时时间（毫秒）
+    timeout: 2000
+    # 使用的数据库索引
+    database: 0
+
+aj:
+  captcha:
+    cache-type: local
+    type: default
+    slip-offset: 5
+    aes-status: true
+    interference-options: 2
+

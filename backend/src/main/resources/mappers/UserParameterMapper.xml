@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tencent.tdesign.mapper.UserParameterMapper">
+  <sql id="BaseSelect">
+    SELECT id,
+      user_id,
+      param_key,
+      param_value,
+      description,
+      created_at,
+      updated_at
+    FROM user_parameters
+  </sql>
+
+  <select id="selectByUserId" resultType="com.tencent.tdesign.entity.UserParameterEntity">
+    <include refid="BaseSelect" />
+    WHERE user_id = #{userId}
+    ORDER BY id ASC
+  </select>
+
+  <select id="selectById" resultType="com.tencent.tdesign.entity.UserParameterEntity">
+    <include refid="BaseSelect" />
+    WHERE id = #{id}
+  </select>
+
+  <insert id="insert" parameterType="com.tencent.tdesign.entity.UserParameterEntity" useGeneratedKeys="true" keyProperty="id">
+    INSERT INTO user_parameters (
+      user_id,
+      param_key,
+      param_value,
+      description,
+      created_at,
+      updated_at
+    )
+    VALUES (
+      #{userId},
+      #{paramKey},
+      #{paramValue},
+      #{description},
+      #{createdAt},
+      #{updatedAt}
+    )
+  </insert>
+
+  <update id="update" parameterType="com.tencent.tdesign.entity.UserParameterEntity">
+    UPDATE user_parameters
+    SET
+      param_key = #{paramKey},
+      param_value = #{paramValue},
+      description = #{description},
+      updated_at = #{updatedAt}
+    WHERE id = #{id}
+  </update>
+
+  <delete id="deleteById">
+    DELETE FROM user_parameters WHERE id = #{id}
+  </delete>
+</mapper>

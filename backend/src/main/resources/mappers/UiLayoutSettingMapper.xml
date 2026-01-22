@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tencent.tdesign.mapper.UiLayoutSettingMapper">
+  <select id="selectTop" resultType="com.tencent.tdesign.entity.UiLayoutSetting">
+    SELECT id, default_home, show_footer, is_sidebar_compact, show_breadcrumb, menu_auto_collapsed, layout, split_menu, side_mode, is_footer_aside, is_sidebar_fixed, is_header_fixed, is_use_tabs_router, show_header
+    FROM ui_layout_settings
+    ORDER BY id ASC
+    LIMIT 1
+  </select>
+
+  <insert id="insert" parameterType="com.tencent.tdesign.entity.UiLayoutSetting" useGeneratedKeys="true" keyProperty="id">
+    INSERT INTO ui_layout_settings (
+      default_home, show_footer, is_sidebar_compact, show_breadcrumb, menu_auto_collapsed, layout, split_menu, side_mode, is_footer_aside, is_sidebar_fixed, is_header_fixed, is_use_tabs_router, show_header
+    ) VALUES (
+      #{defaultHome}, #{showFooter}, #{isSidebarCompact}, #{showBreadcrumb}, #{menuAutoCollapsed}, #{layout}, #{splitMenu}, #{sideMode}, #{isFooterAside}, #{isSidebarFixed}, #{isHeaderFixed}, #{isUseTabsRouter}, #{showHeader}
+    )
+  </insert>
+
+  <update id="update" parameterType="com.tencent.tdesign.entity.UiLayoutSetting">
+    UPDATE ui_layout_settings
+    SET
+      default_home = #{defaultHome},
+      show_footer = #{showFooter},
+      is_sidebar_compact = #{isSidebarCompact},
+      show_breadcrumb = #{showBreadcrumb},
+      menu_auto_collapsed = #{menuAutoCollapsed},
+      layout = #{layout},
+      split_menu = #{splitMenu},
+      side_mode = #{sideMode},
+      is_footer_aside = #{isFooterAside},
+      is_sidebar_fixed = #{isSidebarFixed},
+      is_header_fixed = #{isHeaderFixed},
+      is_use_tabs_router = #{isUseTabsRouter},
+      show_header = #{showHeader}
+    WHERE id = #{id}
+  </update>
+</mapper>

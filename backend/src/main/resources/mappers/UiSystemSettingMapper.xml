@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tencent.tdesign.mapper.UiSystemSettingMapper">
+  <select id="selectTop" resultType="com.tencent.tdesign.entity.UiSystemSetting">
+    SELECT id, log_retention_days, ai_assistant_enabled, maintenance_enabled, maintenance_message
+    FROM ui_system_settings
+    ORDER BY id ASC
+    LIMIT 1
+  </select>
+
+  <insert id="insert" parameterType="com.tencent.tdesign.entity.UiSystemSetting" useGeneratedKeys="true" keyProperty="id">
+    INSERT INTO ui_system_settings (
+      log_retention_days,
+      ai_assistant_enabled,
+      maintenance_enabled,
+      maintenance_message
+    ) VALUES (
+      #{logRetentionDays},
+      #{aiAssistantEnabled},
+      #{maintenanceEnabled},
+      #{maintenanceMessage}
+    )
+  </insert>
+
+  <update id="update" parameterType="com.tencent.tdesign.entity.UiSystemSetting">
+    UPDATE ui_system_settings
+    SET
+      log_retention_days = #{logRetentionDays},
+      ai_assistant_enabled = #{aiAssistantEnabled},
+      maintenance_enabled = #{maintenanceEnabled},
+      maintenance_message = #{maintenanceMessage}
+    WHERE id = #{id}
+  </update>
+</mapper>

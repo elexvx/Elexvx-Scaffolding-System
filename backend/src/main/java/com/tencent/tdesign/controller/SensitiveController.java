@@ -1,0 +1,75 @@
+package com.tencent.tdesign.controller;
+
+import com.tencent.tdesign.dto.SensitiveSettingsRequest;
+import com.tencent.tdesign.dto.SensitiveWordCreateRequest;
+import com.tencent.tdesign.entity.SensitiveWord;
+import com.tencent.tdesign.service.SensitiveService;
+import com.tencent.tdesign.vo.ApiResponse;
+import com.tencent.tdesign.vo.PageResult;
+import com.tencent.tdesign.vo.SensitiveImportResult;
+import com.tencent.tdesign.vo.SensitiveSettingsResponse;
+import jakarta.validation.Valid;
+import java.util.List;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+
+@RestController
+@RequestMapping("/system/sensitive")
+public class SensitiveController {
+  private final SensitiveService sensitiveService;
+
+  public SensitiveController(SensitiveService sensitiveService) {
+    this.sensitiveService = sensitiveService;
+  }
+
+  @GetMapping("/words")
+  public ApiResponse<List<SensitiveWord>> listWords(@RequestParam(required = false) String keyword) {
+    return ApiResponse.success(sensitiveService.listWords(keyword));
+  }
+
+  @GetMapping("/words/page")
+  public ApiResponse<PageResult<SensitiveWord>> pageWords(
+    @RequestParam(required = false) String keyword,
+    @RequestParam(defaultValue = "0") int page,
+    @RequestParam(defaultValue = "10") int size
+  ) {
+    return ApiResponse.success(sensitiveService.pageWords(keyword, page, size));
+  }
+
+  @PostMapping("/words")
+  public ApiResponse<SensitiveWord> createWord(@RequestBody @Valid SensitiveWordCreateRequest req) {
+    return ApiResponse.success(sensitiveService.createWord(req.getWord()));
+  }
+
+  @DeleteMapping("/words/{id}")
+  public ApiResponse<Boolean> deleteWord(@PathVariable long id) {
+    return ApiResponse.success(sensitiveService.deleteWord(id));
+  }
+
+  @GetMapping("/words/template")
+  public void downloadTemplate(jakarta.servlet.http.HttpServletResponse response) {
+    sensitiveService.downloadTemplate(response);
+  }
+
+  @PostMapping("/words/import")
+  public ApiResponse<SensitiveImportResult> importWords(@RequestParam("file") MultipartFile file) {
+    return ApiResponse.success(sensitiveService.importWords(file));
+  }
+
+  @GetMapping("/settings")
+  public ApiResponse<SensitiveSettingsResponse> getSettings() {
+    return ApiResponse.success(sensitiveService.getSettings());
+  }
+
+  @PostMapping("/settings")
+  public ApiResponse<SensitiveSettingsResponse> saveSettings(@RequestBody SensitiveSettingsRequest req) {
+    return ApiResponse.success(sensitiveService.saveSettings(req));
+  }
+}

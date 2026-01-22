@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tencent.tdesign.mapper.AuthQueryMapper">
+  <delete id="deleteRoleMenusByMenuIds">
+    DELETE FROM role_menus
+    WHERE menu_id IN
+    <foreach collection="menuIds" item="id" open="(" close=")" separator=",">
+      #{id}
+    </foreach>
+  </delete>
+
+  <select id="findRoleNamesByUserId" resultType="string">
+    SELECT role
+    FROM user_roles
+    WHERE user_id = #{userId}
+  </select>
+
+  <select id="findPermissionsByUserId" resultType="string">
+    SELECT DISTINCT rp.permission
+    FROM user_roles ur
+    JOIN roles r ON r.name = ur.role
+    JOIN role_permissions rp ON rp.role_id = r.id
+    WHERE ur.user_id = #{userId}
+  </select>
+
+  <select id="findPermissionsByRoleNames" resultType="string">
+    SELECT DISTINCT rp.permission
+    FROM roles r
+    JOIN role_permissions rp ON rp.role_id = r.id
+    WHERE r.name IN
+    <foreach collection="roleNames" item="name" open="(" close=")" separator=",">
+      #{name}
+    </foreach>
+  </select>
+
+  <select id="findPermissionsByRoleId" resultType="string">
+    SELECT permission
+    FROM role_permissions
+    WHERE role_id = #{roleId}
+  </select>
+
+  <select id="findMenuIdsByRoleId" resultType="long">
+    SELECT menu_id
+    FROM role_menus
+    WHERE role_id = #{roleId}
+  </select>
+
+  <select id="findMenuIdsByUserId" resultType="long">
+    SELECT DISTINCT rm.menu_id
+    FROM user_roles ur
+    JOIN roles r ON r.name = ur.role
+    JOIN role_menus rm ON rm.role_id = r.id
+    WHERE ur.user_id = #{userId}
+  </select>
+
+  <select id="findMenuIdsByRoleNames" resultType="long">
+    SELECT DISTINCT rm.menu_id
+    FROM roles r
+    JOIN role_menus rm ON rm.role_id = r.id
+    WHERE r.name IN
+    <foreach collection="roleNames" item="name" open="(" close=")" separator=",">
+      #{name}
+    </foreach>
+  </select>
+
+  <select id="findExistingRoleNames" resultType="string">
+    SELECT name
+    FROM roles
+    WHERE name IN
+    <foreach collection="roleNames" item="name" open="(" close=")" separator=",">
+      #{name}
+    </foreach>
+  </select>
+
+  <delete id="deleteUserRoles">
+    DELETE FROM user_roles WHERE user_id = #{userId}
+  </delete>
+
+  <insert id="insertUserRoles">
+    INSERT INTO user_roles (user_id, role)
+    VALUES
+    <foreach collection="roles" item="role" separator=",">
+      (#{userId}, #{role})
+    </foreach>
+  </insert>
+
+  <delete id="deleteRolePermissions">
+    DELETE FROM role_permissions WHERE role_id = #{roleId}
+  </delete>
+
+  <insert id="insertRolePermissions">
+    INSERT INTO role_permissions (role_id, permission)
+    VALUES
+    <foreach collection="permissions" item="permission" separator=",">
+      (#{roleId}, #{permission})
+    </foreach>
+  </insert>
+
+  <delete id="deleteRoleMenus">
+    DELETE FROM role_menus WHERE role_id = #{roleId}
+  </delete>
+
+  <insert id="insertRoleMenus">
+    INSERT INTO role_menus (role_id, menu_id)
+    VALUES
+    <foreach collection="menuIds" item="menuId" separator=",">
+      (#{roleId}, #{menuId})
+    </foreach>
+  </insert>
+
+  <insert id="insertMissingAdminMenus">
+    INSERT INTO role_menus (role_id, menu_id)
+    SELECT r.id, m.id
+    FROM roles r, sys_menu_items m
+    WHERE r.name = 'admin'
+      AND NOT EXISTS (
+        SELECT 1 FROM role_menus rm
+        WHERE rm.role_id = r.id AND rm.menu_id = m.id
+      )
+  </insert>
+
+  <select id="selectRoleIdByName" resultType="long">
+    SELECT id FROM roles WHERE name = #{name}
+  </select>
+
+  <select id="countRolePermission" resultType="long">
+    SELECT COUNT(1)
+    FROM role_permissions
+    WHERE role_id = #{roleId} AND permission = #{permission}
+  </select>
+
+  <insert id="insertRolePermission">
+    INSERT INTO role_permissions (role_id, permission)
+    VALUES (#{roleId}, #{permission})
+  </insert>
+</mapper>

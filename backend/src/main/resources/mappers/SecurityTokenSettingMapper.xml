@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tencent.tdesign.mapper.SecurityTokenSettingMapper">
+  <select id="selectTop" resultType="com.tencent.tdesign.entity.SecurityTokenSetting">
+    SELECT id, session_timeout_minutes, token_timeout_minutes, token_refresh_grace_minutes
+    FROM security_token_settings
+    ORDER BY id ASC
+    LIMIT 1
+  </select>
+
+  <insert id="insert" parameterType="com.tencent.tdesign.entity.SecurityTokenSetting" useGeneratedKeys="true" keyProperty="id">
+    INSERT INTO security_token_settings (
+      session_timeout_minutes, token_timeout_minutes, token_refresh_grace_minutes
+    ) VALUES (
+      #{sessionTimeoutMinutes}, #{tokenTimeoutMinutes}, #{tokenRefreshGraceMinutes}
+    )
+  </insert>
+
+  <update id="update" parameterType="com.tencent.tdesign.entity.SecurityTokenSetting">
+    UPDATE security_token_settings
+    SET
+      session_timeout_minutes = #{sessionTimeoutMinutes},
+      token_timeout_minutes = #{tokenTimeoutMinutes},
+      token_refresh_grace_minutes = #{tokenRefreshGraceMinutes}
+    WHERE id = #{id}
+  </update>
+</mapper>

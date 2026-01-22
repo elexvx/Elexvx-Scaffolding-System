@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tencent.tdesign.mapper.FileResourceMapper">
+  <sql id="BaseSelect">
+    SELECT id,
+      content,
+      file_name,
+      suffix,
+      file_url,
+      created_by_id,
+      created_by_name,
+      created_at,
+      updated_at
+    FROM file_resources
+  </sql>
+
+  <select id="selectById" resultType="com.tencent.tdesign.entity.FileResource">
+    <include refid="BaseSelect" />
+    WHERE id = #{id}
+  </select>
+
+  <select id="selectPage" resultType="com.tencent.tdesign.entity.FileResource">
+    <include refid="BaseSelect" />
+    ORDER BY created_at DESC
+    LIMIT #{limit} OFFSET #{offset}
+  </select>
+
+  <select id="count" resultType="long">
+    SELECT COUNT(1)
+    FROM file_resources
+  </select>
+
+  <insert id="insert" parameterType="com.tencent.tdesign.entity.FileResource" useGeneratedKeys="true" keyProperty="id">
+    INSERT INTO file_resources (
+      content,
+      file_name,
+      suffix,
+      file_url,
+      created_by_id,
+      created_by_name,
+      created_at,
+      updated_at
+    )
+    VALUES (
+      #{content},
+      #{fileName},
+      #{suffix},
+      #{fileUrl},
+      #{createdById},
+      #{createdByName},
+      #{createdAt},
+      #{updatedAt}
+    )
+  </insert>
+
+  <update id="update" parameterType="com.tencent.tdesign.entity.FileResource">
+    UPDATE file_resources
+    SET
+      content = #{content},
+      file_name = #{fileName},
+      suffix = #{suffix},
+      file_url = #{fileUrl},
+      updated_at = #{updatedAt}
+    WHERE id = #{id}
+  </update>
+
+  <delete id="deleteById">
+    DELETE FROM file_resources WHERE id = #{id}
+  </delete>
+</mapper>

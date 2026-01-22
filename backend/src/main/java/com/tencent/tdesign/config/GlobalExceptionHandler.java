@@ -1,0 +1,228 @@
+package com.tencent.tdesign.config;
+
+import cn.dev33.satoken.exception.NotLoginException;
+import cn.dev33.satoken.exception.NotPermissionException;
+import cn.dev33.satoken.exception.NotRoleException;
+import com.tencent.tdesign.exception.ConcurrentLoginException;
+import com.tencent.tdesign.exception.RepeatSubmitException;
+import com.tencent.tdesign.mapper.MenuItemMapper;
+import com.tencent.tdesign.entity.MenuItemEntity;
+import com.tencent.tdesign.vo.ApiResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.core.NestedExceptionUtils;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.lang.NonNull;
+import org.springframework.validation.BindException;
+import org.springframework.validation.FieldError;
+import org.springframework.web.context.request.async.AsyncRequestTimeoutException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
+
+import java.time.format.DateTimeParseException;
+import java.util.stream.Collectors;
+
+@RestControllerAdvice
+public class GlobalExceptionHandler {
+  private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+  private static final @NonNull MediaType SSE_MEDIA_TYPE = MediaType.parseMediaType(MediaType.TEXT_EVENT_STREAM_VALUE);
+  private final MenuItemMapper menuItemMapper;
+
+  public GlobalExceptionHandler(MenuItemMapper menuItemMapper) {
+    this.menuItemMapper = menuItemMapper;
+  }
+
+  /**
+   * 处理 Sa-Token 未登录异常
+   */
+  @ExceptionHandler(NotLoginException.class)
+  public Object handleNotLoginException(NotLoginException e, HttpServletRequest request) {
+    log.debug("用户未登录或token已过期: {}", e.getMessage());
+    String type = e.getType();
+    String msg;
+    if (NotLoginException.KICK_OUT.equals(type)) {
+      msg = "已被系统管理员强制下线，请重新登录";
+    } else if (NotLoginException.BE_REPLACED.equals(type)) {
+      msg = "账号在其他地方登录，你已被迫下线，请重新登录";
+    } else if (NotLoginException.TOKEN_TIMEOUT.equals(type)) {
+      msg = "登录已过期，请重新登录";
+    } else {
+      msg = "未登录或登录已失效，请重新登录";
+    }
+    if (isSseRequest(request)) {
+      String payload = "event: unauthorized\ndata: " + escapeSseData(msg) + "\n\n";
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).contentType(SSE_MEDIA_TYPE).body(payload);
+    }
+    return ApiResponse.failure(401, msg);
+  }
+
+  /**
+   * 处理 Sa-Token 权限不足异常
+   */
+  @ExceptionHandler(NotPermissionException.class)
+  public ResponseEntity<ApiResponse<Void>> handleNotPermissionException(NotPermissionException e) {
+    log.warn("权限不足: {}", e.getMessage());
+    return ResponseEntity.status(HttpStatus.FORBIDDEN)
+      .body(ApiResponse.failure(403, buildPermissionMessage(e.getPermission())));
+  }
+
+  /**
+   * 处理 Sa-Token 角色不足异常
+   */
+  @ExceptionHandler(NotRoleException.class)
+  public ResponseEntity<ApiResponse<Void>> handleNotRoleException(NotRoleException e) {
+    log.warn("角色不足: {}", e.getMessage());
+    return ResponseEntity.status(HttpStatus.FORBIDDEN)
+      .body(ApiResponse.failure(403, "权限不足，请联系管理员开通"));
+  }
+
+  /**
+   * 处理参数校验异常 (Bean Validation)
+   */
+  @ExceptionHandler(MethodArgumentNotValidException.class)
+  public ApiResponse<Void> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
+    String message = e.getBindingResult().getFieldErrors().stream()
+      .map(FieldError::getDefaultMessage)
+      .collect(Collectors.joining("; "));
+    log.debug("参数校验失败: {}", message);
+    return ApiResponse.failure(400, "参数校验失败: " + message);
+  }
+
+  /**
+   * 处理参数绑定异常
+   */
+  @ExceptionHandler(BindException.class)
+  public ApiResponse<Void> handleBindException(BindException e) {
+    String message = e.getBindingResult().getFieldErrors().stream()
+      .map(FieldError::getDefaultMessage)
+      .collect(Collectors.joining("; "));
+    log.debug("参数绑定失败: {}", message);
+    return ApiResponse.failure(400, "参数绑定失败: " + message);
+  }
+
+  /**
+   * 处理多设备登录异常
+   */
+  @ExceptionHandler(ConcurrentLoginException.class)
+  public ApiResponse<Void> handleConcurrentLoginException(ConcurrentLoginException e) {
+    log.debug("检测到多设备登录: {}", e.getMessage());
+    return ApiResponse.failure(409, e.getMessage());
+  }
+
+  @ExceptionHandler(RepeatSubmitException.class)
+  public ResponseEntity<ApiResponse<Void>> handleRepeatSubmitException(RepeatSubmitException e) {
+    return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+      .body(ApiResponse.failure(429, e.getMessage()));
+  }
+
+  /**
+   * 处理非法参数异常
+   */
+  @ExceptionHandler(IllegalArgumentException.class)
+  public ApiResponse<Void> handleIllegalArgumentException(IllegalArgumentException e) {
+    log.debug("非法参数: {}", e.getMessage());
+    return ApiResponse.failure(400, e.getMessage());
+  }
+
+  /**
+   * 处理请求体解析异常（如日期格式、JSON 格式错误等）
+   */
+  @ExceptionHandler(HttpMessageNotReadableException.class)
+  public ApiResponse<Void> handleHttpMessageNotReadableException(@NonNull HttpMessageNotReadableException e) {
+    Throwable root = NestedExceptionUtils.getMostSpecificCause(e);
+    if (root instanceof DateTimeParseException) {
+      return ApiResponse.failure(400, "日期格式错误，应为 yyyy-MM-dd");
+    }
+    log.debug("请求体解析失败: {}", root != null ? root.getMessage() : e.getMessage());
+    return ApiResponse.failure(400, "请求体格式错误");
+  }
+
+  /**
+   * 处理所有未捕获的异常
+   */
+  @ExceptionHandler(MaxUploadSizeExceededException.class)
+  public ApiResponse<Void> handleMaxUploadSizeExceededException(MaxUploadSizeExceededException e) {
+    log.debug("上传文件超限: {}", e.getMessage());
+    return ApiResponse.failure(413, "上传文件过大，请压缩后重试");
+  }
+
+  @ExceptionHandler(AsyncRequestTimeoutException.class)
+  public Object handleAsyncRequestTimeoutException(AsyncRequestTimeoutException e, HttpServletRequest request) {
+    if (isSseRequest(request)) {
+      return ResponseEntity.status(HttpStatus.NO_CONTENT).contentType(SSE_MEDIA_TYPE).body("");
+    }
+    return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+  }
+
+  @ExceptionHandler(NoResourceFoundException.class)
+  public ResponseEntity<Void> handleNoResourceFoundException(NoResourceFoundException e) {
+    log.debug("静态资源不存在: {}", e.getMessage());
+    return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+  }
+
+  @ExceptionHandler(Exception.class)
+  public Object handleException(Exception e, HttpServletRequest request) {
+    log.error("系统异常", e);
+    if (isSseRequest(request)) {
+      String payload = "event: error\ndata: server error\n\n";
+      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+        .contentType(SSE_MEDIA_TYPE)
+        .body(payload);
+    }
+    return ApiResponse.failure(500, "服务器内部错误，请联系管理员");
+  }
+
+  private String buildPermissionMessage(String permission) {
+    if (permission == null || permission.isBlank()) {
+      return "权限不足，请联系管理员开通权限后再试";
+    }
+    String[] parts = permission.trim().split(":");
+    if (parts.length != 3) {
+      return "权限不足，缺少权限: " + permission + "，请联系管理员开通权限后再试";
+    }
+    String resource = parts[1];
+    String action = parts[2];
+    String pageName = resolvePageTitle(resource);
+    String actionLabel = resolveActionLabel(action);
+    String suffix = (actionLabel == null || actionLabel.isBlank()) ? "" : "的" + actionLabel + "操作";
+    return "权限不足：页面[" + pageName + "] 权限[" + permission + "]未开通" + suffix + "，请联系管理员开通权限后再试";
+  }
+
+  private String resolvePageTitle(String resource) {
+    if (resource == null || resource.isBlank()) return "Unknown";
+    MenuItemEntity item = menuItemMapper.selectByRouteName(resource);
+    if (item == null) return resource;
+    String title = item.getTitleZhCn();
+    return (title == null || title.isBlank()) ? resource : title;
+  }
+
+  private String resolveActionLabel(String action) {
+    if (action == null || action.isBlank()) return null;
+    return switch (action) {
+      case "create" -> "新增";
+      case "update" -> "修改";
+      case "delete" -> "删除";
+      case "query" -> "查询";
+      case "import" -> "导入";
+      case "export" -> "导出";
+      default -> action;
+    };
+  }
+
+  private boolean isSseRequest(HttpServletRequest request) {
+    String accept = request.getHeader("Accept");
+    return accept != null && accept.contains(MediaType.TEXT_EVENT_STREAM_VALUE);
+  }
+
+  private String escapeSseData(String data) {
+    if (data == null) return "";
+    return data.replace("\n", "\\n").replace("\r", "");
+  }
+}
