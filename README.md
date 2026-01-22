@@ -1,22 +1,38 @@
-# 全栈管理系统
+﻿# Elexvx ® Inc 脚手架系统
 
-一套基于 Vue 3 组件库 + `Spring Boot` 的全栈管理后台示例，集成了用户体系、系统设置、监控、AI 助手、公告通知等常用能力。本仓库包含 `frontend` 与 `backend` 两个子项目，可独立启动。
+Elexvx 脚手架系统 是由 Elexvx ® Inc 推出的一套面向企业后台的脚手架/管理系统，提供用户与权限管理、系统配置、消息公告、文件与对象存储、短信/邮箱验证等基础能力，支持快速搭建业务后台。
 
-## 主要特性
+## 技术栈
 
-- 🔐 **统一身份与权限**：基于 Sa-Token 的登录、角色、菜单与按钮权限控制。
-- 📊 **系统监控**：服务器与 Redis 监控，支持实时刷新与趋势图展示，内嵌监控页支持单点登录。
-- 🤖 **AI 能力接入**：可配置多家主流大模型（OpenAI 兼容、Azure、DeepSeek、Moonshot、Qwen、Ollama 等），提供在线测试与右下角 ChatGPT 风格助手。
-- 📨 **公告管理**：一级菜单独立的公告管理，支持卡片与表格视图、富文本编辑、发布/撤回、全员广播。
-- 🧾 **登录体验一致**：登录/注册/找回密码结构统一，内置条款勾选与协议弹窗。
+- 前端：Vue 3、TypeScript、Vite、Pinia、Vue Router、TDesign Vue Next、ECharts、Axios
+- 后端：Spring Boot 3.3、MyBatis、Sa-Token、Druid、MySQL、Redis（可选）、Spring Mail、SpringDoc OpenAPI
+- 其他：Flyway（当前默认关闭）、AJ Captcha
 
 ## 快速开始
 
 ### 环境准备
 
 - Node.js >= 18.18.0，npm >= 9
-- JDK 17+ 与 Maven 3.8+
-- 可选：本地 Redis（用于监控示例）与 MySQL（默认连接串见 `backend/src/main/resources/application.yml`）
+- JDK 17+，Maven 3.8+
+- MySQL 8.x
+- Redis（可选，用于监控等功能）
+
+### 初始化数据库
+
+- 可导入 `database/tdesign_init.sql` 作为基础数据
+- 或运行后端后自动建表（数据库不存在会自动创建）
+
+### 启动后端
+
+```bash
+cd backend
+mvn spring-boot:run
+```
+
+- 默认端口：`8080`
+- 上下文路径：`/api`
+- 数据库配置：`backend/src/main/resources/application.yml`
+- 可用环境变量覆盖：`MYSQL_URL`、`MYSQL_USER`、`MYSQL_PASSWORD`
 
 ### 启动前端
 
@@ -26,47 +42,21 @@ npm install
 npm run dev
 ```
 
-访问 `http://localhost:3002`，默认使用 Vite 代理将 `/api` 请求转发到后端 `http://127.0.0.1:8080`。
+- 访问：`http://localhost:3002`
+- 开发环境 `/api` 会代理到 `http://127.0.0.1:8080`
 
-### 启动后端
+### 生产构建（可选）
 
 ```bash
-cd backend
-mvn spring-boot:run
+cd frontend
+npm run build
+cd ../backend
+mvn -DskipTests package
 ```
 
-后端默认监听 `8080`，上下文路径为 `/api`。数据库表在启动时自动初始化，admin 默认拥有全部菜单权限。
+## 目录说明
 
-## 功能指南
-
-### AI 接入与调试
-
-1. 登录后进入 **系统设置 -> AI 接口设置**，新增或编辑接入配置：
-   - 填写 Base URL、Endpoint（默认 `/v1/chat/completions`）、模型、密钥等。
-   - 支持 OpenAI 兼容 / Azure OpenAI / DeepSeek / Moonshot / Qwen 兼容模式 / Ollama。
-2. 点击“连接测试”验证连通性，可设为默认模型。
-3. 使用右下角的 AI 助手（ChatGPT 风格界面），选择模型并对话。助手会遵守权限边界，自动阻止危险/越权的工具调用。
-
-### 公告管理
-
-- 一级菜单「公告管理」下包含 **卡片展示** 与 **表格管理** 两种视图。
-- 表格视图支持新增/编辑/删除/发布/撤回，正文使用富文本编辑器。
-- 发布时会自动通过站内消息进行广播，方便全员通知。
-
-### 监控与内嵌页面
-
-- **Redis 监控**：实时刷新核心指标并绘制内存/QPS 趋势图；无法连接时会给出诊断提示。
-- **Druid 数据监控**：已支持在内嵌 iframe 中复用登录态（admin 角色自动单点登录）。
-
-### 账号与安全
-
-- 登录、注册、找回密码页面结构统一，均需勾选并可查看用户/隐私协议。
-- 找回密码通过短信验证码重置，需先在系统设置中开启并配置短信能力。
-
-## 常见问题
-
-- **Redis 页面无数据**：确认 `application.yml` 中 `tdesign.redis.enabled=true` 且 Redis 可访问；页面右上角可手动刷新，错误原因会在提示中显示。
-- **AI 助手不可用**：先在「AI 接口设置」中添加可用配置并通过测试，再在助手侧边选择模型。
-- **内嵌监控无法登录**：确保使用 admin 角色访问，系统会为 Druid 页自动注入会话。
-
-如需更多细节，可查阅 `API_SECURITY_SPEC.md`、`MESSAGE_API.md` 或对应页面源码。祝使用愉快！
+- `frontend/` 管理后台前端（Vue 3 + Vite），页面、路由、状态管理、API 请求等
+- `backend/` 后端服务（Spring Boot），接口、业务逻辑、数据访问与配置
+- `database/` 初始化 SQL、表结构与基础数据脚本
+- `scripts/` 项目辅助脚本（构建/部署/运维相关）

@@ -39,7 +39,7 @@
           size="large"
           :type="showPsw ? 'text' : 'password'"
           clearable
-        :placeholder="t('pages.login.input.password')"
+          :placeholder="t('pages.login.input.password')"
         >
           <template #prefix-icon>
             <t-icon name="lock-on" />

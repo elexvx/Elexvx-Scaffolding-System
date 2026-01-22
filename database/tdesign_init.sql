@@ -11,7 +11,7 @@
  Target Server Version : 80033
  File Encoding         : 65001
 
- Date: 23/01/2026 03:03:45
+ Date: 23/01/2026 03:43:58
 */
 
 SET NAMES utf8mb4;
@@ -90,7 +90,7 @@ CREATE TABLE `file_download_history`  (
   PRIMARY KEY (`id`) USING BTREE,
   INDEX `idx_file_download_history_user_time`(`user_id` ASC, `downloaded_at` ASC) USING BTREE,
   INDEX `idx_file_download_history_file_time`(`file_id` ASC, `downloaded_at` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 2 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 3 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of file_download_history
@@ -195,6 +195,12 @@ CREATE TABLE `operation_logs`  (
 -- ----------------------------
 -- Records of operation_logs
 -- ----------------------------
+INSERT INTO `operation_logs` VALUES (379, 'LOGIN', '登录', '用户登录', 1, 'admin', '127.0.0.1', 'Windows 设备', 'Windows 10', 'Edge', '2026-01-23 03:36:20', 'e59c3cd1-3b52-47c7-bf88-fad5b2281827');
+INSERT INTO `operation_logs` VALUES (380, 'DELETE', '公告管理', '删除公告: AI技术在医疗领域的创新应用与发展前景', 1, 'admin', '127.0.0.1', 'Windows 设备', 'Windows 10', 'Edge', '2026-01-23 03:36:57', 'e59c3cd1-3b52-47c7-bf88-fad5b2281827');
+INSERT INTO `operation_logs` VALUES (381, 'DELETE', '公告管理', '删除公告: 大数据分析助力企业决策的实践案例', 1, 'admin', '127.0.0.1', 'Windows 设备', 'Windows 10', 'Edge', '2026-01-23 03:36:59', 'e59c3cd1-3b52-47c7-bf88-fad5b2281827');
+INSERT INTO `operation_logs` VALUES (382, 'DELETE', '公告管理', '删除公告: 区块链技术在供应链管理中的应用', 1, 'admin', '127.0.0.1', 'Windows 设备', 'Windows 10', 'Edge', '2026-01-23 03:37:01', 'e59c3cd1-3b52-47c7-bf88-fad5b2281827');
+INSERT INTO `operation_logs` VALUES (383, 'WITHDRAW', '公告管理', '更改公告状态: 云计算技术发展趋势与未来展望', 1, 'admin', '127.0.0.1', 'Windows 设备', 'Windows 10', 'Edge', '2026-01-23 03:37:03', 'e59c3cd1-3b52-47c7-bf88-fad5b2281827');
+INSERT INTO `operation_logs` VALUES (384, 'DELETE', '公告管理', '删除公告: 云计算技术发展趋势与未来展望', 1, 'admin', '127.0.0.1', 'Windows 设备', 'Windows 10', 'Edge', '2026-01-23 03:37:10', 'e59c3cd1-3b52-47c7-bf88-fad5b2281827');
 
 -- ----------------------------
 -- Table structure for role_menus
@@ -456,7 +462,7 @@ CREATE TABLE `security_settings`  (
   `password_require_special` tinyint NULL DEFAULT NULL,
   `password_allow_sequential` tinyint NULL DEFAULT NULL,
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 2 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of security_settings
@@ -565,7 +571,7 @@ CREATE TABLE `storage_settings`  (
   `path_prefix` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
   `public_read` tinyint NULL DEFAULT NULL,
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 2 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of storage_settings
@@ -769,60 +775,16 @@ CREATE TABLE `ui_settings`  (
   `privacy_agreement` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL,
   `website_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
   `copyright_start_year` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
-  `sms_enabled` tinyint NULL DEFAULT NULL,
-  `sms_access_key_id` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
-  `sms_access_key_secret` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
-  `sms_sign_name` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
-  `sms_template_code` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
-  `sms_region_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
-  `sms_endpoint` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
-  `email_enabled` tinyint NULL DEFAULT NULL,
-  `email_host` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
-  `email_port` int NULL DEFAULT NULL,
-  `email_username` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
-  `email_password` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
-  `email_from` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
-  `email_ssl` tinyint NULL DEFAULT NULL,
   `favicon_url` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
-  `session_timeout_minutes` int NULL DEFAULT NULL,
-  `token_timeout_minutes` int NULL DEFAULT NULL,
-  `token_refresh_grace_minutes` int NULL DEFAULT NULL,
-  `captcha_type` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
-  `drag_captcha_width` int NULL DEFAULT NULL,
-  `drag_captcha_height` int NULL DEFAULT NULL,
-  `drag_captcha_threshold` int NULL DEFAULT NULL,
-  `image_captcha_length` int NULL DEFAULT NULL,
-  `image_captcha_noise_lines` int NULL DEFAULT NULL,
-  `password_min_length` int NULL DEFAULT NULL,
-  `password_require_uppercase` tinyint NULL DEFAULT NULL,
-  `password_require_lowercase` tinyint NULL DEFAULT NULL,
-  `password_require_special` tinyint NULL DEFAULT NULL,
-  `password_allow_sequential` tinyint NULL DEFAULT NULL,
-  `sms_provider` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
-  `sms_sdk_app_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
-  `sms_aliyun_enabled` tinyint NULL DEFAULT NULL,
-  `sms_aliyun_access_key_id` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
-  `sms_aliyun_access_key_secret` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
-  `sms_aliyun_sign_name` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
-  `sms_aliyun_template_code` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
-  `sms_aliyun_region_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
-  `sms_aliyun_endpoint` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
-  `sms_tencent_enabled` tinyint NULL DEFAULT NULL,
-  `sms_tencent_secret_id` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
-  `sms_tencent_secret_key` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
-  `sms_tencent_sign_name` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
-  `sms_tencent_template_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
-  `sms_tencent_region` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
-  `sms_tencent_endpoint` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
   `qr_code_url` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
   `ai_assistant_enabled` tinyint NULL DEFAULT NULL,
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 2 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 3 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of ui_settings
 -- ----------------------------
-INSERT INTO `ui_settings` VALUES (2, 'Elexvx Inc', '苏ICP备2025160017号', '1.0', NULL, '/api/files/AfhTAAbiGchX_GRMPEF80DDX72c_ZEylVGdGxslAnTeLvg7p5b7_84FuuQ0MrYCDuoKMJQejiysLfBGzEAqULV7tJXxXzcTQq7k1s1gHDJ1yW3YuZZusknE5qTHD-0YvYxsfze4_O7l1p8Xo3OyxPLp-7KHmi8ql5KIR7VVf3_fNLkvEHblo2w', '/api/files/AdaYk_j-A2ARRI_Cc5Dx3WnZZ3OvUGyfuHwqhhWag2I2EIhn0wJ_ZnhgRGsqFu7v8CpL_uhe5v_TGCV7JcLZdhUbmgmKNNdGj6L2jUaj-frej5NDsKZlUZpS5ZCbkkumZ2avMo3qPGZ6pCdUtEpe6eyGyqM4SWPzjMGEJrWcytZyYv6x2qsk6w', 0, 0, '/example/goods', 0, '06:00', '18:00', NULL, NULL, NULL, NULL, 'light', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '/api/files/ASEKxrkL3Eyntni2xRg_DV22A3AesVeuj88o5WbIucYgX4flHrqFOyedklljKs0MVJPDqZkTwe4b3f8aK6h7mrMUkg-1fVExjmvUllNmYaqH36UjAnJzFtxvKr7VmwJj2EVg6oD7md1qsgWiFHbHwDicf4Un_cu2zgzSXaTv4Nbe4QWW8t_G4w', '<h1 style=\"text-align: start;\">用户协议</h1><p style=\"text-align: start;\"><em>宏翔商道（南京）科技发展有限公司（Elexvx Inc）</em>（以下简称“我们”）依据本协议为用户（以下简称“你”）提供<em>Elexvx 脚手架系统</em>服务。本协议对你和我们均具有法律约束力。</p><h2 style=\"text-align: start;\">一、本服务的功能</h2><p style=\"text-align: start;\">你可以使用本服务企业底层脚手架系统。</p><p style=\"text-align: start;\"><br></p><h2 style=\"text-align: start;\">二、责任范围及限制</h2><p style=\"text-align: start;\">你使用本服务得到的结果仅供参考，实际情况以官方为准。</p><p style=\"text-align: start;\"><br></p><h2 style=\"text-align: start;\">三、隐私保护</h2><p style=\"text-align: start;\">我们重视对你隐私的保护，你的个人隐私信息将根据《隐私政策》受到保护与规范，详情请参阅《隐私政策》。</p><p style=\"text-align: start;\"><br></p><h2 style=\"text-align: start;\">四、其他条款</h2><p style=\"text-align: start;\">4.1 本协议所有条款的标题仅为阅读方便，本身并无实际涵义，不能作为本协议涵义解释的依据。</p><p style=\"text-align: start;\">4.2 本协议条款无论因何种原因部分无效或不可执行，其余条款仍有效，对双方具有约束力。</p>', '<h1 style=\"text-align: start;\">隐私政策</h1><p>更新日期：<strong>2026/1/8</strong></p><p>生效日期：<strong>2026/1/8</strong></p><h1 style=\"text-align: start;\">导言</h1><p style=\"text-align: start;\"><em>Elexvx 脚手架系统</em> 是一款由 <em>宏翔商道（南京）科技发展有限公司（Elexvx Inc）</em> （以下简称“我们”）提供的产品。 您在使用我们的服务时，我们可能会收集和使用您的相关信息。我们希望通过本《隐私政策》向您说明，在使用我们的服务时，我们如何收集、使用、储存和分享这些信息，以及我们为您提供的访问、更新、控制和保护这些信息的方式。 本《隐私政策》与您所使用的 <em>Elexvx 脚手架系统</em> 服务息息相关，希望您仔细阅读，在需要时，按照本《隐私政策》的指引，作出您认为适当的选择。本《隐私政策》中涉及的相关技术词汇，我们尽量以简明扼要的表述，并提供进一步说明的链接，以便您的理解。</p><p style=\"text-align: start;\"><strong>您使用或继续使用我们的服务，即意味着同意我们按照本《隐私政策》收集、使用、储存和分享您的相关信息。</strong></p><p style=\"text-align: start;\">如对本《隐私政策》或相关事宜有任何问题，请通过 <strong>elexvx@elexvx.com</strong> 与我们联系。</p><p style=\"text-align: start;\"><br></p><h1 style=\"text-align: start;\">1. 我们收集的信息</h1><p style=\"text-align: start;\">我们或我们的第三方合作伙伴提供服务时，可能会收集、储存和使用下列与您有关的信息。如果您不提供相关信息，可能无法注册成为我们的用户或无法享受我们提供的某些服务，或者无法达到相关服务拟达到的效果。</p><ul><li style=\"text-align: start;\"><strong>个人信息</strong>，您在注册账户或使用我们的服务时，向我们提供的相关个人信息，例如电话号码、电子邮件等。</li></ul><p style=\"text-align: start;\"><br></p><h1 style=\"text-align: start;\">2. 信息的存储</h1><h2 style=\"text-align: start;\">2.1 信息存储的方式和期限</h2><ul><li style=\"text-align: start;\">我们会通过安全的方式存储您的信息，包括本地存储（例如利用APP进行数据缓存）、数据库和服务器日志。</li><li style=\"text-align: start;\">一般情况下，我们只会在为实现服务目的所必需的时间内或法律法规规定的条件下存储您的个人信息。</li></ul><h2 style=\"text-align: start;\">2.2 信息存储的地域</h2><ul><li style=\"text-align: start;\">我们会按照法律法规规定，将境内收集的用户个人信息存储于中国境内。</li><li style=\"text-align: start;\">目前我们不会跨境传输或存储您的个人信息。将来如需跨境传输或存储的，我们会向您告知信息出境的目的、接收方、安全保证措施和安全风险，并征得您的同意。</li></ul><h2 style=\"text-align: start;\">2.3 产品或服务停止运营时的通知</h2><ul><li style=\"text-align: start;\">当我们的产品或服务发生停止运营的情况时，我们将以推送通知、公告等形式通知您，并在合理期限内删除您的个人信息或进行匿名化处理，法律法规另有规定的除外。</li></ul><p style=\"text-align: start;\"><br></p><h1 style=\"text-align: start;\">3. 信息安全</h1><p style=\"text-align: start;\">我们使用各种安全技术和程序，以防信息的丢失、不当使用、未经授权阅览或披露。例如，在某些服务中，我们将利用加密技术（例如SSL）来保护您提供的个人信息。但请您理解，由于技术的限制以及可能存在的各种恶意手段，在互联网行业，即便竭尽所能加强安全措施，也不可能始终保证信息百分之百的安全。您需要了解，您接入我们的服务所用的系统和通讯网络，有可能因我们可控范围外的因素而出现问题。</p><p style=\"text-align: start;\"><br></p><h1 style=\"text-align: start;\">4. 我们如何使用信息</h1><p style=\"text-align: start;\">我们可能将在向您提供服务的过程之中所收集的信息用作下列用途：</p><ul><li style=\"text-align: start;\">向您提供服务；</li><li style=\"text-align: start;\">在我们提供服务时，用于身份验证、客户服务、安全防范、诈骗监测、存档和备份用途，确保我们向您提供的产品和服务的安全性；</li><li style=\"text-align: start;\">帮助我们设计新服务，改善我们现有服务；</li><li style=\"text-align: start;\">使我们更加了解您如何接入和使用我们的服务，从而针对性地回应您的个性化需求，例如语言设定、位置设定、个性化的帮助服务和指示，或对您和其他用户作出其他方面的回应；</li><li style=\"text-align: start;\">向您提供与您更加相关的广告以替代普遍投放的广告；</li><li style=\"text-align: start;\">评估我们服务中的广告和其他促销及推广活动的效果，并加以改善；</li><li style=\"text-align: start;\">软件认证或管理软件升级；</li><li style=\"text-align: start;\">让您参与有关我们产品和服务的调查。</li></ul><p style=\"text-align: start;\"><br></p><h1 style=\"text-align: start;\">5. 信息共享</h1><p style=\"text-align: start;\">目前，我们不会主动共享或转让您的个人信息至第三方，如存在其他共享或转让您的个人信息或您需要我们将您的个人信息共享或转让至第三方情形时，我们会直接或确认第三方征得您对上述行为的明示同意。</p><p style=\"text-align: start;\">为了投放广告，评估、优化广告投放效果等目的，我们需要向广告主及其代理商等第三方合作伙伴共享您的部分数据，要求其严格遵守我们关于数据隐私保护的措施与要求，包括但不限于根据数据保护协议、承诺书及相关数据处理政策进行处理，避免识别出个人身份，保障隐私安全。</p><p style=\"text-align: start;\">我们不会向合作伙伴分享可用于识别您个人身份的信息（例如您的姓名或电子邮件地址），除非您明确授权。</p><p style=\"text-align: start;\">我们不会对外公开披露所收集的个人信息，如必须公开披露时，我们会向您告知此次公开披露的目的、披露信息的类型及可能涉及的敏感信息，并征得您的明示同意。</p><p style=\"text-align: start;\">随着我们业务的持续发展，我们有可能进行合并、收购、资产转让等交易，我们将告知您相关情形，按照法律法规及不低于本《隐私政策》所要求的标准继续保护或要求新的控制者继续保护您的个人信息。</p><p style=\"text-align: start;\">另外，根据相关法律法规及国家标准，以下情形中，我们可能会共享、转让、公开披露个人信息无需事先征得您的授权同意：</p><ul><li style=\"text-align: start;\">与国家安全、国防安全直接相关的；</li><li style=\"text-align: start;\">与公共安全、公共卫生、重大公共利益直接相关的；</li><li style=\"text-align: start;\">犯罪侦查、起诉、审判和判决执行等直接相关的；</li><li style=\"text-align: start;\">出于维护个人信息主体或其他个人的生命、财产等重大合法权益但又很难得到本人同意的；</li><li style=\"text-align: start;\">个人信息主体自行向社会公众公开个人信息的；</li><li style=\"text-align: start;\">从合法公开披露的信息中收集个人信息的，如合法的新闻报道、政府信息公开等渠道。</li></ul><p style=\"text-align: start;\"><br></p><h1 style=\"text-align: start;\">6. 您的权利</h1><p style=\"text-align: start;\">在您使用我们的服务期间，我们可能会视产品具体情况为您提供相应的操作设置，以便您可以查询、删除、更正或撤回您的相关个人信息，您可参考相应的具体指引进行操作。此外，我们还设置了投诉举报渠道，您的意见将会得到及时的处理。如果您无法通过上述途径和方式行使您的个人信息主体权利，您可以通过本《隐私政策》中提供的联系方式提出您的请求，我们会按照法律法规的规定予以反馈。</p><p style=\"text-align: start;\">当您决定不再使用我们的产品或服务时，可以申请注销账户。注销账户后，除法律法规另有规定外，我们将删除或匿名化处理您的个人信息。</p><p style=\"text-align: start;\"><br></p><h1 style=\"text-align: start;\">7. 变更</h1><p style=\"text-align: start;\">我们可能适时修订本《隐私政策》的条款。当变更发生时，我们会在版本更新时向您提示新的《隐私政策》，并向您说明生效日期。请您仔细阅读变更后的《隐私政策》内容，<strong>若您继续使用我们的服务，即表示您同意我们按照更新后的《隐私政策》处理您的个人信息。</strong></p><p style=\"text-align: start;\"><br></p><h1 style=\"text-align: start;\">8. 未成年人保护</h1><p style=\"text-align: start;\">我们鼓励父母或监护人指导未满十八岁的未成年人使用我们的服务。我们建议未成年人鼓励他们的父母或监护人阅读本《隐私政策》，并建议未成年人在提交的个人信息之前寻求父母或监护人的同意和指导。</p>', 'Elexvx 脚手架系统', '2025', 1, NULL, NULL, '宏翔商道', 'SMS_489540092', 'cn-hangzhou', 'dysmsapi.aliyuncs.com', 1, 'smtp.163.com', 465, 'elexvx@163.com', NULL, 'elexvx@163.com', 1, NULL, 1440, 1440, 60, 'image', 280, 160, 98, 5, 8, 6, 0, 0, 0, 1, 'aliyun', '', 1, NULL, NULL, '宏翔商道', 'SMS_489540092', 'cn-hangzhou', 'dysmsapi.aliyuncs.com', 0, '', '', '', '', 'ap-guangzhou', '', '/api/files/AW2kZzhbP7MhEjvI-x1xwb5hec-HBuUwVYpcwcVh5Cozaj-r6d-IuZ17TkTFAy07yj27nwOu6G3hOfS0PNTtjUxCOZv80OC8GJvKbKhZvAqzuD7XTjieVBCzabQ2cnFfpTn4VPloU3MtSNmKH_J4qF-jrxKlbVv_tfaQS2r2md2cjP09dztUMA', NULL);
+INSERT INTO `ui_settings` VALUES (2, 'Elexvx Inc', '苏ICP备2025160017号', '1.0', NULL, '/api/files/AfhTAAbiGchX_GRMPEF80DDX72c_ZEylVGdGxslAnTeLvg7p5b7_84FuuQ0MrYCDuoKMJQejiysLfBGzEAqULV7tJXxXzcTQq7k1s1gHDJ1yW3YuZZusknE5qTHD-0YvYxsfze4_O7l1p8Xo3OyxPLp-7KHmi8ql5KIR7VVf3_fNLkvEHblo2w', '/api/files/AdaYk_j-A2ARRI_Cc5Dx3WnZZ3OvUGyfuHwqhhWag2I2EIhn0wJ_ZnhgRGsqFu7v8CpL_uhe5v_TGCV7JcLZdhUbmgmKNNdGj6L2jUaj-frej5NDsKZlUZpS5ZCbkkumZ2avMo3qPGZ6pCdUtEpe6eyGyqM4SWPzjMGEJrWcytZyYv6x2qsk6w', 0, 0, '/example/goods', 0, '06:00', '18:00', NULL, NULL, NULL, NULL, 'light', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '/api/files/ASEKxrkL3Eyntni2xRg_DV22A3AesVeuj88o5WbIucYgX4flHrqFOyedklljKs0MVJPDqZkTwe4b3f8aK6h7mrMUkg-1fVExjmvUllNmYaqH36UjAnJzFtxvKr7VmwJj2EVg6oD7md1qsgWiFHbHwDicf4Un_cu2zgzSXaTv4Nbe4QWW8t_G4w', '<h1 style=\"text-align: start;\">用户协议</h1><p style=\"text-align: start;\"><em>宏翔商道（南京）科技发展有限公司（Elexvx Inc）</em>（以下简称“我们”）依据本协议为用户（以下简称“你”）提供<em>Elexvx 脚手架系统</em>服务。本协议对你和我们均具有法律约束力。</p><h2 style=\"text-align: start;\">一、本服务的功能</h2><p style=\"text-align: start;\">你可以使用本服务企业底层脚手架系统。</p><p style=\"text-align: start;\"><br></p><h2 style=\"text-align: start;\">二、责任范围及限制</h2><p style=\"text-align: start;\">你使用本服务得到的结果仅供参考，实际情况以官方为准。</p><p style=\"text-align: start;\"><br></p><h2 style=\"text-align: start;\">三、隐私保护</h2><p style=\"text-align: start;\">我们重视对你隐私的保护，你的个人隐私信息将根据《隐私政策》受到保护与规范，详情请参阅《隐私政策》。</p><p style=\"text-align: start;\"><br></p><h2 style=\"text-align: start;\">四、其他条款</h2><p style=\"text-align: start;\">4.1 本协议所有条款的标题仅为阅读方便，本身并无实际涵义，不能作为本协议涵义解释的依据。</p><p style=\"text-align: start;\">4.2 本协议条款无论因何种原因部分无效或不可执行，其余条款仍有效，对双方具有约束力。</p>', '<h1 style=\"text-align: start;\">隐私政策</h1><p>更新日期：<strong>2026/1/8</strong></p><p>生效日期：<strong>2026/1/8</strong></p><h1 style=\"text-align: start;\">导言</h1><p style=\"text-align: start;\"><em>Elexvx 脚手架系统</em> 是一款由 <em>宏翔商道（南京）科技发展有限公司（Elexvx Inc）</em> （以下简称“我们”）提供的产品。 您在使用我们的服务时，我们可能会收集和使用您的相关信息。我们希望通过本《隐私政策》向您说明，在使用我们的服务时，我们如何收集、使用、储存和分享这些信息，以及我们为您提供的访问、更新、控制和保护这些信息的方式。 本《隐私政策》与您所使用的 <em>Elexvx 脚手架系统</em> 服务息息相关，希望您仔细阅读，在需要时，按照本《隐私政策》的指引，作出您认为适当的选择。本《隐私政策》中涉及的相关技术词汇，我们尽量以简明扼要的表述，并提供进一步说明的链接，以便您的理解。</p><p style=\"text-align: start;\"><strong>您使用或继续使用我们的服务，即意味着同意我们按照本《隐私政策》收集、使用、储存和分享您的相关信息。</strong></p><p style=\"text-align: start;\">如对本《隐私政策》或相关事宜有任何问题，请通过 <strong>elexvx@elexvx.com</strong> 与我们联系。</p><p style=\"text-align: start;\"><br></p><h1 style=\"text-align: start;\">1. 我们收集的信息</h1><p style=\"text-align: start;\">我们或我们的第三方合作伙伴提供服务时，可能会收集、储存和使用下列与您有关的信息。如果您不提供相关信息，可能无法注册成为我们的用户或无法享受我们提供的某些服务，或者无法达到相关服务拟达到的效果。</p><ul><li style=\"text-align: start;\"><strong>个人信息</strong>，您在注册账户或使用我们的服务时，向我们提供的相关个人信息，例如电话号码、电子邮件等。</li></ul><p style=\"text-align: start;\"><br></p><h1 style=\"text-align: start;\">2. 信息的存储</h1><h2 style=\"text-align: start;\">2.1 信息存储的方式和期限</h2><ul><li style=\"text-align: start;\">我们会通过安全的方式存储您的信息，包括本地存储（例如利用APP进行数据缓存）、数据库和服务器日志。</li><li style=\"text-align: start;\">一般情况下，我们只会在为实现服务目的所必需的时间内或法律法规规定的条件下存储您的个人信息。</li></ul><h2 style=\"text-align: start;\">2.2 信息存储的地域</h2><ul><li style=\"text-align: start;\">我们会按照法律法规规定，将境内收集的用户个人信息存储于中国境内。</li><li style=\"text-align: start;\">目前我们不会跨境传输或存储您的个人信息。将来如需跨境传输或存储的，我们会向您告知信息出境的目的、接收方、安全保证措施和安全风险，并征得您的同意。</li></ul><h2 style=\"text-align: start;\">2.3 产品或服务停止运营时的通知</h2><ul><li style=\"text-align: start;\">当我们的产品或服务发生停止运营的情况时，我们将以推送通知、公告等形式通知您，并在合理期限内删除您的个人信息或进行匿名化处理，法律法规另有规定的除外。</li></ul><p style=\"text-align: start;\"><br></p><h1 style=\"text-align: start;\">3. 信息安全</h1><p style=\"text-align: start;\">我们使用各种安全技术和程序，以防信息的丢失、不当使用、未经授权阅览或披露。例如，在某些服务中，我们将利用加密技术（例如SSL）来保护您提供的个人信息。但请您理解，由于技术的限制以及可能存在的各种恶意手段，在互联网行业，即便竭尽所能加强安全措施，也不可能始终保证信息百分之百的安全。您需要了解，您接入我们的服务所用的系统和通讯网络，有可能因我们可控范围外的因素而出现问题。</p><p style=\"text-align: start;\"><br></p><h1 style=\"text-align: start;\">4. 我们如何使用信息</h1><p style=\"text-align: start;\">我们可能将在向您提供服务的过程之中所收集的信息用作下列用途：</p><ul><li style=\"text-align: start;\">向您提供服务；</li><li style=\"text-align: start;\">在我们提供服务时，用于身份验证、客户服务、安全防范、诈骗监测、存档和备份用途，确保我们向您提供的产品和服务的安全性；</li><li style=\"text-align: start;\">帮助我们设计新服务，改善我们现有服务；</li><li style=\"text-align: start;\">使我们更加了解您如何接入和使用我们的服务，从而针对性地回应您的个性化需求，例如语言设定、位置设定、个性化的帮助服务和指示，或对您和其他用户作出其他方面的回应；</li><li style=\"text-align: start;\">向您提供与您更加相关的广告以替代普遍投放的广告；</li><li style=\"text-align: start;\">评估我们服务中的广告和其他促销及推广活动的效果，并加以改善；</li><li style=\"text-align: start;\">软件认证或管理软件升级；</li><li style=\"text-align: start;\">让您参与有关我们产品和服务的调查。</li></ul><p style=\"text-align: start;\"><br></p><h1 style=\"text-align: start;\">5. 信息共享</h1><p style=\"text-align: start;\">目前，我们不会主动共享或转让您的个人信息至第三方，如存在其他共享或转让您的个人信息或您需要我们将您的个人信息共享或转让至第三方情形时，我们会直接或确认第三方征得您对上述行为的明示同意。</p><p style=\"text-align: start;\">为了投放广告，评估、优化广告投放效果等目的，我们需要向广告主及其代理商等第三方合作伙伴共享您的部分数据，要求其严格遵守我们关于数据隐私保护的措施与要求，包括但不限于根据数据保护协议、承诺书及相关数据处理政策进行处理，避免识别出个人身份，保障隐私安全。</p><p style=\"text-align: start;\">我们不会向合作伙伴分享可用于识别您个人身份的信息（例如您的姓名或电子邮件地址），除非您明确授权。</p><p style=\"text-align: start;\">我们不会对外公开披露所收集的个人信息，如必须公开披露时，我们会向您告知此次公开披露的目的、披露信息的类型及可能涉及的敏感信息，并征得您的明示同意。</p><p style=\"text-align: start;\">随着我们业务的持续发展，我们有可能进行合并、收购、资产转让等交易，我们将告知您相关情形，按照法律法规及不低于本《隐私政策》所要求的标准继续保护或要求新的控制者继续保护您的个人信息。</p><p style=\"text-align: start;\">另外，根据相关法律法规及国家标准，以下情形中，我们可能会共享、转让、公开披露个人信息无需事先征得您的授权同意：</p><ul><li style=\"text-align: start;\">与国家安全、国防安全直接相关的；</li><li style=\"text-align: start;\">与公共安全、公共卫生、重大公共利益直接相关的；</li><li style=\"text-align: start;\">犯罪侦查、起诉、审判和判决执行等直接相关的；</li><li style=\"text-align: start;\">出于维护个人信息主体或其他个人的生命、财产等重大合法权益但又很难得到本人同意的；</li><li style=\"text-align: start;\">个人信息主体自行向社会公众公开个人信息的；</li><li style=\"text-align: start;\">从合法公开披露的信息中收集个人信息的，如合法的新闻报道、政府信息公开等渠道。</li></ul><p style=\"text-align: start;\"><br></p><h1 style=\"text-align: start;\">6. 您的权利</h1><p style=\"text-align: start;\">在您使用我们的服务期间，我们可能会视产品具体情况为您提供相应的操作设置，以便您可以查询、删除、更正或撤回您的相关个人信息，您可参考相应的具体指引进行操作。此外，我们还设置了投诉举报渠道，您的意见将会得到及时的处理。如果您无法通过上述途径和方式行使您的个人信息主体权利，您可以通过本《隐私政策》中提供的联系方式提出您的请求，我们会按照法律法规的规定予以反馈。</p><p style=\"text-align: start;\">当您决定不再使用我们的产品或服务时，可以申请注销账户。注销账户后，除法律法规另有规定外，我们将删除或匿名化处理您的个人信息。</p><p style=\"text-align: start;\"><br></p><h1 style=\"text-align: start;\">7. 变更</h1><p style=\"text-align: start;\">我们可能适时修订本《隐私政策》的条款。当变更发生时，我们会在版本更新时向您提示新的《隐私政策》，并向您说明生效日期。请您仔细阅读变更后的《隐私政策》内容，<strong>若您继续使用我们的服务，即表示您同意我们按照更新后的《隐私政策》处理您的个人信息。</strong></p><p style=\"text-align: start;\"><br></p><h1 style=\"text-align: start;\">8. 未成年人保护</h1><p style=\"text-align: start;\">我们鼓励父母或监护人指导未满十八岁的未成年人使用我们的服务。我们建议未成年人鼓励他们的父母或监护人阅读本《隐私政策》，并建议未成年人在提交的个人信息之前寻求父母或监护人的同意和指导。</p>', 'Elexvx 脚手架系统', '2025', NULL, '/api/files/AW2kZzhbP7MhEjvI-x1xwb5hec-HBuUwVYpcwcVh5Cozaj-r6d-IuZ17TkTFAy07yj27nwOu6G3hOfS0PNTtjUxCOZv80OC8GJvKbKhZvAqzuD7XTjieVBCzabQ2cnFfpTn4VPloU3MtSNmKH_J4qF-jrxKlbVv_tfaQS2r2md2cjP09dztUMA', NULL);
 
 -- ----------------------------
 -- Table structure for ui_system_settings
