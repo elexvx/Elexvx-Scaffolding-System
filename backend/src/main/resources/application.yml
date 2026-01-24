@@ -13,7 +13,7 @@ spring:
     # 数据库用户名（可通过 MYSQL_USER 覆盖）
     username: ${MYSQL_USER:root}
     # 数据库密码（可通过 MYSQL_PASSWORD 覆盖）
-    password: ${MYSQL_PASSWORD:151505}
+    password: ${MYSQL_PASSWORD:123456}
     # 数据库连接池类型（使用 Druid）
     type: com.alibaba.druid.pool.DruidDataSource
   flyway:
