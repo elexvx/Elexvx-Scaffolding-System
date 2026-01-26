@@ -22,7 +22,14 @@
         <t-button theme="primary" @click="openCreate">新增通知</t-button>
       </t-space>
 
-      <t-table :data="list" :columns="columns" row-key="id" :loading="loading">
+      <t-table
+        :data="list"
+        :columns="columns"
+        row-key="id"
+        :loading="loading"
+        :pagination="pagination"
+        @page-change="handlePageChange"
+      >
         <template #priority="{ row }">
           <t-tag :theme="priorityTheme(row.priority)" variant="light-outline">{{ priorityLabel(row.priority) }}</t-tag>
         </template>
@@ -44,14 +51,6 @@
           </t-space>
         </template>
       </t-table>
-      <t-pagination
-        v-if="total > query.size"
-        :total="total"
-        :page-size="query.size"
-        :current="query.page + 1"
-        style="margin-top: 16px"
-        @change="handlePageChange"
-      />
     </t-card>
 
     <confirm-drawer
@@ -167,7 +166,6 @@ const RichTextEditor = defineAsyncComponent(() => import('@/components/RichTextE
 import { useUserStore } from '@/store';
 
 const list = ref<NotificationItem[]>([]);
-const total = ref(0);
 const loading = ref(false);
 const saving = ref(false);
 
@@ -199,8 +197,12 @@ const query = reactive({
   keyword: '',
   priority: '',
   status: '',
-  page: 0,
-  size: 10,
+});
+
+const pagination = reactive({
+  current: 1,
+  pageSize: 10,
+  total: 0,
 });
 
 const formVisible = ref(false);
@@ -377,14 +379,14 @@ const load = async () => {
   loading.value = true;
   try {
     const res = await fetchNotifications({
-      page: query.page,
-      size: query.size,
+      page: pagination.current - 1,
+      size: pagination.pageSize,
       keyword: query.keyword,
       priority: query.priority,
       status: query.status,
     });
     list.value = res.list || [];
-    total.value = res.total || 0;
+    pagination.total = res.total || 0;
   } finally {
     loading.value = false;
   }
@@ -394,12 +396,13 @@ const reset = () => {
   query.keyword = '';
   query.priority = '';
   query.status = '';
-  query.page = 0;
+  pagination.current = 1;
   load();
 };
 
-const handlePageChange = ({ current }: { current: number }) => {
-  query.page = current - 1;
+const handlePageChange = ({ current, pageSize }: { current: number; pageSize: number }) => {
+  pagination.current = current;
+  pagination.pageSize = pageSize;
   load();
 };
 

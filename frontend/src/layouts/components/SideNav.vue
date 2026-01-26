@@ -137,9 +137,12 @@ const menuCls = computed(() => {
 const router = useRouter();
 const settingStore = useSettingStore();
 
+const lastAutoCollapsed = ref<boolean | null>(null);
 const autoCollapsed = () => {
   if (!menuAutoCollapsed.value) return;
   const isCompact = window.innerWidth <= MIN_POINT;
+  if (lastAutoCollapsed.value === isCompact) return;
+  lastAutoCollapsed.value = isCompact;
   settingStore.updateConfig({ isSidebarCompact: isCompact });
 };
 

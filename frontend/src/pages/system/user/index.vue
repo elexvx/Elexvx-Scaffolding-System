@@ -191,8 +191,6 @@ const pagination = reactive({
   current: 1,
   pageSize: 10,
   total: 0,
-  showJumper: true,
-  showSizer: true,
 });
 
 const roleOptions = computed<SelectOption[]>(() => (roles.value || []).map((r) => ({ label: r.name, value: r.name })));
