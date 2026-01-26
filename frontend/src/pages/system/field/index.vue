@@ -1,7 +1,7 @@
 <template>
   <t-card title="字段管理" :bordered="false" class="field-management">
-    <t-row :gutter="[16, 16]">
-      <t-col :xs="24" :sm="8" :md="6">
+    <div class="field-layout">
+      <div class="field-layout__left">
         <div class="field-panel">
           <div class="panel-header panel-header--space">
             <span class="panel-title">数据库/表</span>
@@ -21,8 +21,8 @@
             @active="handleTreeActive"
           />
         </div>
-      </t-col>
-      <t-col :xs="24" :sm="16" :md="18">
+      </div>
+      <div class="field-layout__right">
         <div class="field-panel">
           <div class="panel-header panel-header--space">
             <div>
@@ -34,14 +34,7 @@
               <t-button variant="outline" :disabled="!currentTableKey" @click="openRemoveTable">删除表</t-button>
             </t-space>
           </div>
-          <t-table
-            row-key="name"
-            :data="currentFields"
-            :columns="columns"
-            :pagination="pagination"
-            bordered
-            @page-change="handlePageChange"
-          >
+          <t-table row-key="name" :data="currentFields" :columns="columns" bordered>
             <template #required="{ row }">
               <t-switch v-model="row.required" size="small" />
             </template>
@@ -59,8 +52,8 @@
             </template>
           </t-table>
         </div>
-      </t-col>
-    </t-row>
+      </div>
+    </div>
 
     <t-dialog
       v-model:visible="dialogVisible"
@@ -158,7 +151,7 @@
 </template>
 
 <script setup lang="ts">
-import type { PageInfo, PrimaryTableCol } from 'tdesign-vue-next';
+import type { PrimaryTableCol } from 'tdesign-vue-next';
 import { DialogPlugin, MessagePlugin } from 'tdesign-vue-next';
 import { computed, reactive, ref, watch } from 'vue';
 
@@ -417,12 +410,6 @@ const columns: PrimaryTableCol[] = [
   { colKey: 'op', title: '操作', width: 140, fixed: 'right' },
 ];
 
-const pagination = reactive({
-  current: 1,
-  pageSize: 10,
-  total: 0,
-});
-
 const currentFields = computed(() => (currentTableKey.value ? fieldMap[currentTableKey.value] || [] : []));
 
 const currentTableLabel = computed(() => {
@@ -493,11 +480,6 @@ const tableForm = reactive({
   label: '',
   value: '',
 });
-
-const handlePageChange = (pageInfo: PageInfo) => {
-  pagination.current = pageInfo.current;
-  pagination.pageSize = pageInfo.pageSize;
-};
 
 const findTableByValue = (value: string) => {
   if (!value) return null;
@@ -665,7 +647,6 @@ const saveField = async () => {
       }
     }
     dialogVisible.value = false;
-    pagination.total = list.length;
     persistState();
     MessagePlugin.success('保存成功');
   } finally {
@@ -685,7 +666,6 @@ const handleDelete = (row: FieldItem) => {
       const index = list.findIndex((item) => item.name === row.name);
       if (index >= 0) {
         list.splice(index, 1);
-        pagination.total = list.length;
         persistState();
         MessagePlugin.success('已删除');
       }
@@ -716,18 +696,6 @@ const removeTableByValue = (value: string) => {
 };
 
 watch(
-  currentFields,
-  (list) => {
-    pagination.total = list.length;
-    const maxPage = Math.max(1, Math.ceil(list.length / pagination.pageSize));
-    if (pagination.current > maxPage) {
-      pagination.current = 1;
-    }
-  },
-  { immediate: true, deep: true },
-);
-
-watch(
   tableTree,
   () => {
     persistState();
@@ -749,12 +717,30 @@ ensureDefaultSelection();
 
 <style lang="less" scoped>
 .field-management {
+  .field-layout {
+    display: flex;
+    gap: 16px;
+    align-items: stretch;
+  }
+
+  .field-layout__left {
+    flex: 0 0 320px;
+    min-width: 280px;
+  }
+
+  .field-layout__right {
+    flex: 1;
+    min-width: 0;
+  }
+
   .field-panel {
     border: 1px solid var(--td-component-border);
     border-radius: var(--td-radius-default);
     padding: 16px;
     background-color: var(--td-bg-color-container);
     min-height: 520px;
+    display: flex;
+    flex-direction: column;
   }
 
   .panel-header {
@@ -783,7 +769,8 @@ ensureDefaultSelection();
   }
 
   .field-tree {
-    max-height: 520px;
+    flex: 1;
+    min-height: 0;
     overflow: auto;
     padding-right: 8px;
   }
