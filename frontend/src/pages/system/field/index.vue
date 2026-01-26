@@ -202,6 +202,84 @@ const cloneTree = (nodes: TableNode[]) =>
     children: node.children ? cloneTree(node.children) : undefined,
   }));
 
+const mergeTreeChildren = (base: TableNode[], stored: TableNode[] = []) => {
+  const storedMap = new Map(stored.filter(Boolean).map((node) => [node.value, node] as const));
+  const merged: TableNode[] = [];
+  base.forEach((child) => {
+    const hit = storedMap.get(child.value);
+    storedMap.delete(child.value);
+    merged.push({
+      ...child,
+      ...(hit || {}),
+      nodeType: 'table',
+    });
+  });
+  storedMap.forEach((node) => {
+    merged.push({
+      ...node,
+      nodeType: 'table',
+    });
+  });
+  return merged;
+};
+
+const mergeTableTrees = (base: TableNode[], stored?: TableNode[]) => {
+  if (!Array.isArray(stored) || stored.length === 0) {
+    return cloneTree(base);
+  }
+  const storedMap = new Map(stored.filter(Boolean).map((node) => [node.value, node] as const));
+  const merged: TableNode[] = [];
+  base.forEach((db) => {
+    const hit = storedMap.get(db.value);
+    storedMap.delete(db.value);
+    const children = mergeTreeChildren(db.children || [], hit?.children || []);
+    merged.push({
+      ...db,
+      ...(hit || {}),
+      nodeType: 'db',
+      children,
+    });
+  });
+  storedMap.forEach((node) => {
+    merged.push({
+      ...node,
+      nodeType: 'db',
+      children: node.children ? cloneTree(node.children) : [],
+    });
+  });
+  return merged;
+};
+
+const mergeFieldList = (base: FieldItem[], stored: FieldItem[] = []) => {
+  const storedMap = new Map(stored.filter(Boolean).map((item) => [item.name, item] as const));
+  const merged: FieldItem[] = [];
+  base.forEach((item) => {
+    const hit = storedMap.get(item.name);
+    storedMap.delete(item.name);
+    merged.push({
+      ...item,
+      ...(hit || {}),
+    });
+  });
+  storedMap.forEach((item) => {
+    merged.push({ ...item });
+  });
+  return merged;
+};
+
+const mergeFieldMap = (base: Record<string, FieldItem[]>, stored?: Record<string, FieldItem[]>) => {
+  const merged: Record<string, FieldItem[]> = {};
+  Object.entries(base).forEach(([key, list]) => {
+    merged[key] = mergeFieldList(list, stored?.[key] || []);
+  });
+  Object.entries(stored || {}).forEach(([key, list]) => {
+    if (!merged[key]) {
+      merged[key] = cloneFields(list || []);
+    }
+  });
+  return merged;
+};
+
 const tableTree = ref<TableNode[]>(cloneTree(defaultTableTree));
 
 const defaultFieldMap: Record<string, FieldItem[]> = {
@@ -368,15 +446,17 @@ const loadPersistedState = () => {
   try {
     const rawTree = window.localStorage.getItem(STORAGE_KEYS.tree);
     const rawFields = window.localStorage.getItem(STORAGE_KEYS.fields);
-    const parsedTree = rawTree ? (JSON.parse(rawTree) as TableNode[]) : cloneTree(defaultTableTree);
-    const parsedFields = rawFields ? (JSON.parse(rawFields) as Record<string, FieldItem[]>) : defaultFieldMap;
-    tableTree.value = Array.isArray(parsedTree) ? parsedTree : cloneTree(defaultTableTree);
+    const parsedTree = rawTree ? (JSON.parse(rawTree) as TableNode[]) : undefined;
+    const parsedFields = rawFields ? (JSON.parse(rawFields) as Record<string, FieldItem[]>) : undefined;
+    tableTree.value = mergeTableTrees(defaultTableTree, parsedTree);
     Object.keys(fieldMap).forEach((key) => {
       delete fieldMap[key];
     });
-    Object.entries(parsedFields || {}).forEach(([key, fields]) => {
+    const mergedFields = mergeFieldMap(defaultFieldMap, parsedFields);
+    Object.entries(mergedFields).forEach(([key, fields]) => {
       fieldMap[key] = cloneFields(fields);
     });
+    persistState();
   } catch {
     tableTree.value = cloneTree(defaultTableTree);
     Object.keys(fieldMap).forEach((key) => {
@@ -385,6 +465,7 @@ const loadPersistedState = () => {
     Object.entries(defaultFieldMap).forEach(([key, fields]) => {
       fieldMap[key] = cloneFields(fields);
     });
+    persistState();
   }
 };
 
