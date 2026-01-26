@@ -251,7 +251,6 @@ const pagination = computed(() => {
     current: query.page + 1,
     pageSize: query.size,
     total: total.value,
-    showJumper: true,
   };
 });
 

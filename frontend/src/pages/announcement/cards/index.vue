@@ -53,10 +53,10 @@
                 <p>暂无数据</p>
               </div>
               <t-pagination
-                v-if="total > query.size"
-                :page-size="query.size"
-                :total="total"
-                :current="query.page + 1"
+                v-if="pagination.total > pagination.pageSize"
+                :page-size="pagination.pageSize"
+                :total="pagination.total"
+                :current="pagination.current"
                 style="margin-top: 16px"
                 @change="handlePageChange"
               />
@@ -109,7 +109,6 @@ import { t } from '@/locales';
 import MessageTable from '../components/MessageTable.vue';
 
 const list = ref<AnnouncementItem[]>([]);
-const total = ref(0);
 const loading = ref(false);
 const detailVisible = ref(false);
 const current = ref<AnnouncementItem>();
@@ -127,8 +126,12 @@ const query = reactive({
   keyword: '',
   priority: '',
   status: 'published',
-  page: 0,
-  size: 8,
+});
+
+const pagination = reactive({
+  current: 1,
+  pageSize: 8,
+  total: 0,
 });
 
 const priorityOptions = [
@@ -190,14 +193,14 @@ const load = async () => {
   loading.value = true;
   try {
     const res = await fetchAnnouncements({
-      page: query.page,
-      size: query.size,
+      page: pagination.current - 1,
+      size: pagination.pageSize,
       keyword: query.keyword,
       status: query.status,
       priority: query.priority,
     });
     list.value = res.list || [];
-    total.value = res.total || 0;
+    pagination.total = res.total || 0;
   } finally {
     loading.value = false;
   }
@@ -207,12 +210,13 @@ const reset = () => {
   query.keyword = '';
   query.priority = '';
   query.status = 'published';
-  query.page = 0;
+  pagination.current = 1;
   load();
 };
 
-const handlePageChange = ({ current }: { current: number }) => {
-  query.page = current - 1;
+const handlePageChange = ({ current, pageSize }: { current: number; pageSize: number }) => {
+  pagination.current = current;
+  pagination.pageSize = pageSize;
   load();
 };
 
