@@ -60,3 +60,8 @@ mvn -DskipTests package
 - `backend/` 后端服务（Spring Boot），接口、业务逻辑、数据访问与配置
 - `database/` 初始化 SQL、表结构与基础数据脚本
 - `scripts/` 项目辅助脚本（构建/部署/运维相关）
+
+## 更新与业务隔离
+
+为避免系统更新覆盖业务代码，建议将业务代码放在独立目录中，并通过配置或接口联动。  
+详细说明请参考：`docs/UPDATE_GUIDE.md`。

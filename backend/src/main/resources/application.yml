@@ -45,6 +45,9 @@ mybatis:
 
 # 自定义配置
 tdesign:
+  system:
+    version: ${TDESIGN_SYSTEM_VERSION:1.0.0}
+    update-check-url: ${TDESIGN_UPDATE_CHECK_URL:}
   file:
     token-secret: ${FILE_TOKEN_SECRET:tdesign-file-token-secret} # 文件下载/预览的签名密钥
   security:
