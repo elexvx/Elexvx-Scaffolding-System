@@ -65,6 +65,8 @@
             <t-descriptions-item label="手机">{{ profile.mobile || '-' }}</t-descriptions-item>
             <t-descriptions-item label="座机">{{ profile.phone || '-' }}</t-descriptions-item>
             <t-descriptions-item label="邮箱">{{ profile.email || '-' }}</t-descriptions-item>
+            <t-descriptions-item label="角色">{{ formatList(profile.roles) }}</t-descriptions-item>
+            <t-descriptions-item label="所属部门" :span="2">{{ formatList(profile.orgUnitNames) }}</t-descriptions-item>
             <t-descriptions-item label="座位">{{ profile.seat || '-' }}</t-descriptions-item>
             <t-descriptions-item label="主体">{{ profile.entity || '-' }}</t-descriptions-item>
             <t-descriptions-item label="上级">{{ profile.leader || '-' }}</t-descriptions-item>
@@ -270,6 +272,11 @@ const handleAvatarFail = (context: any) => {
 // 用户资料
 const profile = ref<UserProfile>({} as UserProfile);
 const profileDescColumn = 2;
+
+const formatList = (items?: string[]) => {
+  if (!items || items.length === 0) return '-';
+  return items.join(' / ');
+};
 
 // 资料表单
 const profileFormRef = ref<FormInstanceFunctions>();

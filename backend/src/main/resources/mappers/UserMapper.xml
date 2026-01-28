@@ -27,7 +27,10 @@
       address,
       introduction,
       avatar,
-      tags
+      tags,
+      status,
+      created_at,
+      updated_at
     FROM users
   </sql>
 
@@ -61,6 +64,14 @@
     ORDER BY id ASC
   </select>
 
+  <select id="selectByIds" resultType="com.tencent.tdesign.entity.UserEntity">
+    <include refid="BaseSelect" />
+    WHERE id IN
+    <foreach collection="ids" item="id" open="(" close=")" separator=",">
+      #{id}
+    </foreach>
+  </select>
+
   <select id="selectAllIds" resultType="long">
     SELECT id FROM users ORDER BY id ASC
   </select>
@@ -71,6 +82,24 @@
       <if test="keyword != null and keyword != ''">
         AND (account LIKE CONCAT('%', #{keyword}, '%')
           OR name LIKE CONCAT('%', #{keyword}, '%'))
+      </if>
+      <if test="mobile != null and mobile != ''">
+        AND (mobile LIKE CONCAT('%', #{mobile}, '%')
+          OR phone LIKE CONCAT('%', #{mobile}, '%'))
+      </if>
+      <if test="status != null">
+        AND status = #{status}
+      </if>
+      <if test="orgUnitId != null">
+        AND id IN (
+          SELECT user_id FROM user_org_units WHERE org_unit_id = #{orgUnitId}
+        )
+      </if>
+      <if test="startTime != null">
+        AND created_at &gt;= #{startTime}
+      </if>
+      <if test="endTime != null">
+        AND created_at &lt;= #{endTime}
       </if>
     </where>
     ORDER BY id ASC
@@ -84,6 +113,24 @@
       <if test="keyword != null and keyword != ''">
         AND (account LIKE CONCAT('%', #{keyword}, '%')
           OR name LIKE CONCAT('%', #{keyword}, '%'))
+      </if>
+      <if test="mobile != null and mobile != ''">
+        AND (mobile LIKE CONCAT('%', #{mobile}, '%')
+          OR phone LIKE CONCAT('%', #{mobile}, '%'))
+      </if>
+      <if test="status != null">
+        AND status = #{status}
+      </if>
+      <if test="orgUnitId != null">
+        AND id IN (
+          SELECT user_id FROM user_org_units WHERE org_unit_id = #{orgUnitId}
+        )
+      </if>
+      <if test="startTime != null">
+        AND created_at &gt;= #{startTime}
+      </if>
+      <if test="endTime != null">
+        AND created_at &lt;= #{endTime}
       </if>
     </where>
   </select>
@@ -130,7 +177,8 @@
       address,
       introduction,
       avatar,
-      tags
+      tags,
+      status
     )
     VALUES (
       #{account},
@@ -155,7 +203,8 @@
       #{address},
       #{introduction},
       #{avatar},
-      #{tags}
+      #{tags},
+      #{status}
     )
   </insert>
 
@@ -184,7 +233,8 @@
       address = #{address},
       introduction = #{introduction},
       avatar = #{avatar},
-      tags = #{tags}
+      tags = #{tags},
+      status = #{status}
     WHERE id = #{id}
   </update>
 

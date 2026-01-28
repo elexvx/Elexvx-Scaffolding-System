@@ -906,6 +906,26 @@ public class MenuItemService {
       );
       list.add(
         new SeedNode(
+          "users",
+          null,
+          "PAGE",
+          "org",
+          "SystemOrg",
+          "/system/org/index",
+          null,
+          "机构管理",
+          "Organization",
+          "tree-round-dot-vertical",
+          false,
+          null,
+          false,
+          true,
+          2,
+          "create,update,delete,query"
+        )
+      );
+      list.add(
+        new SeedNode(
           "system",
           null,
           "PAGE",
@@ -921,26 +941,6 @@ public class MenuItemService {
           false,
           true,
           0,
-          "create,update,delete,query"
-        )
-      );
-      list.add(
-        new SeedNode(
-          "system",
-          null,
-          "PAGE",
-          "field",
-          "SystemField",
-          "/system/field/index",
-          null,
-          "字段管理",
-          "Field Manager",
-          "table",
-          false,
-          null,
-          false,
-          true,
-          1,
           "create,update,delete,query"
         )
       );

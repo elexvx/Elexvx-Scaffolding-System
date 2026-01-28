@@ -26,6 +26,8 @@ public class UserCreateRequest {
   private String position;
   private LocalDate joinDay;
   private String team;
+  private Integer status;
+  private List<Long> orgUnitIds;
 
   public String getAccount() {
     return account;
@@ -137,5 +139,21 @@ public class UserCreateRequest {
 
   public void setTeam(String team) {
     this.team = team;
+  }
+
+  public Integer getStatus() {
+    return status;
+  }
+
+  public void setStatus(Integer status) {
+    this.status = status;
+  }
+
+  public List<Long> getOrgUnitIds() {
+    return orgUnitIds;
+  }
+
+  public void setOrgUnitIds(List<Long> orgUnitIds) {
+    this.orgUnitIds = orgUnitIds;
   }
 }

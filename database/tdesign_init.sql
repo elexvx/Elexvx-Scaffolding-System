@@ -818,6 +818,9 @@ CREATE TABLE `users`  (
   `tags` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
   `id_card` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
   `guid` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
+  `status` tinyint NOT NULL DEFAULT 1,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE INDEX `account`(`account` ASC) USING BTREE
 ) ENGINE = InnoDB AUTO_INCREMENT = 149 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
@@ -825,8 +828,47 @@ CREATE TABLE `users`  (
 -- ----------------------------
 -- Records of users
 -- ----------------------------
-INSERT INTO `users` VALUES (1, 'admin', '张三', '$2a$10$BbVSQCIChdR.4gfwiG1OduJiKE/KpUTbhBXd.7Sr.uwi8eggDpYeu', '+86 13800000000', '0000', 'admin@qq.com', 'T32F 001', '腾讯集团', 'CEO', '系统管理员', '2018-01-01', '腾讯/腾讯公司/管理层/系统管理组', 'male', '张三的昵称', '', '', '', '', '张三的简介', '/api/uploads/business/b27eeb829cd64ccaab15123e70678c24.jpg', '', '', 'e59c3cd1-3b52-47c7-bf88-fad5b2281827');
-INSERT INTO `users` VALUES (3, 'bob', 'Bob', '$2a$10$BbVSQCIChdR.4gfwiG1OduJiKE/KpUTbhBXd.7Sr.uwi8eggDpYeu', '+86 13923456789', '8889', 'bob@tencent.com', 'T32F 012', '腾讯集团', 'Sarah Li', '后端开发工程师', '2020-07-01', '腾讯/腾讯公司/CSIG事业群/云计算部/后端架构组', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '700e0805-c571-4e6a-873b-00899a32ede2');
+INSERT INTO `users` VALUES (1, 'admin', '张三', '$2a$10$BbVSQCIChdR.4gfwiG1OduJiKE/KpUTbhBXd.7Sr.uwi8eggDpYeu', '+86 13800000000', '0000', 'admin@qq.com', 'T32F 001', '腾讯集团', 'CEO', '系统管理员', '2018-01-01', '腾讯/腾讯公司/管理层/系统管理组', 'male', '张三的昵称', '', '', '', '', '张三的简介', '/api/uploads/business/b27eeb829cd64ccaab15123e70678c24.jpg', '', '', 'e59c3cd1-3b52-47c7-bf88-fad5b2281827', 1, NOW(), NOW());
+INSERT INTO `users` VALUES (3, 'bob', 'Bob', '$2a$10$BbVSQCIChdR.4gfwiG1OduJiKE/KpUTbhBXd.7Sr.uwi8eggDpYeu', '+86 13923456789', '8889', 'bob@tencent.com', 'T32F 012', '腾讯集团', 'Sarah Li', '后端开发工程师', '2020-07-01', '腾讯/腾讯公司/CSIG事业群/云计算部/后端架构组', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '700e0805-c571-4e6a-873b-00899a32ede2', 1, NOW(), NOW());
+
+-- ----------------------------
+-- Table structure for org_units
+-- ----------------------------
+DROP TABLE IF EXISTS `org_units`;
+CREATE TABLE `org_units`  (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `parent_id` bigint NULL DEFAULT NULL,
+  `name` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  `short_name` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
+  `type` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  `sort_order` int NOT NULL DEFAULT 0,
+  `status` tinyint NOT NULL DEFAULT 1,
+  `phone` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
+  `email` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Table structure for org_unit_leaders
+-- ----------------------------
+DROP TABLE IF EXISTS `org_unit_leaders`;
+CREATE TABLE `org_unit_leaders`  (
+  `org_unit_id` bigint NOT NULL,
+  `user_id` bigint NOT NULL,
+  PRIMARY KEY (`org_unit_id`, `user_id`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Table structure for user_org_units
+-- ----------------------------
+DROP TABLE IF EXISTS `user_org_units`;
+CREATE TABLE `user_org_units`  (
+  `user_id` bigint NOT NULL,
+  `org_unit_id` bigint NOT NULL,
+  PRIMARY KEY (`user_id`, `org_unit_id`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Table structure for verification_email_settings

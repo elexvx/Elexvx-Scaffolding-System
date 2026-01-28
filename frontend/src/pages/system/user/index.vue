@@ -1,50 +1,90 @@
 <template>
-  <t-card title="用户管理" :bordered="false">
-    <t-space direction="vertical" style="width: 100%">
-      <t-space class="user-table-toolbar">
+  <div class="user-management">
+    <div class="user-management__left">
+      <t-card title="组织机构" :bordered="false" class="org-panel">
         <t-input
-          v-model="keyword"
+          v-model="orgKeyword"
           type="search"
           clearable
-          placeholder="按账号/姓名搜索"
-          style="width: 260px"
-          @enter="reload"
+          placeholder="请输入部门名称"
+          @change="filterOrgTree"
         />
-        <t-button v-if="canCreate" theme="primary" @click="openCreate">新增用户</t-button>
-        <t-button variant="outline" @click="reload">刷新</t-button>
-      </t-space>
+        <t-tree
+          class="org-tree"
+          :data="filteredOrgTree"
+          :keys="orgTreeKeys"
+          hover
+          activable
+          :expanded="expandedOrgIds"
+          @click="handleOrgSelect"
+        />
+      </t-card>
+    </div>
 
-      <t-table
-        row-key="id"
-        :data="rows"
-        :columns="columns"
-        :pagination="pagination"
-        :loading="loading"
-        @page-change="onPageChange"
-      >
-        <template #roles="{ row }">
-          <t-space>
-            <t-tag v-for="r in row.roles || []" :key="r" theme="primary" variant="light">{{ r }}</t-tag>
-          </t-space>
-        </template>
-        <template #op="{ row }">
-          <t-space class="user-table-actions">
-            <t-link v-if="canUpdate" :disabled="isEditDisabled(row)" theme="primary" @click="openEdit(row)"
-              >编辑</t-link
-            >
-            <t-link v-if="canReset" :disabled="isResetDisabled(row)" theme="primary" @click="resetPwd(row)"
-              >重置密码</t-link
-            >
-            <t-link v-if="canDelete" :disabled="isDeleteDisabled(row)" theme="danger" @click="removeRow(row)"
-              >删除</t-link
-            >
-            <span v-if="!canUpdate && !canReset && !canDelete">--</span>
-          </t-space>
-        </template>
-      </t-table>
-    </t-space>
+    <div class="user-management__right">
+      <t-card title="用户管理" :bordered="false" class="user-panel">
+        <div class="user-filter">
+          <t-input v-model="filters.keyword" clearable placeholder="用户名称" />
+          <t-input v-model="filters.mobile" clearable placeholder="手机号" />
+          <t-select v-model="filters.status" :options="statusOptions" clearable placeholder="用户状态" />
+          <t-date-range-picker
+            v-model="filters.createdRange"
+            allow-input
+            clearable
+            format="YYYY-MM-DD"
+            value-type="YYYY-MM-DD"
+            placeholder="开始日期 - 结束日期"
+          />
+          <t-button theme="primary" @click="reload">搜索</t-button>
+          <t-button variant="outline" @click="resetFilters">重置</t-button>
+        </div>
 
-    <confirm-drawer v-model:visible="drawerVisible" :header="drawerTitle" size="720px">
+        <div class="user-actions">
+          <t-button v-if="canCreate" theme="primary" @click="openCreate">新增</t-button>
+        </div>
+
+        <t-table
+          row-key="id"
+          :data="rows"
+          :columns="columns"
+          :pagination="pagination"
+          :loading="loading"
+          @page-change="onPageChange"
+        >
+          <template #orgUnitNames="{ row }">
+            <span>{{ formatOrgUnits(row.orgUnitNames) }}</span>
+          </template>
+          <template #status="{ row }">
+            <t-switch
+              :value="row.status === 1"
+              :disabled="!canUpdate"
+              @change="(val) => toggleStatus(row, val)"
+            />
+          </template>
+          <template #roles="{ row }">
+            <t-space>
+              <t-tag v-for="r in row.roles || []" :key="r" theme="primary" variant="light">{{ r }}</t-tag>
+            </t-space>
+          </template>
+          <template #op="{ row }">
+            <t-space class="user-table-actions">
+              <t-link v-if="canUpdate" :disabled="isEditDisabled(row)" theme="primary" @click="openEdit(row)"
+                >编辑</t-link
+              >
+              <t-link v-if="canReset" :disabled="isResetDisabled(row)" theme="primary" @click="resetPwd(row)"
+                >重置密码</t-link
+              >
+              <t-link v-if="canDelete" :disabled="isDeleteDisabled(row)" theme="danger" @click="removeRow(row)"
+                >删除</t-link
+              >
+              <span v-if="!canUpdate && !canReset && !canDelete">--</span>
+            </t-space>
+          </template>
+        </t-table>
+      </t-card>
+    </div>
+
+    <confirm-drawer v-model:visible="drawerVisible" :header="drawerTitle" size="760px">
       <t-form
         ref="formRef"
         :data="form"
@@ -92,7 +132,28 @@
               />
             </t-form-item>
           </t-col>
-
+          <t-col :xs="24" :sm="12">
+            <t-form-item label="所属部门" name="orgUnitIds">
+              <t-tree-select
+                v-model="form.orgUnitIds"
+                :data="orgTree"
+                multiple
+                clearable
+                filterable
+                placeholder="选择部门"
+                :keys="orgTreeKeys"
+                style="max-width: 500px; width: 100%"
+              />
+            </t-form-item>
+          </t-col>
+          <t-col :xs="24" :sm="12">
+            <t-form-item label="状态" name="status">
+              <t-radio-group v-model="form.status">
+                <t-radio :value="1">正常</t-radio>
+                <t-radio :value="0">停用</t-radio>
+              </t-radio-group>
+            </t-form-item>
+          </t-col>
           <t-col :xs="24" :sm="12">
             <t-form-item label="手机" name="mobile">
               <t-input v-model="form.mobile" placeholder="+86 138xxxx" style="max-width: 500px; width: 100%" />
@@ -134,7 +195,7 @@
         </t-space>
       </template>
     </confirm-drawer>
-  </t-card>
+  </div>
 </template>
 <script setup lang="ts">
 import type { FormInstanceFunctions, FormRule, PageInfo, PrimaryTableCol, SelectOption } from 'tdesign-vue-next';
@@ -155,8 +216,15 @@ interface RoleRow {
   permissions?: string[];
 }
 
+interface OrgUnitNode {
+  id: number;
+  name: string;
+  children?: OrgUnitNode[];
+}
+
 interface UserRow {
   id: number;
+  guid: string;
   account: string;
   name: string;
   mobile?: string;
@@ -165,6 +233,10 @@ interface UserRow {
   joinDay?: string;
   team?: string;
   roles?: string[];
+  orgUnitIds?: number[];
+  orgUnitNames?: string[];
+  status?: number;
+  createdAt?: string;
 }
 
 interface PageResult<T> {
@@ -172,13 +244,30 @@ interface PageResult<T> {
   total: number;
 }
 
-const keyword = ref('');
 const loading = ref(false);
 const saving = ref(false);
 const userStore = useUserStore();
 
 const rows = ref<UserRow[]>([]);
 const roles = ref<RoleRow[]>([]);
+const orgTree = ref<OrgUnitNode[]>([]);
+const filteredOrgTree = ref<OrgUnitNode[]>([]);
+const orgKeyword = ref('');
+const selectedOrgUnitId = ref<number | null>(null);
+const expandedOrgIds = ref<number[]>([]);
+
+const filters = reactive({
+  keyword: '',
+  mobile: '',
+  status: null as null | number,
+  createdRange: [] as string[],
+});
+
+const statusOptions = [
+  { label: '正常', value: 1 },
+  { label: '停用', value: 0 },
+];
+
 const passwordPolicy = reactive({
   minLength: 6,
   requireUppercase: false,
@@ -193,22 +282,18 @@ const pagination = reactive({
   total: 0,
 });
 
+const orgTreeKeys = { value: 'id', label: 'name', children: 'children' };
+
 const roleOptions = computed<SelectOption[]>(() => (roles.value || []).map((r) => ({ label: r.name, value: r.name })));
 
 const columns: PrimaryTableCol[] = [
-  {
-    colKey: 'serial-number',
-    title: '序号',
-    width: 80,
-    fixed: 'left',
-    cell: (_h, { rowIndex }) => String((pagination.current - 1) * pagination.pageSize + rowIndex + 1),
-  },
-  { colKey: 'account', title: '账号', width: 160, ellipsis: true },
-  { colKey: 'name', title: '姓名', width: 160, ellipsis: true },
-  { colKey: 'mobile', title: '手机', width: 160, ellipsis: true },
-  { colKey: 'email', title: '邮箱', width: 220, ellipsis: true },
-  { colKey: 'idCard', title: '身份证号', width: 200, ellipsis: true },
-  { colKey: 'roles', title: '角色', width: 220 },
+  { colKey: 'name', title: '用户名称', width: 140 },
+  { colKey: 'orgUnitNames', title: '所属部门', width: 180, ellipsis: true },
+  { colKey: 'account', title: '系统账号', width: 160, ellipsis: true },
+  { colKey: 'guid', title: '系统编号', width: 260, ellipsis: true },
+  { colKey: 'mobile', title: '手机号', width: 140, ellipsis: true },
+  { colKey: 'status', title: '状态', width: 120 },
+  { colKey: 'createdAt', title: '创建时间', width: 180 },
   { colKey: 'op', title: '操作', width: 200, fixed: 'right' },
 ];
 
@@ -233,6 +318,8 @@ const form = reactive({
   idCard: '',
   joinDay: '' as string | '',
   team: '',
+  orgUnitIds: [] as number[],
+  status: 1,
 });
 
 const minPasswordLength = computed(() =>
@@ -318,7 +405,14 @@ const rules = computed<Record<string, FormRule[]>>(() => {
     roles: [
       {
         validator: (val: string[]) => Array.isArray(val) && val.length > 0,
-        message: 'Please select at least one role',
+        message: '请选择至少一个角色',
+        type: 'error',
+      },
+    ],
+    orgUnitIds: [
+      {
+        validator: (val: number[]) => Array.isArray(val) && val.length > 0,
+        message: '请选择所属部门',
         type: 'error',
       },
     ],
@@ -335,10 +429,26 @@ const resetForm = () => {
   form.idCard = '';
   form.joinDay = '';
   form.team = '';
+  form.orgUnitIds = [];
+  form.status = 1;
 };
 
 const loadRoles = async () => {
   roles.value = await request.get<RoleRow[]>({ url: '/system/role/list' });
+};
+
+const loadOrgTree = async () => {
+  orgTree.value = await request.get<OrgUnitNode[]>({ url: '/system/org/tree' });
+  filteredOrgTree.value = [...orgTree.value];
+  expandedOrgIds.value = flattenOrgIds(orgTree.value);
+};
+
+const filterOrgTree = () => {
+  if (!orgKeyword.value) {
+    filteredOrgTree.value = [...orgTree.value];
+    return;
+  }
+  filteredOrgTree.value = filterTree(orgTree.value, orgKeyword.value.trim());
 };
 
 const loadPasswordPolicy = async () => {
@@ -358,10 +468,16 @@ const loadPasswordPolicy = async () => {
 const reload = async () => {
   loading.value = true;
   try {
+    const [startDate, endDate] = filters.createdRange || [];
     const res = await request.get<PageResult<UserRow>>({
       url: '/system/user/page',
       params: {
-        keyword: keyword.value || undefined,
+        keyword: filters.keyword || undefined,
+        mobile: filters.mobile || undefined,
+        orgUnitId: selectedOrgUnitId.value || undefined,
+        status: filters.status ?? undefined,
+        startTime: startDate ? `${startDate} 00:00:00` : undefined,
+        endTime: endDate ? `${endDate} 23:59:59` : undefined,
         page: pagination.current - 1,
         size: pagination.pageSize,
       },
@@ -376,6 +492,22 @@ const reload = async () => {
 const onPageChange = (pi: PageInfo) => {
   pagination.current = pi.current;
   pagination.pageSize = pi.pageSize;
+  reload();
+};
+
+const resetFilters = () => {
+  filters.keyword = '';
+  filters.mobile = '';
+  filters.status = null;
+  filters.createdRange = [];
+  selectedOrgUnitId.value = null;
+  reload();
+};
+
+const handleOrgSelect = (ctx: any) => {
+  const node = ctx?.node;
+  if (!node) return;
+  selectedOrgUnitId.value = node.value ?? node.id;
   reload();
 };
 
@@ -407,6 +539,8 @@ const openEdit = (row: UserRow) => {
   form.idCard = row.idCard || '';
   form.joinDay = row.joinDay || '';
   form.team = row.team || '';
+  form.orgUnitIds = [...(row.orgUnitIds || [])];
+  form.status = row.status ?? 1;
   drawerVisible.value = true;
 };
 
@@ -428,6 +562,8 @@ const submitForm = async () => {
           idCard: form.idCard || undefined,
           joinDay: form.joinDay || undefined,
           team: form.team || undefined,
+          orgUnitIds: form.orgUnitIds,
+          status: form.status,
         },
       });
       MessagePlugin.success('创建成功');
@@ -442,6 +578,8 @@ const submitForm = async () => {
           idCard: form.idCard || undefined,
           joinDay: form.joinDay || undefined,
           team: form.team || undefined,
+          orgUnitIds: form.orgUnitIds,
+          status: form.status,
         },
       });
       MessagePlugin.success('保存成功');
@@ -495,6 +633,18 @@ const removeRow = (row: UserRow) => {
   });
 };
 
+const toggleStatus = async (row: UserRow, enabled: boolean) => {
+  if (!canUpdate.value) return;
+  const targetStatus = enabled ? 1 : 0;
+  await request.put({
+    url: `/system/user/${row.id}`,
+    data: {
+      status: targetStatus,
+    },
+  });
+  row.status = targetStatus;
+};
+
 const isRootAdmin = (row: UserRow) => {
   const account = (row?.account || '').trim().toLowerCase();
   return account === 'admin';
@@ -519,16 +669,78 @@ const isDeleteDisabled = (row: UserRow) => {
   return false;
 };
 
+const formatOrgUnits = (names?: string[]) => {
+  if (!names || names.length === 0) return '-';
+  return names.join(' / ');
+};
+
+const filterTree = (nodes: OrgUnitNode[], keywordValue: string): OrgUnitNode[] => {
+  const matched: OrgUnitNode[] = [];
+  nodes.forEach((node) => {
+    const children = node.children ? filterTree(node.children, keywordValue) : [];
+    if (node.name.includes(keywordValue) || children.length > 0) {
+      matched.push({ ...node, children });
+    }
+  });
+  return matched;
+};
+
+const flattenOrgIds = (nodes: OrgUnitNode[]): number[] => {
+  const ids: number[] = [];
+  nodes.forEach((node) => {
+    ids.push(node.id);
+    if (node.children && node.children.length) {
+      ids.push(...flattenOrgIds(node.children));
+    }
+  });
+  return ids;
+};
+
 onMounted(async () => {
   await loadRoles();
+  await loadOrgTree();
   await loadPasswordPolicy();
   await reload();
 });
 </script>
 <style scoped lang="less">
-.user-table-toolbar {
-  flex-wrap: wrap;
+.user-management {
+  display: flex;
+  gap: 16px;
+  min-height: calc(100vh - 200px);
+}
+
+.user-management__left {
+  width: 240px;
+  flex-shrink: 0;
+}
+
+.user-management__right {
+  flex: 1;
+  min-width: 0;
+}
+
+.org-panel {
+  height: 100%;
+}
+
+.org-tree {
+  margin-top: 16px;
+  max-height: calc(100vh - 320px);
+  overflow: auto;
+}
+
+.user-filter {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(160px, 1fr));
   gap: 12px;
+  align-items: center;
+}
+
+.user-actions {
+  margin: 16px 0 8px;
+  display: flex;
+  justify-content: flex-start;
 }
 
 .user-table-actions {
@@ -536,17 +748,23 @@ onMounted(async () => {
   gap: 8px;
 }
 
-@media (width <= 768px) {
-  .user-table-toolbar {
-    align-items: stretch;
+@media (max-width: 1200px) {
+  .user-management {
+    flex-direction: column;
   }
 
-  .user-table-toolbar :deep(.t-input) {
+  .user-management__left {
     width: 100%;
   }
 
-  .user-table-toolbar :deep(.t-button) {
-    width: 100%;
+  .user-filter {
+    grid-template-columns: repeat(2, minmax(140px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .user-filter {
+    grid-template-columns: 1fr;
   }
 }
 </style>

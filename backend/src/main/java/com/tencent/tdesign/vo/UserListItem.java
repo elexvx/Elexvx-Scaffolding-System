@@ -3,6 +3,7 @@ package com.tencent.tdesign.vo;
 import com.tencent.tdesign.annotation.Sensitive;
 import com.tencent.tdesign.enums.DesensitizedType;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 public class UserListItem {
@@ -25,6 +26,10 @@ public class UserListItem {
   private LocalDate joinDay;
   private String team;
   private List<String> roles;
+  private List<Long> orgUnitIds;
+  private List<String> orgUnitNames;
+  private Integer status;
+  private LocalDateTime createdAt;
 
   public Long getId() {
     return id;
@@ -144,5 +149,37 @@ public class UserListItem {
 
   public void setRoles(List<String> roles) {
     this.roles = roles;
+  }
+
+  public List<Long> getOrgUnitIds() {
+    return orgUnitIds;
+  }
+
+  public void setOrgUnitIds(List<Long> orgUnitIds) {
+    this.orgUnitIds = orgUnitIds;
+  }
+
+  public List<String> getOrgUnitNames() {
+    return orgUnitNames;
+  }
+
+  public void setOrgUnitNames(List<String> orgUnitNames) {
+    this.orgUnitNames = orgUnitNames;
+  }
+
+  public Integer getStatus() {
+    return status;
+  }
+
+  public void setStatus(Integer status) {
+    this.status = status;
+  }
+
+  public LocalDateTime getCreatedAt() {
+    return createdAt;
+  }
+
+  public void setCreatedAt(LocalDateTime createdAt) {
+    this.createdAt = createdAt;
   }
 }
