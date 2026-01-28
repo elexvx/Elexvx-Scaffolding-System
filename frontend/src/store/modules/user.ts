@@ -13,6 +13,7 @@ const InitUserInfo: UserInfo = {
   assignedRoles: [],
   roleSimulated: false,
   permissions: [],
+  orgUnitNames: [],
 };
 
 export const useUserStore = defineStore('user', {

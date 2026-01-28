@@ -529,6 +529,7 @@ public class AuthService {
     resp.setGuid(user.getGuid());
     resp.setAssignedRoles(permissionFacade.getAssignedRoles(userId));
     resp.setRoleSimulated(permissionFacade.isAssumed(userId));
+    resp.setOrgUnitNames(orgUnitMapper.selectNamesByUserId(userId));
     return resp;
   }
 
