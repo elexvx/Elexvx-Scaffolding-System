@@ -1,9 +1,9 @@
 package com.tencent.tdesign.service;
 
-import cn.dev33.satoken.stp.StpUtil;
 import com.tencent.tdesign.dto.FileResourceRequest;
 import com.tencent.tdesign.entity.FileResource;
 import com.tencent.tdesign.mapper.FileResourceMapper;
+import com.tencent.tdesign.security.AuthContext;
 import com.tencent.tdesign.util.PermissionUtil;
 import com.tencent.tdesign.vo.FileResourceResponse;
 import com.tencent.tdesign.vo.PageResult;
@@ -21,15 +21,18 @@ public class FileDownloadService {
   private final FileResourceMapper mapper;
   private final ObjectStorageService storageService;
   private final OperationLogService operationLogService;
+  private final AuthContext authContext;
 
   public FileDownloadService(
     FileResourceMapper mapper,
     ObjectStorageService storageService,
-    OperationLogService operationLogService
+    OperationLogService operationLogService,
+    AuthContext authContext
   ) {
     this.mapper = mapper;
     this.storageService = storageService;
     this.operationLogService = operationLogService;
+    this.authContext = authContext;
   }
 
   @Transactional(readOnly = true)
@@ -55,9 +58,9 @@ public class FileDownloadService {
     entity.setFileUrl(normalize(req.getFileUrl()));
     entity.setCreatedAt(now);
     entity.setUpdatedAt(now);
-    long userId = StpUtil.getLoginIdAsLong();
+    long userId = authContext.requireUserId();
     entity.setCreatedById(userId);
-    entity.setCreatedByName(String.valueOf(StpUtil.getLoginId()));
+    entity.setCreatedByName(String.valueOf(userId));
     mapper.insert(entity);
     operationLogService.log("CREATE", "文件下载", "新增文件: " + entity.getContent());
     return FileResourceResponse.from(entity);

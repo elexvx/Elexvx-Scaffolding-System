@@ -1,12 +1,12 @@
 package com.tencent.tdesign.service;
 
-import cn.dev33.satoken.stp.StpUtil;
 import com.tencent.tdesign.dao.AuthQueryDao;
 import com.tencent.tdesign.dto.MenuItemCreateRequest;
 import com.tencent.tdesign.dto.MenuItemReorderRequest;
 import com.tencent.tdesign.dto.MenuItemUpdateRequest;
 import com.tencent.tdesign.entity.MenuItemEntity;
 import com.tencent.tdesign.mapper.MenuItemMapper;
+import com.tencent.tdesign.security.AuthContext;
 import com.tencent.tdesign.vo.MenuItemTreeNode;
 import com.tencent.tdesign.vo.RouteItem;
 import com.tencent.tdesign.vo.RouteMeta;
@@ -31,12 +31,20 @@ public class MenuItemService {
   private final OperationLogService operationLogService;
   private final AuthQueryDao authDao;
   private final PermissionFacade permissionFacade;
+  private final AuthContext authContext;
 
-  public MenuItemService(MenuItemMapper menuItemMapper, OperationLogService operationLogService, AuthQueryDao authDao, PermissionFacade permissionFacade) {
+  public MenuItemService(
+    MenuItemMapper menuItemMapper,
+    OperationLogService operationLogService,
+    AuthQueryDao authDao,
+    PermissionFacade permissionFacade,
+    AuthContext authContext
+  ) {
     this.menuItemMapper = menuItemMapper;
     this.operationLogService = operationLogService;
     this.authDao = authDao;
     this.permissionFacade = permissionFacade;
+    this.authContext = authContext;
   }
 
   public boolean isConfigured() {
@@ -432,7 +440,7 @@ public class MenuItemService {
   }
 
   private List<MenuItemEntity> filterAccessible(List<MenuItemEntity> items) {
-    long userId = StpUtil.getLoginIdAsLong();
+    long userId = authContext.requireUserId();
     Set<Long> accessibleMenuIds = new HashSet<>(permissionFacade.getAccessibleMenuIds(userId));
 
     Map<Long, MenuItemEntity> idMap = new HashMap<>();

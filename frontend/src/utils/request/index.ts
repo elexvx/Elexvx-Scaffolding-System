@@ -111,6 +111,7 @@ const transform: AxiosTransform = {
         hasNotifiedUnauthorized = true;
         // 清除本地token
         user.token = '';
+        user.refreshToken = '';
         user.tokenExpiresAt = null;
         user.userInfo = { name: '', avatar: '', roles: [] };
         user.userInfoLoaded = false;
@@ -130,6 +131,7 @@ const transform: AxiosTransform = {
 
         // 清除本地token
         user.token = '';
+        user.refreshToken = '';
         user.tokenExpiresAt = null;
         user.userInfo = { name: '', avatar: '', roles: [] };
         user.userInfoLoaded = false;

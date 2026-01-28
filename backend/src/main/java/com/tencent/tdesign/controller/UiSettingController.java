@@ -1,12 +1,13 @@
 package com.tencent.tdesign.controller;
 
-import cn.dev33.satoken.stp.StpUtil;
 import com.tencent.tdesign.annotation.RepeatSubmit;
 import com.tencent.tdesign.dto.EmailSendRequest;
 import com.tencent.tdesign.dto.UiSettingRequest;
 import com.tencent.tdesign.entity.SecuritySetting;
 import com.tencent.tdesign.entity.UiSetting;
 import com.tencent.tdesign.entity.VerificationSetting;
+import com.tencent.tdesign.security.AccessControlService;
+import com.tencent.tdesign.security.AuthContext;
 import com.tencent.tdesign.service.EmailSenderService;
 import com.tencent.tdesign.service.ObjectStorageService;
 import com.tencent.tdesign.service.OperationLogService;
@@ -31,6 +32,8 @@ public class UiSettingController {
   private final EmailSenderService emailSenderService;
   private final VerificationSettingService verificationSettingService;
   private final SecuritySettingService securitySettingService;
+  private final AuthContext authContext;
+  private final AccessControlService accessControlService;
 
   public UiSettingController(
     UiSettingService uiSettingService,
@@ -38,7 +41,9 @@ public class UiSettingController {
     ObjectStorageService storageService,
     EmailSenderService emailSenderService,
     VerificationSettingService verificationSettingService,
-    SecuritySettingService securitySettingService
+    SecuritySettingService securitySettingService,
+    AuthContext authContext,
+    AccessControlService accessControlService
   ) {
     this.uiSettingService = uiSettingService;
     this.operationLogService = operationLogService;
@@ -46,6 +51,8 @@ public class UiSettingController {
     this.emailSenderService = emailSenderService;
     this.verificationSettingService = verificationSettingService;
     this.securitySettingService = securitySettingService;
+    this.authContext = authContext;
+    this.accessControlService = accessControlService;
   }
 
   @GetMapping
@@ -56,15 +63,15 @@ public class UiSettingController {
     SecuritySetting securitySetting = securitySettingService.getOrCreate();
     boolean canViewVerificationSensitive = false;
     boolean canViewSecuritySensitive = false;
-    if (StpUtil.isLogin()) {
+    if (authContext.isAuthenticated()) {
       // 登录用户可查看更完整的系统配置，未登录用户仅返回基础字段（避免刷新时触发登录失效）。
-      boolean isAdmin = StpUtil.hasRole("admin");
+      boolean isAdmin = accessControlService.hasRole("admin");
       canViewVerificationSensitive = isAdmin
-        || StpUtil.hasPermission("system:SystemVerification:query")
-        || StpUtil.hasPermission("system:SystemVerification:update");
+        || accessControlService.hasPermission("system:SystemVerification:query")
+        || accessControlService.hasPermission("system:SystemVerification:update");
       canViewSecuritySensitive = isAdmin
-        || StpUtil.hasPermission("system:SystemSecurity:query")
-        || StpUtil.hasPermission("system:SystemSecurity:update");
+        || accessControlService.hasPermission("system:SystemSecurity:query")
+        || accessControlService.hasPermission("system:SystemSecurity:update");
     }
 
     UiSettingResponse response = new UiSettingResponse();
@@ -203,7 +210,7 @@ public class UiSettingController {
   @PostMapping("/email/test")
   @RepeatSubmit
   public ApiResponse<Boolean> testEmail(@RequestBody @Valid EmailSendRequest req) {
-    StpUtil.checkLogin();
+    authContext.requireUserId();
     VerificationSetting setting = verificationSettingService.getDecryptedCopy();
     if (setting == null || !Boolean.TRUE.equals(setting.getEmailEnabled())) {
       throw new IllegalArgumentException("邮箱验证已禁用");

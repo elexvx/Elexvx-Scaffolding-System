@@ -1,6 +1,5 @@
 package com.tencent.tdesign.controller;
 
-import cn.dev33.satoken.annotation.SaCheckLogin;
 import com.tencent.tdesign.annotation.RepeatSubmit;
 import com.tencent.tdesign.dto.FileResourceRequest;
 import com.tencent.tdesign.service.FileDownloadService;
@@ -20,7 +19,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/system/file/resource")
-@SaCheckLogin
 public class DownloadController {
   private final FileDownloadService fileDownloadService;
 

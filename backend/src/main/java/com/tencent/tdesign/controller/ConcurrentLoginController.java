@@ -1,9 +1,10 @@
 package com.tencent.tdesign.controller;
 
-import cn.dev33.satoken.stp.StpUtil;
 import com.tencent.tdesign.annotation.RepeatSubmit;
 import com.tencent.tdesign.dto.ConcurrentLoginDecisionRequest;
+import com.tencent.tdesign.security.AuthContext;
 import com.tencent.tdesign.service.ConcurrentLoginService;
+import com.tencent.tdesign.service.AuthTokenService;
 import com.tencent.tdesign.vo.ApiResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.MediaType;
@@ -19,23 +20,29 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 @RequestMapping("/auth")
 public class ConcurrentLoginController {
   private final ConcurrentLoginService concurrentLoginService;
+  private final AuthContext authContext;
+  private final AuthTokenService authTokenService;
 
-  public ConcurrentLoginController(ConcurrentLoginService concurrentLoginService) {
+  public ConcurrentLoginController(
+    ConcurrentLoginService concurrentLoginService,
+    AuthContext authContext,
+    AuthTokenService authTokenService
+  ) {
     this.concurrentLoginService = concurrentLoginService;
+    this.authContext = authContext;
+    this.authTokenService = authTokenService;
   }
 
   @GetMapping(value = "/concurrent/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
   public SseEmitter subscribeConcurrentLogin() {
-    StpUtil.checkLogin();
-    long userId = StpUtil.getLoginIdAsLong();
+    long userId = authContext.requireUserId();
     return concurrentLoginService.subscribeLoginNotice(userId);
   }
 
   @PostMapping("/concurrent/decision")
   @RepeatSubmit
   public ApiResponse<Boolean> decide(@RequestBody @Valid ConcurrentLoginDecisionRequest req) {
-    StpUtil.checkLogin();
-    long userId = StpUtil.getLoginIdAsLong();
+    long userId = authContext.requireUserId();
     String action = req.getAction();
     boolean approve;
     if ("approve".equalsIgnoreCase(action)) approve = true;
@@ -43,7 +50,7 @@ public class ConcurrentLoginController {
     else throw new IllegalArgumentException("action仅支持 approve 或 reject");
 
     if (approve) {
-      StpUtil.replaced(userId, null);
+      authTokenService.removeUserTokens(userId);
     }
     concurrentLoginService.decide(userId, req.getRequestId(), approve);
     return ApiResponse.success(true);

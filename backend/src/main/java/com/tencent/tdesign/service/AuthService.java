@@ -1,8 +1,5 @@
 package com.tencent.tdesign.service;
 
-import cn.dev33.satoken.SaManager;
-import cn.dev33.satoken.stp.SaLoginModel;
-import cn.dev33.satoken.stp.StpUtil;
 import com.tencent.tdesign.dao.AuthQueryDao;
 import com.tencent.tdesign.dto.LoginRequest;
 import com.tencent.tdesign.dto.SmsLoginRequest;
@@ -24,6 +21,8 @@ import com.tencent.tdesign.vo.SmsSendResponse;
 import com.tencent.tdesign.vo.UserInfoResponse;
 import com.tencent.tdesign.vo.UserProfileResponse;
 import com.tencent.tdesign.util.SensitiveMaskUtil;
+import com.tencent.tdesign.security.AuthContext;
+import com.tencent.tdesign.security.AuthSession;
 import jakarta.servlet.http.HttpServletRequest;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -56,6 +55,8 @@ public class AuthService {
   private final EmailCodeService emailCodeService;
   private final VerificationSettingService verificationSettingService;
   private final SecuritySettingService securitySettingService;
+  private final AuthTokenService authTokenService;
+  private final AuthContext authContext;
 
   public AuthService(
     UserMapper userMapper,
@@ -75,7 +76,9 @@ public class AuthService {
       EmailSenderService emailSenderService,
       EmailCodeService emailCodeService,
       VerificationSettingService verificationSettingService,
-      SecuritySettingService securitySettingService) {
+      SecuritySettingService securitySettingService,
+      AuthTokenService authTokenService,
+      AuthContext authContext) {
     this.userMapper = userMapper;
     this.orgUnitMapper = orgUnitMapper;
     this.uiSettingService = uiSettingService;
@@ -94,6 +97,8 @@ public class AuthService {
     this.emailCodeService = emailCodeService;
     this.verificationSettingService = verificationSettingService;
     this.securitySettingService = securitySettingService;
+    this.authTokenService = authTokenService;
+    this.authContext = authContext;
   }
 
   public LoginResponse login(LoginRequest req) {
@@ -197,12 +202,10 @@ public class AuthService {
   private LoginResponse completeLogin(UserEntity user, Boolean force) {
     ensureUserActive(user);
     boolean allowMultiDeviceLogin = isAllowMultiDeviceLogin();
-    SaManager.getConfig().setIsConcurrent(allowMultiDeviceLogin);
-
     DeviceSnapshot snapshot = buildDeviceSnapshot();
 
     // 检查是否已经在其他设备登录
-    if (!allowMultiDeviceLogin && StpUtil.isLogin(user.getId())) {
+    if (!allowMultiDeviceLogin && hasActiveSession(user.getId())) {
       if (!Boolean.TRUE.equals(force)) {
         String deviceInfo = buildDeviceInfo(snapshot.deviceModel, snapshot.os, snapshot.browser);
         ConcurrentLoginService.PendingLogin pending = concurrentLoginService.createPending(
@@ -216,18 +219,15 @@ public class AuthService {
         return LoginResponse.pending(pending.getRequestId(), pending.getRequestKey());
       }
       // 如果 force=true，注销之前的登录
-      StpUtil.replaced(user.getId(), null);
+      authTokenService.removeUserTokens(user.getId());
     }
 
     ensureUserGuid(user);
     long expiresInSeconds = resolveTokenTimeoutSeconds();
-    SaLoginModel loginModel = new SaLoginModel();
-    loginModel.setTimeout(expiresInSeconds);
-    StpUtil.login(user.getId(), loginModel);
-    permissionFacade.clearAssumedRoles(user.getId());
-    initSession(user, snapshot);
+    AuthSession session = buildSession(user, snapshot);
+    String token = authTokenService.createToken(user.getId(), session, expiresInSeconds);
     operationLogService.logLogin(user, snapshot.deviceModel, snapshot.os, snapshot.browser, snapshot.ipAddress);
-    return LoginResponse.success(StpUtil.getTokenValue(), expiresInSeconds);
+    return LoginResponse.success(token, expiresInSeconds);
   }
 
   private void ensureUserActive(UserEntity user) {
@@ -479,31 +479,32 @@ public class AuthService {
         .orElseThrow(() -> new IllegalArgumentException("用户不存在"));
     ensureUserGuid(user);
     long expiresInSeconds = resolveTokenTimeoutSeconds();
-    SaLoginModel loginModel = new SaLoginModel();
-    loginModel.setTimeout(expiresInSeconds);
-    StpUtil.login(user.getId(), loginModel);
-    permissionFacade.clearAssumedRoles(user.getId());
     DeviceSnapshot snapshot = new DeviceSnapshot(
         pending.getDeviceModel(),
         pending.getOs(),
         pending.getBrowser(),
         pending.getIpAddress(),
         pending.getLoginLocation());
-    initSession(user, snapshot);
+    AuthSession session = buildSession(user, snapshot);
+    String token = authTokenService.createToken(user.getId(), session, expiresInSeconds);
     operationLogService.logLogin(user, snapshot.deviceModel, snapshot.os, snapshot.browser, snapshot.ipAddress);
-    return LoginResponse.success(StpUtil.getTokenValue(), expiresInSeconds);
+    return LoginResponse.success(token, expiresInSeconds);
   }
 
-  private void initSession(UserEntity user, DeviceSnapshot snapshot) {
-    StpUtil.getSession().set("loginId", user.getId());
-    StpUtil.getSession().set("userName", user.getName());
-    StpUtil.getSession().set("account", user.getAccount());
-    StpUtil.getSession().set("userGuid", user.getGuid());
-    StpUtil.getSession().set("ipAddress", snapshot.ipAddress);
-    StpUtil.getSession().set("loginLocation", snapshot.loginLocation);
-    StpUtil.getSession().set("browser", snapshot.browser);
-    StpUtil.getSession().set("os", snapshot.os);
-    StpUtil.getSession().set("deviceModel", snapshot.deviceModel);
+  private AuthSession buildSession(UserEntity user, DeviceSnapshot snapshot) {
+    AuthSession session = new AuthSession();
+    session.setDeviceModel(snapshot.deviceModel);
+    session.setOs(snapshot.os);
+    session.setBrowser(snapshot.browser);
+    session.setIpAddress(snapshot.ipAddress);
+    session.setLoginLocation(snapshot.loginLocation);
+    session.getAttributes().put("loginId", user.getId());
+    session.getAttributes().put("userName", user.getName());
+    session.getAttributes().put("account", user.getAccount());
+    session.getAttributes().put("userGuid", user.getGuid());
+    session.getAttributes().put("loginTime", System.currentTimeMillis());
+    session.setDeviceId(buildDeviceInfo(snapshot.deviceModel, snapshot.os, snapshot.browser));
+    return session;
   }
 
   private DeviceSnapshot buildDeviceSnapshot() {
@@ -517,7 +518,7 @@ public class AuthService {
   }
 
   public UserInfoResponse currentUserInfo() {
-    long userId = StpUtil.getLoginIdAsLong();
+    long userId = authContext.requireUserId();
     UserEntity user = Optional.ofNullable(userMapper.selectById(userId))
         .orElseThrow(() -> new IllegalArgumentException("用户不存在"));
     ensureUserGuid(user);
@@ -534,7 +535,7 @@ public class AuthService {
   }
 
   public UserProfileResponse currentUserProfile() {
-    long userId = StpUtil.getLoginIdAsLong();
+    long userId = authContext.requireUserId();
     UserEntity user = Optional.ofNullable(userMapper.selectById(userId))
         .orElseThrow(() -> new IllegalArgumentException("用户不存在"));
     return enrichProfile(toProfile(user), userId);
@@ -542,7 +543,7 @@ public class AuthService {
 
   @Transactional
   public UserProfileResponse updateCurrentUserProfile(UserProfileUpdateRequest req) {
-    long userId = StpUtil.getLoginIdAsLong();
+    long userId = authContext.requireUserId();
     UserEntity u = Optional.ofNullable(userMapper.selectById(userId))
         .orElseThrow(() -> new IllegalArgumentException("用户不存在"));
     String oldAvatar = u.getAvatar();
@@ -589,9 +590,7 @@ public class AuthService {
     ensureUserGuid(u);
     saveUser(u);
 
-    if (StpUtil.isLogin()) {
-      StpUtil.getSession().set("userName", u.getName());
-    }
+    updateSessionUserName(u.getName());
     if (req.getAvatar() != null && oldAvatar != null && !oldAvatar.equals(req.getAvatar())) {
       deleteUploadFile(oldAvatar);
     }
@@ -693,7 +692,7 @@ public class AuthService {
     // 根据系统设置校验新密码规范
     passwordPolicyService.validate(req.getNewPassword());
 
-    long userId = StpUtil.getLoginIdAsLong();
+    long userId = authContext.requireUserId();
     UserEntity u = Optional.ofNullable(userMapper.selectById(userId))
         .orElseThrow(() -> new IllegalArgumentException("用户不存在"));
 
@@ -741,7 +740,7 @@ public class AuthService {
 
   @Transactional
   public UserInfoResponse switchRoles(RoleSwitchRequest req) {
-    long userId = StpUtil.getLoginIdAsLong();
+    long userId = authContext.requireUserId();
     if (!permissionFacade.isAdminAccount(userId)) {
       throw new IllegalArgumentException("仅 admin 账号可以切换演示权限");
     }
@@ -754,7 +753,7 @@ public class AuthService {
   }
 
   public List<String> listAllRoleNames() {
-    long userId = StpUtil.getLoginIdAsLong();
+    long userId = authContext.requireUserId();
     if (!permissionFacade.isAdminAccount(userId)) {
       throw new IllegalArgumentException("仅 admin 账号可查看角色列表");
     }
@@ -762,10 +761,13 @@ public class AuthService {
   }
 
   public boolean logout() {
-    if (StpUtil.isLogin()) {
-      long userId = StpUtil.getLoginIdAsLong();
+    if (authContext.isAuthenticated()) {
+      long userId = authContext.requireUserId();
       permissionFacade.clearAssumedRoles(userId);
-      StpUtil.logout();
+      String token = authContext.getToken();
+      if (token != null) {
+        authTokenService.removeToken(token);
+      }
     }
     return true;
   }
@@ -834,7 +836,26 @@ public class AuthService {
     if (minutes != null && minutes > 0) {
       return minutes * 60L;
     }
-    return SaManager.getConfig().getTimeout();
+    return 2592000L;
+  }
+
+  private boolean hasActiveSession(long userId) {
+    List<String> tokens = authTokenService.listUserTokens(userId);
+    for (String token : tokens) {
+      if (authTokenService.getSession(token) != null) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private void updateSessionUserName(String userName) {
+    String token = authContext.getToken();
+    if (token == null) return;
+    AuthSession session = authTokenService.getSession(token);
+    if (session == null) return;
+    session.getAttributes().put("userName", userName);
+    authTokenService.updateSession(token, session);
   }
 
 }

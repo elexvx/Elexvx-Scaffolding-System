@@ -1,10 +1,10 @@
 package com.tencent.tdesign.service;
 
-import cn.dev33.satoken.session.SaSession;
-import cn.dev33.satoken.stp.StpUtil;
 import com.tencent.tdesign.entity.OperationLogEntity;
 import com.tencent.tdesign.entity.UserEntity;
 import com.tencent.tdesign.mapper.OperationLogMapper;
+import com.tencent.tdesign.security.AuthContext;
+import com.tencent.tdesign.security.AuthSession;
 import com.tencent.tdesign.vo.OperationLogVO;
 import com.tencent.tdesign.vo.PageResult;
 import jakarta.servlet.http.HttpServletRequest;
@@ -25,16 +25,22 @@ public class OperationLogService {
   private final OperationLogMapper mapper;
   private final UiSettingService uiSettingService;
   private final HttpServletRequest request;
+  private final AuthContext authContext;
+  private final AuthTokenService authTokenService;
   private final AtomicLong lastCleanupTime = new AtomicLong(0);
 
   public OperationLogService(
     OperationLogMapper mapper,
     UiSettingService uiSettingService,
-    HttpServletRequest request
+    HttpServletRequest request,
+    AuthContext authContext,
+    AuthTokenService authTokenService
   ) {
     this.mapper = mapper;
     this.uiSettingService = uiSettingService;
     this.request = request;
+    this.authContext = authContext;
+    this.authTokenService = authTokenService;
   }
 
   public void logLogin(UserEntity user, String deviceModel, String os, String browser, String ipAddress) {
@@ -60,15 +66,24 @@ public class OperationLogService {
     e.setModule(module);
     e.setDetail(detail);
 
-    if (StpUtil.isLogin()) {
-      Long userId = StpUtil.getLoginIdAsLong();
+    if (authContext.isAuthenticated()) {
+      Long userId = authContext.requireUserId();
       e.setUserId(userId);
-      SaSession session = StpUtil.getSession();
-      e.setAccount(session.getString("account"));
-      e.setUserGuid(session.getString("userGuid"));
-      e.setDeviceModel(session.getString("deviceModel"));
-      e.setOs(session.getString("os"));
-      e.setBrowser(session.getString("browser"));
+      String token = authContext.getToken();
+      AuthSession session = token == null ? null : authTokenService.getSession(token);
+      if (session != null) {
+        Object account = session.getAttributes().get("account");
+        Object userGuid = session.getAttributes().get("userGuid");
+        if (account != null) {
+          e.setAccount(String.valueOf(account));
+        }
+        if (userGuid != null) {
+          e.setUserGuid(String.valueOf(userGuid));
+        }
+        e.setDeviceModel(session.getDeviceModel());
+        e.setOs(session.getOs());
+        e.setBrowser(session.getBrowser());
+      }
     }
 
     e.setIpAddress(resolveClientIp());

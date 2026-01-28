@@ -1,7 +1,6 @@
 package com.tencent.tdesign.service;
 
-import cn.dev33.satoken.session.SaSession;
-import cn.dev33.satoken.stp.StpUtil;
+import com.tencent.tdesign.security.AuthSession;
 import com.tencent.tdesign.vo.OnlineUserVO;
 import com.tencent.tdesign.vo.PageResult;
 import java.text.SimpleDateFormat;
@@ -19,48 +18,37 @@ public class OnlineUserService {
 
   private static final Logger logger = LoggerFactory.getLogger(OnlineUserService.class);
   private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-  private final OnlineUserTokenRegistry tokenRegistry;
+  private final AuthTokenService authTokenService;
 
-  public OnlineUserService(OnlineUserTokenRegistry tokenRegistry) {
-    this.tokenRegistry = tokenRegistry;
+  public OnlineUserService(AuthTokenService authTokenService) {
+    this.authTokenService = authTokenService;
   }
 
   public PageResult<OnlineUserVO> getOnlineUsers(String loginAddress, String userName, int page, int size) {
     Set<String> tokenSet = new LinkedHashSet<>();
-    try {
-      tokenSet.addAll(StpUtil.searchTokenValue("", 0, -1, false));
-    } catch (Exception e) {
-      logger.debug("searchTokenValue not available: {}", e.getMessage());
-    }
-    tokenSet.addAll(tokenRegistry.snapshotTokens());
+    tokenSet.addAll(authTokenService.listAllTokens());
     List<String> tokenList = new ArrayList<>(tokenSet);
     List<OnlineUserVO> allUsers = new ArrayList<>();
     logger.debug("Found {} tokens in system", tokenList.size());
 
     for (String token : tokenList) {
       try {
-        // 通过 token 获取登录用户ID
-        Object loginIdObj = StpUtil.getLoginIdByToken(token);
-        if (loginIdObj == null) {
-          logger.debug("No login ID found for token: {}", token);
-          continue;
-        }
-
-        // 通过登录用户ID获取session
-        SaSession session = StpUtil.getSessionByLoginId(loginIdObj, false);
+        AuthSession session = authTokenService.getSession(token);
         if (session == null) {
-          logger.debug("No session found for loginId: {}", loginIdObj);
+          logger.debug("No login ID found for token: {}", token);
+          authTokenService.removeToken(token);
           continue;
         }
 
         // 从 session 中获取用户信息
-        String userNameStr = (String) session.get("userName");
-        String account = (String) session.get("account");
-        String ipAddr = (String) session.get("ipAddress");
-        String location = (String) session.get("loginLocation");
-        String browser = (String) session.get("browser");
-        String os = (String) session.get("os");
-        Long loginTimeMs = session.getCreateTime();
+        String userNameStr = (String) session.getAttributes().get("userName");
+        String account = (String) session.getAttributes().get("account");
+        String ipAddr = session.getIpAddress();
+        String location = session.getLoginLocation();
+        String browser = session.getBrowser();
+        String os = session.getOs();
+        Object loginTimeObj = session.getAttributes().get("loginTime");
+        Long loginTimeMs = loginTimeObj instanceof Number ? ((Number) loginTimeObj).longValue() : null;
 
         // 过滤条件：登录地址
         if (loginAddress != null && !loginAddress.isEmpty()) {
@@ -108,8 +96,8 @@ public class OnlineUserService {
 
   public boolean forceLogout(String sessionId) {
     try {
-      StpUtil.kickoutByTokenValue(sessionId);
-      return true;
+      authTokenService.removeToken(sessionId);
+      return authTokenService.getSession(sessionId) == null;
     } catch (Exception e) {
       return false;
     }
@@ -117,17 +105,15 @@ public class OnlineUserService {
 
   public OnlineUserVO getOnlineUser(String sessionId) {
     try {
-      Object loginIdObj = StpUtil.getLoginIdByToken(sessionId);
-      if (loginIdObj == null) return null;
-      SaSession session = StpUtil.getSessionByLoginId(loginIdObj, false);
+      AuthSession session = authTokenService.getSession(sessionId);
       if (session == null) return null;
 
-      String userNameStr = (String) session.get("userName");
-      String account = (String) session.get("account");
-      String ipAddr = (String) session.get("ipAddress");
-      String location = (String) session.get("loginLocation");
-      String browser = (String) session.get("browser");
-      String os = (String) session.get("os");
+      String userNameStr = (String) session.getAttributes().get("userName");
+      String account = (String) session.getAttributes().get("account");
+      String ipAddr = session.getIpAddress();
+      String location = session.getLoginLocation();
+      String browser = session.getBrowser();
+      String os = session.getOs();
 
       OnlineUserVO user = new OnlineUserVO();
       user.setSessionId(sessionId);
@@ -137,7 +123,8 @@ public class OnlineUserService {
       user.setLoginLocation(location != null ? location : "");
       user.setBrowser(browser != null ? browser : "Unknown");
       user.setOs(os != null ? os : "Unknown");
-      Long loginTimeMs = session.getCreateTime();
+      Object loginTimeObj = session.getAttributes().get("loginTime");
+      Long loginTimeMs = loginTimeObj instanceof Number ? ((Number) loginTimeObj).longValue() : null;
       user.setLoginTime(loginTimeMs != null ? dateFormat.format(new Date(loginTimeMs)) : "");
       return user;
     } catch (Exception e) {

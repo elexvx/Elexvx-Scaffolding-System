@@ -1,9 +1,9 @@
 package com.tencent.tdesign.service;
 
-import cn.dev33.satoken.stp.StpUtil;
 import com.tencent.tdesign.dto.AnnouncementUpsertRequest;
 import com.tencent.tdesign.entity.Announcement;
 import com.tencent.tdesign.mapper.AnnouncementMapper;
+import com.tencent.tdesign.security.AuthContext;
 import com.tencent.tdesign.util.PermissionUtil;
 import com.tencent.tdesign.vo.AnnouncementResponse;
 import com.tencent.tdesign.vo.AnnouncementSummary;
@@ -37,13 +37,16 @@ public class AnnouncementService {
   );
   private final AnnouncementMapper mapper;
   private final OperationLogService operationLogService;
+  private final AuthContext authContext;
 
   public AnnouncementService(
     AnnouncementMapper mapper,
-    OperationLogService operationLogService
+    OperationLogService operationLogService,
+    AuthContext authContext
   ) {
     this.mapper = mapper;
     this.operationLogService = operationLogService;
+    this.authContext = authContext;
   }
 
   @Transactional
@@ -54,9 +57,9 @@ public class AnnouncementService {
     a.setStatus(StringUtils.hasText(req.getStatus()) ? req.getStatus() : DEFAULT_STATUS);
     a.setCreatedAt(LocalDateTime.now());
     a.setUpdatedAt(LocalDateTime.now());
-    long userId = StpUtil.getLoginIdAsLong();
+    long userId = authContext.requireUserId();
     a.setCreatedById(userId);
-    a.setCreatedByName(String.valueOf(StpUtil.getLoginId()));
+    a.setCreatedByName(String.valueOf(userId));
     if ("published".equalsIgnoreCase(a.getStatus())) {
       a.setPublishAt(LocalDateTime.now());
     }
