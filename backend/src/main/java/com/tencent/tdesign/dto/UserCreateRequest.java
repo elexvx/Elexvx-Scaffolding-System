@@ -28,6 +28,7 @@ public class UserCreateRequest {
   private String team;
   private Integer status;
   private List<Long> orgUnitIds;
+  private List<Long> departmentIds;
 
   public String getAccount() {
     return account;
@@ -155,5 +156,13 @@ public class UserCreateRequest {
 
   public void setOrgUnitIds(List<Long> orgUnitIds) {
     this.orgUnitIds = orgUnitIds;
+  }
+
+  public List<Long> getDepartmentIds() {
+    return departmentIds;
+  }
+
+  public void setDepartmentIds(List<Long> departmentIds) {
+    this.departmentIds = departmentIds;
   }
 }

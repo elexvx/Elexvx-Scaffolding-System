@@ -31,8 +31,13 @@ public class PermissionFacade {
   }
 
   public List<String> getEffectivePermissions(long userId) {
-    List<String> override = getAssumedPermissions(userId);
-    return override.isEmpty() ? authDao.findPermissionsByUserId(userId) : override;
+    List<String> assumedRoles = getAssumedRoles(userId);
+    if (!assumedRoles.isEmpty()) {
+      List<String> assumedPermissions = getAssumedPermissions(userId);
+      if (!assumedPermissions.isEmpty()) return assumedPermissions;
+      return authDao.findPermissionsByRoleNames(assumedRoles);
+    }
+    return authDao.findPermissionsByUserId(userId);
   }
 
   public List<Long> getAccessibleMenuIds(long userId) {

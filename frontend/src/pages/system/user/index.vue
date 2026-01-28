@@ -23,27 +23,31 @@
 
     <div class="user-management__right">
       <t-card title="用户管理" :bordered="false" class="user-panel">
-        <div class="user-filter">
-          <t-input v-model="filters.keyword" clearable placeholder="用户名称" />
-          <t-input v-model="filters.mobile" clearable placeholder="手机号" />
-          <t-select v-model="filters.status" :options="statusOptions" clearable placeholder="用户状态" />
-          <t-date-range-picker
-            v-model="filters.createdRange"
-            allow-input
-            clearable
-            format="YYYY-MM-DD"
-            value-type="YYYY-MM-DD"
-            placeholder="开始日期 - 结束日期"
-          />
-          <t-button theme="primary" @click="reload">搜索</t-button>
-          <t-button variant="outline" @click="resetFilters">重置</t-button>
-        </div>
-
-        <div class="user-actions">
-          <t-button v-if="canCreate" theme="primary" @click="openCreate">新增</t-button>
+        <div class="user-panel__filters">
+          <div class="user-filter">
+            <t-input v-model="filters.keyword" clearable placeholder="用户名称" />
+            <t-input v-model="filters.mobile" clearable placeholder="手机号" />
+            <t-select v-model="filters.status" :options="statusOptions" clearable placeholder="用户状态" />
+            <t-date-range-picker
+              v-model="filters.createdRange"
+              allow-input
+              clearable
+              format="YYYY-MM-DD"
+              value-type="YYYY-MM-DD"
+              placeholder="开始日期 - 结束日期"
+            />
+          </div>
+          <div class="user-filter__actions">
+            <t-space size="small">
+              <t-button theme="primary" @click="reload">搜索</t-button>
+              <t-button variant="outline" @click="resetFilters">重置</t-button>
+            </t-space>
+            <t-button v-if="canCreate" theme="primary" @click="openCreate">新增</t-button>
+          </div>
         </div>
 
         <t-table
+          class="user-table"
           row-key="id"
           :data="rows"
           :columns="columns"
@@ -53,6 +57,9 @@
         >
           <template #orgUnitNames="{ row }">
             <span>{{ formatOrgUnits(row.orgUnitNames) }}</span>
+          </template>
+          <template #departmentNames="{ row }">
+            <span>{{ formatDepartments(row.departmentNames) }}</span>
           </template>
           <template #status="{ row }">
             <t-switch
@@ -133,9 +140,23 @@
             </t-form-item>
           </t-col>
           <t-col :xs="24" :sm="12">
-            <t-form-item label="所属部门" name="orgUnitIds">
+            <t-form-item label="所属机构" name="orgUnitIds">
               <t-tree-select
                 v-model="form.orgUnitIds"
+                :data="orgTree"
+                multiple
+                clearable
+                filterable
+                placeholder="选择机构"
+                :keys="orgTreeKeys"
+                style="max-width: 500px; width: 100%"
+              />
+            </t-form-item>
+          </t-col>
+          <t-col :xs="24" :sm="12">
+            <t-form-item label="所属部门" name="departmentIds">
+              <t-tree-select
+                v-model="form.departmentIds"
                 :data="orgTree"
                 multiple
                 clearable
@@ -235,6 +256,8 @@ interface UserRow {
   roles?: string[];
   orgUnitIds?: number[];
   orgUnitNames?: string[];
+  departmentIds?: number[];
+  departmentNames?: string[];
   status?: number;
   createdAt?: string;
 }
@@ -288,7 +311,8 @@ const roleOptions = computed<SelectOption[]>(() => (roles.value || []).map((r) =
 
 const columns: PrimaryTableCol[] = [
   { colKey: 'name', title: '用户名称', width: 140 },
-  { colKey: 'orgUnitNames', title: '所属部门', width: 180, ellipsis: true },
+  { colKey: 'orgUnitNames', title: '所属机构', width: 180, ellipsis: true },
+  { colKey: 'departmentNames', title: '所属部门', width: 180, ellipsis: true },
   { colKey: 'account', title: '系统账号', width: 160, ellipsis: true },
   { colKey: 'guid', title: '系统编号', width: 260, ellipsis: true },
   { colKey: 'mobile', title: '手机号', width: 140, ellipsis: true },
@@ -319,6 +343,7 @@ const form = reactive({
   joinDay: '' as string | '',
   team: '',
   orgUnitIds: [] as number[],
+  departmentIds: [] as number[],
   status: 1,
 });
 
@@ -430,6 +455,7 @@ const resetForm = () => {
   form.joinDay = '';
   form.team = '';
   form.orgUnitIds = [];
+  form.departmentIds = [];
   form.status = 1;
 };
 
@@ -540,6 +566,7 @@ const openEdit = (row: UserRow) => {
   form.joinDay = row.joinDay || '';
   form.team = row.team || '';
   form.orgUnitIds = [...(row.orgUnitIds || [])];
+  form.departmentIds = [...(row.departmentIds || [])];
   form.status = row.status ?? 1;
   drawerVisible.value = true;
 };
@@ -563,6 +590,7 @@ const submitForm = async () => {
           joinDay: form.joinDay || undefined,
           team: form.team || undefined,
           orgUnitIds: form.orgUnitIds,
+          departmentIds: form.departmentIds,
           status: form.status,
         },
       });
@@ -579,6 +607,7 @@ const submitForm = async () => {
           joinDay: form.joinDay || undefined,
           team: form.team || undefined,
           orgUnitIds: form.orgUnitIds,
+          departmentIds: form.departmentIds,
           status: form.status,
         },
       });
@@ -674,6 +703,11 @@ const formatOrgUnits = (names?: string[]) => {
   return names.join(' / ');
 };
 
+const formatDepartments = (names?: string[]) => {
+  if (!names || names.length === 0) return '-';
+  return names.join(' / ');
+};
+
 const filterTree = (nodes: OrgUnitNode[], keywordValue: string): OrgUnitNode[] => {
   const matched: OrgUnitNode[] = [];
   nodes.forEach((node) => {
@@ -730,6 +764,14 @@ onMounted(async () => {
   overflow: auto;
 }
 
+.user-panel__filters {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 8px 0 16px;
+  border-bottom: 1px solid var(--td-component-border);
+}
+
 .user-filter {
   display: grid;
   grid-template-columns: repeat(4, minmax(160px, 1fr));
@@ -737,10 +779,14 @@ onMounted(async () => {
   align-items: center;
 }
 
-.user-actions {
-  margin: 16px 0 8px;
+.user-filter__actions {
   display: flex;
-  justify-content: flex-start;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.user-table {
+  margin-top: 16px;
 }
 
 .user-table-actions {
@@ -760,11 +806,21 @@ onMounted(async () => {
   .user-filter {
     grid-template-columns: repeat(2, minmax(140px, 1fr));
   }
+
+  .user-filter__actions {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
 }
 
 @media (max-width: 768px) {
   .user-filter {
     grid-template-columns: 1fr;
+  }
+
+  .user-filter__actions {
+    width: 100%;
   }
 }
 </style>

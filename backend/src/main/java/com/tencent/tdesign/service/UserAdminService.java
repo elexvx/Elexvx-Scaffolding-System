@@ -7,6 +7,7 @@ import com.tencent.tdesign.dto.UserUpdateRequest;
 import com.tencent.tdesign.entity.UserEntity;
 import com.tencent.tdesign.mapper.OrgUnitMapper;
 import com.tencent.tdesign.mapper.RoleMapper;
+import com.tencent.tdesign.mapper.UserDepartmentMapper;
 import com.tencent.tdesign.mapper.UserMapper;
 import com.tencent.tdesign.mapper.UserOrgUnitMapper;
 import com.tencent.tdesign.util.SensitiveMaskUtil;
@@ -29,6 +30,7 @@ public class UserAdminService {
   private final AuthQueryDao authDao;
   private final OrgUnitMapper orgUnitMapper;
   private final UserOrgUnitMapper userOrgUnitMapper;
+  private final UserDepartmentMapper userDepartmentMapper;
   private final OperationLogService operationLogService;
   private final PermissionFacade permissionFacade;
   private final PasswordPolicyService passwordPolicyService;
@@ -39,6 +41,7 @@ public class UserAdminService {
     AuthQueryDao authDao,
     OrgUnitMapper orgUnitMapper,
     UserOrgUnitMapper userOrgUnitMapper,
+    UserDepartmentMapper userDepartmentMapper,
     OperationLogService operationLogService,
     PermissionFacade permissionFacade,
     PasswordPolicyService passwordPolicyService
@@ -48,6 +51,7 @@ public class UserAdminService {
     this.authDao = authDao;
     this.orgUnitMapper = orgUnitMapper;
     this.userOrgUnitMapper = userOrgUnitMapper;
+    this.userDepartmentMapper = userDepartmentMapper;
     this.operationLogService = operationLogService;
     this.permissionFacade = permissionFacade;
     this.passwordPolicyService = passwordPolicyService;
@@ -82,6 +86,8 @@ public class UserAdminService {
       item.setRoles(authDao.findRoleNamesByUserId(Objects.requireNonNull(u.getId())));
       item.setOrgUnitNames(orgUnitMapper.selectNamesByUserId(u.getId()));
       item.setOrgUnitIds(orgUnitMapper.selectIdsByUserId(u.getId()));
+      item.setDepartmentNames(userDepartmentMapper.selectDepartmentNamesByUserId(u.getId()));
+      item.setDepartmentIds(userDepartmentMapper.selectDepartmentIdsByUserId(u.getId()));
       list.add(item);
     }
     return new PageResult<>(list, total);
@@ -98,6 +104,8 @@ public class UserAdminService {
     item.setRoles(authDao.findRoleNamesByUserId(id));
     item.setOrgUnitNames(orgUnitMapper.selectNamesByUserId(id));
     item.setOrgUnitIds(orgUnitMapper.selectIdsByUserId(id));
+    item.setDepartmentNames(userDepartmentMapper.selectDepartmentNamesByUserId(id));
+    item.setDepartmentIds(userDepartmentMapper.selectDepartmentIdsByUserId(id));
     return item;
   }
 
@@ -133,6 +141,7 @@ public class UserAdminService {
     ensureRolesExist(roles);
     authDao.replaceUserRoles(u.getId(), roles);
     replaceOrgUnits(u.getId(), req.getOrgUnitIds());
+    replaceDepartments(u.getId(), req.getDepartmentIds());
 
     operationLogService.log("CREATE", "用户管理", "创建用户: " + u.getAccount());
     return get(u.getId());
@@ -167,6 +176,9 @@ public class UserAdminService {
     }
     if (req.getOrgUnitIds() != null) {
       replaceOrgUnits(id, req.getOrgUnitIds());
+    }
+    if (req.getDepartmentIds() != null) {
+      replaceDepartments(id, req.getDepartmentIds());
     }
     operationLogService.log("UPDATE", "用户管理", "更新用户: " + u.getAccount());
     return get(id);
@@ -267,6 +279,15 @@ public class UserAdminService {
     List<Long> cleaned = orgUnitIds.stream().filter(Objects::nonNull).distinct().toList();
     if (!cleaned.isEmpty()) {
       userOrgUnitMapper.insertUserOrgUnits(userId, cleaned);
+    }
+  }
+
+  private void replaceDepartments(Long userId, List<Long> departmentIds) {
+    userDepartmentMapper.deleteByUserId(userId);
+    if (departmentIds == null || departmentIds.isEmpty()) return;
+    List<Long> cleaned = departmentIds.stream().filter(Objects::nonNull).distinct().toList();
+    if (!cleaned.isEmpty()) {
+      userDepartmentMapper.insertUserDepartments(userId, cleaned);
     }
   }
 

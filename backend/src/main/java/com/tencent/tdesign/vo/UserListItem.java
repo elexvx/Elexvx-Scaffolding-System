@@ -28,6 +28,8 @@ public class UserListItem {
   private List<String> roles;
   private List<Long> orgUnitIds;
   private List<String> orgUnitNames;
+  private List<Long> departmentIds;
+  private List<String> departmentNames;
   private Integer status;
   private LocalDateTime createdAt;
 
@@ -165,6 +167,22 @@ public class UserListItem {
 
   public void setOrgUnitNames(List<String> orgUnitNames) {
     this.orgUnitNames = orgUnitNames;
+  }
+
+  public List<Long> getDepartmentIds() {
+    return departmentIds;
+  }
+
+  public void setDepartmentIds(List<Long> departmentIds) {
+    this.departmentIds = departmentIds;
+  }
+
+  public List<String> getDepartmentNames() {
+    return departmentNames;
+  }
+
+  public void setDepartmentNames(List<String> departmentNames) {
+    this.departmentNames = departmentNames;
   }
 
   public Integer getStatus() {

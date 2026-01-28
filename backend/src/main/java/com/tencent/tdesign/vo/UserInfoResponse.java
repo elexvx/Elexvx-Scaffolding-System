@@ -8,6 +8,7 @@ public class UserInfoResponse {
   private String name;
   private String avatar;
   private List<String> roles;
+  private List<String> orgUnitNames;
   private List<String> permissions;
   private List<String> assignedRoles;
   private boolean roleSimulated;
@@ -59,6 +60,14 @@ public class UserInfoResponse {
 
   public void setRoles(List<String> roles) {
     this.roles = roles;
+  }
+
+  public List<String> getOrgUnitNames() {
+    return orgUnitNames;
+  }
+
+  public void setOrgUnitNames(List<String> orgUnitNames) {
+    this.orgUnitNames = orgUnitNames;
   }
 
   public List<String> getPermissions() {

@@ -7,7 +7,17 @@
     SELECT id, website_name, app_version, logo_expanded_url, logo_collapsed_url, favicon_url, qr_code_url
     FROM ui_brand_settings
     ORDER BY id ASC
-    LIMIT 1
+    <choose>
+      <when test="_databaseId == 'sqlserver'">
+        OFFSET 0 ROWS FETCH NEXT 1 ROWS ONLY
+      </when>
+      <when test="_databaseId == 'oracle'">
+        FETCH FIRST 1 ROWS ONLY
+      </when>
+      <otherwise>
+        LIMIT 1
+      </otherwise>
+    </choose>
   </select>
 
   <insert id="insert" parameterType="com.tencent.tdesign.entity.UiBrandSetting" useGeneratedKeys="true" keyProperty="id">

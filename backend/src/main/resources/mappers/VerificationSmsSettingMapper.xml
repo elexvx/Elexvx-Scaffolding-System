@@ -7,7 +7,17 @@
     SELECT id, sms_enabled, sms_provider, sms_aliyun_enabled, sms_aliyun_access_key_id, sms_aliyun_access_key_secret, sms_aliyun_sign_name, sms_aliyun_template_code, sms_aliyun_region_id, sms_aliyun_endpoint, sms_tencent_enabled, sms_tencent_secret_id, sms_tencent_secret_key, sms_tencent_sign_name, sms_tencent_template_id, sms_tencent_region, sms_tencent_endpoint, sms_sdk_app_id
     FROM verification_sms_settings
     ORDER BY id ASC
-    LIMIT 1
+    <choose>
+      <when test="_databaseId == 'sqlserver'">
+        OFFSET 0 ROWS FETCH NEXT 1 ROWS ONLY
+      </when>
+      <when test="_databaseId == 'oracle'">
+        FETCH FIRST 1 ROWS ONLY
+      </when>
+      <otherwise>
+        LIMIT 1
+      </otherwise>
+    </choose>
   </select>
 
   <insert id="insert" parameterType="com.tencent.tdesign.entity.VerificationSmsSetting" useGeneratedKeys="true" keyProperty="id">

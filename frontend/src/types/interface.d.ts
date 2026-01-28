@@ -24,6 +24,7 @@ export interface UserInfo {
   permissions?: string[];
   assignedRoles?: string[];
   roleSimulated?: boolean;
+  orgUnitNames?: string[];
 }
 
 export interface LoginResponse {
