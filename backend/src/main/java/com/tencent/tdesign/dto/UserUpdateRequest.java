@@ -19,6 +19,7 @@ public class UserUpdateRequest {
   private String team;
   private Integer status;
   private List<Long> orgUnitIds;
+  private List<Long> departmentIds;
 
   public String getName() {
     return name;
@@ -130,5 +131,13 @@ public class UserUpdateRequest {
 
   public void setOrgUnitIds(List<Long> orgUnitIds) {
     this.orgUnitIds = orgUnitIds;
+  }
+
+  public List<Long> getDepartmentIds() {
+    return departmentIds;
+  }
+
+  public void setDepartmentIds(List<Long> departmentIds) {
+    this.departmentIds = departmentIds;
   }
 }

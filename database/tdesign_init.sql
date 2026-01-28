@@ -871,6 +871,16 @@ CREATE TABLE `user_org_units`  (
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
+-- Table structure for user_departments
+-- ----------------------------
+DROP TABLE IF EXISTS `user_departments`;
+CREATE TABLE `user_departments`  (
+  `user_id` bigint NOT NULL,
+  `department_id` bigint NOT NULL,
+  PRIMARY KEY (`user_id`, `department_id`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
 -- Table structure for verification_email_settings
 -- ----------------------------
 DROP TABLE IF EXISTS `verification_email_settings`;
