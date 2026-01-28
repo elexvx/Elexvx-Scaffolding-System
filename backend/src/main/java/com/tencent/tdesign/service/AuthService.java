@@ -195,6 +195,7 @@ public class AuthService {
   }
 
   private LoginResponse completeLogin(UserEntity user, Boolean force) {
+    ensureUserActive(user);
     boolean allowMultiDeviceLogin = isAllowMultiDeviceLogin();
     SaManager.getConfig().setIsConcurrent(allowMultiDeviceLogin);
 
@@ -227,6 +228,12 @@ public class AuthService {
     initSession(user, snapshot);
     operationLogService.logLogin(user, snapshot.deviceModel, snapshot.os, snapshot.browser, snapshot.ipAddress);
     return LoginResponse.success(StpUtil.getTokenValue(), expiresInSeconds);
+  }
+
+  private void ensureUserActive(UserEntity user) {
+    if (user.getStatus() != null && user.getStatus() == 0) {
+      throw new IllegalArgumentException("账号已停用");
+    }
   }
 
   private boolean isAllowMultiDeviceLogin() {
