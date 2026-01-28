@@ -23,27 +23,31 @@
 
     <div class="user-management__right">
       <t-card title="用户管理" :bordered="false" class="user-panel">
-        <div class="user-filter">
-          <t-input v-model="filters.keyword" clearable placeholder="用户名称" />
-          <t-input v-model="filters.mobile" clearable placeholder="手机号" />
-          <t-select v-model="filters.status" :options="statusOptions" clearable placeholder="用户状态" />
-          <t-date-range-picker
-            v-model="filters.createdRange"
-            allow-input
-            clearable
-            format="YYYY-MM-DD"
-            value-type="YYYY-MM-DD"
-            placeholder="开始日期 - 结束日期"
-          />
-          <t-button theme="primary" @click="reload">搜索</t-button>
-          <t-button variant="outline" @click="resetFilters">重置</t-button>
-        </div>
-
-        <div class="user-actions">
-          <t-button v-if="canCreate" theme="primary" @click="openCreate">新增</t-button>
+        <div class="user-panel__filters">
+          <div class="user-filter">
+            <t-input v-model="filters.keyword" clearable placeholder="用户名称" />
+            <t-input v-model="filters.mobile" clearable placeholder="手机号" />
+            <t-select v-model="filters.status" :options="statusOptions" clearable placeholder="用户状态" />
+            <t-date-range-picker
+              v-model="filters.createdRange"
+              allow-input
+              clearable
+              format="YYYY-MM-DD"
+              value-type="YYYY-MM-DD"
+              placeholder="开始日期 - 结束日期"
+            />
+          </div>
+          <div class="user-filter__actions">
+            <t-space size="small">
+              <t-button theme="primary" @click="reload">搜索</t-button>
+              <t-button variant="outline" @click="resetFilters">重置</t-button>
+            </t-space>
+            <t-button v-if="canCreate" theme="primary" @click="openCreate">新增</t-button>
+          </div>
         </div>
 
         <t-table
+          class="user-table"
           row-key="id"
           :data="rows"
           :columns="columns"
@@ -730,6 +734,14 @@ onMounted(async () => {
   overflow: auto;
 }
 
+.user-panel__filters {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 8px 0 16px;
+  border-bottom: 1px solid var(--td-component-border);
+}
+
 .user-filter {
   display: grid;
   grid-template-columns: repeat(4, minmax(160px, 1fr));
@@ -737,10 +749,14 @@ onMounted(async () => {
   align-items: center;
 }
 
-.user-actions {
-  margin: 16px 0 8px;
+.user-filter__actions {
   display: flex;
-  justify-content: flex-start;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.user-table {
+  margin-top: 16px;
 }
 
 .user-table-actions {
@@ -760,11 +776,21 @@ onMounted(async () => {
   .user-filter {
     grid-template-columns: repeat(2, minmax(140px, 1fr));
   }
+
+  .user-filter__actions {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
 }
 
 @media (max-width: 768px) {
   .user-filter {
     grid-template-columns: 1fr;
+  }
+
+  .user-filter__actions {
+    width: 100%;
   }
 }
 </style>
