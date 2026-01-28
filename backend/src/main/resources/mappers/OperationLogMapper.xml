@@ -35,14 +35,14 @@
       </if>
       <if test="keyword != null and keyword != ''">
         AND (
-          account LIKE CONCAT('%', #{keyword}, '%')
-          OR user_guid LIKE CONCAT('%', #{keyword}, '%')
-          OR module LIKE CONCAT('%', #{keyword}, '%')
-          OR detail LIKE CONCAT('%', #{keyword}, '%')
-          OR ip_address LIKE CONCAT('%', #{keyword}, '%')
-          OR device_model LIKE CONCAT('%', #{keyword}, '%')
-          OR os LIKE CONCAT('%', #{keyword}, '%')
-          OR browser LIKE CONCAT('%', #{keyword}, '%')
+          account LIKE CONCAT(CONCAT('%', #{keyword}), '%')
+          OR user_guid LIKE CONCAT(CONCAT('%', #{keyword}), '%')
+          OR module LIKE CONCAT(CONCAT('%', #{keyword}), '%')
+          OR detail LIKE CONCAT(CONCAT('%', #{keyword}), '%')
+          OR ip_address LIKE CONCAT(CONCAT('%', #{keyword}), '%')
+          OR device_model LIKE CONCAT(CONCAT('%', #{keyword}), '%')
+          OR os LIKE CONCAT(CONCAT('%', #{keyword}), '%')
+          OR browser LIKE CONCAT(CONCAT('%', #{keyword}), '%')
         )
       </if>
     </where>
@@ -52,7 +52,14 @@
     <include refid="BaseSelect" />
     <include refid="FilterWhere" />
     ORDER BY id DESC
-    LIMIT #{limit} OFFSET #{offset}
+    <choose>
+      <when test="_databaseId == 'oracle' or _databaseId == 'sqlserver'">
+        OFFSET #{offset} ROWS FETCH NEXT #{limit} ROWS ONLY
+      </when>
+      <otherwise>
+        LIMIT #{limit} OFFSET #{offset}
+      </otherwise>
+    </choose>
   </select>
 
   <select id="selectAll" resultType="com.tencent.tdesign.entity.OperationLogEntity">

@@ -25,11 +25,18 @@
     <include refid="BaseSelect" />
     <where>
       <if test="keyword != null and keyword != ''">
-        AND LOWER(word) LIKE CONCAT('%', LOWER(#{keyword}), '%')
+        AND LOWER(word) LIKE CONCAT(CONCAT('%', LOWER(#{keyword})), '%')
       </if>
     </where>
     ORDER BY updated_at DESC, id DESC
-    LIMIT #{limit} OFFSET #{offset}
+    <choose>
+      <when test="_databaseId == 'oracle' or _databaseId == 'sqlserver'">
+        OFFSET #{offset} ROWS FETCH NEXT #{limit} ROWS ONLY
+      </when>
+      <otherwise>
+        LIMIT #{limit} OFFSET #{offset}
+      </otherwise>
+    </choose>
   </select>
 
   <select id="countByKeyword" resultType="long">
@@ -37,7 +44,7 @@
     FROM sensitive_words
     <where>
       <if test="keyword != null and keyword != ''">
-        AND LOWER(word) LIKE CONCAT('%', LOWER(#{keyword}), '%')
+        AND LOWER(word) LIKE CONCAT(CONCAT('%', LOWER(#{keyword})), '%')
       </if>
     </where>
   </select>
@@ -50,7 +57,17 @@
   <select id="selectByWord" resultType="com.tencent.tdesign.entity.SensitiveWord">
     <include refid="BaseSelect" />
     WHERE word = #{word}
-    LIMIT 1
+    <choose>
+      <when test="_databaseId == 'sqlserver'">
+        OFFSET 0 ROWS FETCH NEXT 1 ROWS ONLY
+      </when>
+      <when test="_databaseId == 'oracle'">
+        FETCH FIRST 1 ROWS ONLY
+      </when>
+      <otherwise>
+        LIMIT 1
+      </otherwise>
+    </choose>
   </select>
 
   <insert id="insert" parameterType="com.tencent.tdesign.entity.SensitiveWord" useGeneratedKeys="true" keyProperty="id">

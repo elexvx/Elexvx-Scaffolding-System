@@ -35,7 +35,14 @@
       #{s}
     </foreach>
     ORDER BY updated_at DESC
-    LIMIT #{limit} OFFSET #{offset}
+    <choose>
+      <when test="_databaseId == 'oracle' or _databaseId == 'sqlserver'">
+        OFFSET #{offset} ROWS FETCH NEXT #{limit} ROWS ONLY
+      </when>
+      <otherwise>
+        LIMIT #{limit} OFFSET #{offset}
+      </otherwise>
+    </choose>
   </select>
 
   <select id="countByStatus" resultType="long">
@@ -51,7 +58,14 @@
     <include refid="BaseSelect" />
     WHERE status = 'published'
     ORDER BY publish_at DESC
-    LIMIT #{limit}
+    <choose>
+      <when test="_databaseId == 'oracle' or _databaseId == 'sqlserver'">
+        OFFSET 0 ROWS FETCH NEXT #{limit} ROWS ONLY
+      </when>
+      <otherwise>
+        LIMIT #{limit}
+      </otherwise>
+    </choose>
   </select>
 
   <insert id="insert" parameterType="com.tencent.tdesign.entity.Announcement" useGeneratedKeys="true" keyProperty="id">

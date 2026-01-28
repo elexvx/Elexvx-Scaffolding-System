@@ -20,7 +20,17 @@
   <select id="selectByPageKey" resultType="com.tencent.tdesign.entity.SensitivePageSetting">
     <include refid="BaseSelect" />
     WHERE page_key = #{pageKey}
-    LIMIT 1
+    <choose>
+      <when test="_databaseId == 'sqlserver'">
+        OFFSET 0 ROWS FETCH NEXT 1 ROWS ONLY
+      </when>
+      <when test="_databaseId == 'oracle'">
+        FETCH FIRST 1 ROWS ONLY
+      </when>
+      <otherwise>
+        LIMIT 1
+      </otherwise>
+    </choose>
   </select>
 
   <select id="selectById" resultType="com.tencent.tdesign.entity.SensitivePageSetting">

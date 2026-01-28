@@ -7,7 +7,17 @@
     SELECT id, email_enabled, email_host, email_port, email_username, email_password, email_from, email_ssl
     FROM verification_email_settings
     ORDER BY id ASC
-    LIMIT 1
+    <choose>
+      <when test="_databaseId == 'sqlserver'">
+        OFFSET 0 ROWS FETCH NEXT 1 ROWS ONLY
+      </when>
+      <when test="_databaseId == 'oracle'">
+        FETCH FIRST 1 ROWS ONLY
+      </when>
+      <otherwise>
+        LIMIT 1
+      </otherwise>
+    </choose>
   </select>
 
   <insert id="insert" parameterType="com.tencent.tdesign.entity.VerificationEmailSetting" useGeneratedKeys="true" keyProperty="id">
