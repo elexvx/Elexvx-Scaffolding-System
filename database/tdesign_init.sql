@@ -311,10 +311,6 @@ INSERT INTO `role_permissions` VALUES (1, 'system:SystemMenu:create');
 INSERT INTO `role_permissions` VALUES (1, 'system:SystemMenu:delete');
 INSERT INTO `role_permissions` VALUES (1, 'system:SystemMenu:query');
 INSERT INTO `role_permissions` VALUES (1, 'system:SystemMenu:update');
-INSERT INTO `role_permissions` VALUES (1, 'system:SystemField:create');
-INSERT INTO `role_permissions` VALUES (1, 'system:SystemField:delete');
-INSERT INTO `role_permissions` VALUES (1, 'system:SystemField:query');
-INSERT INTO `role_permissions` VALUES (1, 'system:SystemField:update');
 INSERT INTO `role_permissions` VALUES (1, 'system:SystemMonitor:create');
 INSERT INTO `role_permissions` VALUES (1, 'system:SystemMonitor:delete');
 INSERT INTO `role_permissions` VALUES (1, 'system:SystemMonitor:query');
@@ -596,7 +592,6 @@ INSERT INTO `sys_menu_items` VALUES (1000, NULL, 'DIR', '/system', 'system', 'LA
 INSERT INTO `sys_menu_items` VALUES (1001, 1019, 'PAGE', 'user', 'SystemUser', '/system/user/index', NULL, '用户管理', 'Users', 'user', 0, 1, NULL, 0, 1, 'admin', NULL, 0, 16, '2025-12-14 03:19:00', '2026-01-18 21:21:03', 'create,update,delete,query');
 INSERT INTO `sys_menu_items` VALUES (1002, 1019, 'PAGE', 'role', 'SystemRole', '/system/role/index', NULL, '角色管理', 'Roles', 'usergroup', 0, 1, NULL, 0, 1, 'admin', NULL, 1, 12, '2025-12-14 03:19:00', '2026-01-18 21:21:03', 'create,update,delete,query');
 INSERT INTO `sys_menu_items` VALUES (1003, 1000, 'PAGE', 'menu', 'SystemMenu', '/system/menu/index', NULL, '目录/页面管理', 'Menu Manager', 'tree-round-dot-vertical', 0, 1, NULL, 0, 1, 'admin', NULL, 0, 7, '2025-12-14 03:19:00', '2026-01-18 21:21:03', 'create,update,delete,query');
-INSERT INTO `sys_menu_items` VALUES (1042, 1000, 'PAGE', 'field', 'SystemField', '/system/field/index', NULL, '字段管理', 'Field Manager', 'table', 0, 1, NULL, 0, 1, 'admin', NULL, 1, 1, '2026-02-01 10:00:00', '2026-02-01 10:00:00', 'create,update,delete,query');
 INSERT INTO `sys_menu_items` VALUES (1004, NULL, 'DIR', '/monitor', 'SystemMonitor', 'LAYOUT', NULL, '系统监控', 'Monitor', 'chart-bar', 0, 1, NULL, 0, 1, 'admin', NULL, 5, 14, '2025-12-16 01:38:31', '2026-01-18 21:21:03', 'query,create,update,delete');
 INSERT INTO `sys_menu_items` VALUES (1005, 1004, 'PAGE', 'online-user', 'SystemMonitorOnlineUser', '/system/monitor/online-user/index', NULL, '在线用户', 'Online User', 'usergroup-add', 0, 1, NULL, 0, 1, 'admin', NULL, 0, 5, '2025-12-16 01:38:31', '2026-01-18 21:22:37', 'create,update,delete,query');
 INSERT INTO `sys_menu_items` VALUES (1006, 1004, 'PAGE', 'server', 'SystemMonitorServer', '/system/monitor/server/index', NULL, '服务监控', 'Server Monitor', 'server', 0, 1, NULL, 0, 1, 'admin', NULL, 0, 4, '2025-12-16 03:21:37', '2026-01-18 21:21:03', 'create,update,delete,query');

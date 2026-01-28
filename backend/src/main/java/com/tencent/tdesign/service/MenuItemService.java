@@ -929,26 +929,6 @@ public class MenuItemService {
           "system",
           null,
           "PAGE",
-          "field",
-          "SystemField",
-          "/system/field/index",
-          null,
-          "字段管理",
-          "Field Manager",
-          "table",
-          false,
-          null,
-          false,
-          true,
-          1,
-          "create,update,delete,query"
-        )
-      );
-      list.add(
-        new SeedNode(
-          "system",
-          null,
-          "PAGE",
           "personalize",
           "SystemPersonalize",
           "/system/personalize/index",
