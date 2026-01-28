@@ -8,12 +8,19 @@ import org.springframework.lang.NonNull;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Objects;
+
 @Component
 public class DatabaseSchemaInitializer implements SmartLifecycle {
   private static final Logger log = LoggerFactory.getLogger(DatabaseSchemaInitializer.class);
 
   private final JdbcTemplate jdbc;
   private volatile boolean running = false;
+  private volatile DatabaseDialect databaseDialect;
 
   @Value("${tdesign.db.schema-init.enabled:true}")
   private boolean enabled;
@@ -92,7 +99,7 @@ public class DatabaseSchemaInitializer implements SmartLifecycle {
   private void ensureUsersTable() {
     if (!tableExists("users")) {
       log.info("创建表 users");
-      jdbc.execute(
+      String createSql =
         "CREATE TABLE IF NOT EXISTS users (" +
           "id BIGINT PRIMARY KEY AUTO_INCREMENT, " +
           "account VARCHAR(64) NOT NULL UNIQUE, " +
@@ -112,8 +119,8 @@ public class DatabaseSchemaInitializer implements SmartLifecycle {
           "status TINYINT NOT NULL DEFAULT 1, " +
           "created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, " +
           "updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP" +
-          ")"
-      );
+          ")";
+      createTableWithComments("users", createSql);
       return;
     }
 
@@ -136,7 +143,7 @@ public class DatabaseSchemaInitializer implements SmartLifecycle {
   private void ensureOrgUnitsTable() {
     if (!tableExists("org_units")) {
       log.info("创建表 org_units");
-      jdbc.execute(
+      String createSql =
         "CREATE TABLE IF NOT EXISTS org_units (" +
           "id BIGINT PRIMARY KEY AUTO_INCREMENT, " +
           "parent_id BIGINT NULL, " +
@@ -149,8 +156,8 @@ public class DatabaseSchemaInitializer implements SmartLifecycle {
           "email VARCHAR(128), " +
           "created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, " +
           "updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP" +
-          ")"
-      );
+          ")";
+      createTableWithComments("org_units", createSql);
       return;
     }
     ensureColumn("org_units", "parent_id", "BIGINT NULL");
@@ -167,72 +174,72 @@ public class DatabaseSchemaInitializer implements SmartLifecycle {
   private void ensureOrgUnitLeadersTable() {
     if (!tableExists("org_unit_leaders")) {
       log.info("创建表 org_unit_leaders");
-      jdbc.execute(
+      String createSql =
         "CREATE TABLE IF NOT EXISTS org_unit_leaders (" +
           "org_unit_id BIGINT NOT NULL, " +
           "user_id BIGINT NOT NULL, " +
           "PRIMARY KEY (org_unit_id, user_id)" +
-          ")"
-      );
+          ")";
+      createTableWithComments("org_unit_leaders", createSql);
     }
   }
 
   private void ensureUserOrgUnitsTable() {
     if (!tableExists("user_org_units")) {
       log.info("创建表 user_org_units");
-      jdbc.execute(
+      String createSql =
         "CREATE TABLE IF NOT EXISTS user_org_units (" +
           "user_id BIGINT NOT NULL, " +
           "org_unit_id BIGINT NOT NULL, " +
           "PRIMARY KEY (user_id, org_unit_id)" +
-          ")"
-      );
+          ")";
+      createTableWithComments("user_org_units", createSql);
     }
   }
 
   private void ensureRolesTables() {
     if (!tableExists("roles")) {
       log.info("创建表 roles");
-      jdbc.execute(
+      String createSql =
         "CREATE TABLE IF NOT EXISTS roles (" +
           "id BIGINT PRIMARY KEY AUTO_INCREMENT, " +
           "name VARCHAR(64) UNIQUE NOT NULL, " +
           "description VARCHAR(255)" +
-          ")"
-      );
+          ")";
+      createTableWithComments("roles", createSql);
     } else {
       ensureColumn("roles", "description", "VARCHAR(255) NULL");
     }
 
     if (!tableExists("user_roles")) {
       log.info("创建表 user_roles");
-      jdbc.execute(
+      String createSql =
         "CREATE TABLE IF NOT EXISTS user_roles (" +
           "user_id BIGINT NOT NULL, " +
           "role VARCHAR(64) NOT NULL, " +
           "PRIMARY KEY (user_id, role)" +
-          ")"
-      );
+          ")";
+      createTableWithComments("user_roles", createSql);
     } else {
       ensureColumn("user_roles", "role", "VARCHAR(64) NULL");
     }
 
     if (!tableExists("role_permissions")) {
       log.info("创建表 role_permissions");
-      jdbc.execute(
+      String createSql =
         "CREATE TABLE IF NOT EXISTS role_permissions (" +
           "role_id BIGINT NOT NULL, " +
           "permission VARCHAR(128) NOT NULL, " +
           "PRIMARY KEY (role_id, permission)" +
-          ")"
-      );
+          ")";
+      createTableWithComments("role_permissions", createSql);
     }
   }
 
   private void ensureMenuItemsTable() {
     if (!tableExists("sys_menu_items")) {
       log.info("create table sys_menu_items");
-      jdbc.execute(
+      String createSql =
         "CREATE TABLE IF NOT EXISTS sys_menu_items (" +
           "id BIGINT PRIMARY KEY AUTO_INCREMENT, " +
           "parent_id BIGINT NULL, " +
@@ -254,8 +261,8 @@ public class DatabaseSchemaInitializer implements SmartLifecycle {
           "created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, " +
           "updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, " +
           "UNIQUE KEY uk_sys_menu_items_route_name (route_name)" +
-          ")"
-      );
+          ")";
+      createTableWithComments("sys_menu_items", createSql);
       return;
     }
 
@@ -282,13 +289,13 @@ public class DatabaseSchemaInitializer implements SmartLifecycle {
   private void ensureRoleMenusTable() {
     if (!tableExists("role_menus")) {
       log.info("创建表 role_menus");
-      jdbc.execute(
+      String createSql =
         "CREATE TABLE IF NOT EXISTS role_menus (" +
           "role_id BIGINT NOT NULL, " +
           "menu_id BIGINT NOT NULL, " +
           "PRIMARY KEY (role_id, menu_id)" +
-          ")"
-      );
+          ")";
+      createTableWithComments("role_menus", createSql);
     }
   }
 
@@ -296,7 +303,7 @@ public class DatabaseSchemaInitializer implements SmartLifecycle {
   private void ensureUiBrandSettingsTable() {
     if (!tableExists("ui_brand_settings")) {
       log.info("create table ui_brand_settings");
-      jdbc.execute(
+      String createSql =
         "CREATE TABLE IF NOT EXISTS ui_brand_settings (" +
           "id BIGINT PRIMARY KEY AUTO_INCREMENT, " +
           "website_name VARCHAR(100), " +
@@ -305,8 +312,8 @@ public class DatabaseSchemaInitializer implements SmartLifecycle {
           "logo_collapsed_url VARCHAR(255), " +
           "favicon_url VARCHAR(255), " +
           "qr_code_url VARCHAR(255)" +
-          ")"
-      );
+          ")";
+      createTableWithComments("ui_brand_settings", createSql);
       return;
     }
     ensureColumn("ui_brand_settings", "website_name", "VARCHAR(100) NULL");
@@ -320,7 +327,7 @@ public class DatabaseSchemaInitializer implements SmartLifecycle {
   private void ensureUiLayoutSettingsTable() {
     if (!tableExists("ui_layout_settings")) {
       log.info("create table ui_layout_settings");
-      jdbc.execute(
+      String createSql =
         "CREATE TABLE IF NOT EXISTS ui_layout_settings (" +
           "id BIGINT PRIMARY KEY AUTO_INCREMENT, " +
           "default_home VARCHAR(255), " +
@@ -336,8 +343,8 @@ public class DatabaseSchemaInitializer implements SmartLifecycle {
           "is_header_fixed TINYINT, " +
           "is_use_tabs_router TINYINT, " +
           "show_header TINYINT" +
-          ")"
-      );
+          ")";
+      createTableWithComments("ui_layout_settings", createSql);
       return;
     }
     ensureColumn("ui_layout_settings", "default_home", "VARCHAR(255) NULL");
@@ -358,7 +365,7 @@ public class DatabaseSchemaInitializer implements SmartLifecycle {
   private void ensureUiThemeSettingsTable() {
     if (!tableExists("ui_theme_settings")) {
       log.info("create table ui_theme_settings");
-      jdbc.execute(
+      String createSql =
         "CREATE TABLE IF NOT EXISTS ui_theme_settings (" +
           "id BIGINT PRIMARY KEY AUTO_INCREMENT, " +
           "auto_theme TINYINT, " +
@@ -366,8 +373,8 @@ public class DatabaseSchemaInitializer implements SmartLifecycle {
           "dark_start_time VARCHAR(10), " +
           "mode VARCHAR(20), " +
           "brand_theme VARCHAR(20)" +
-          ")"
-      );
+          ")";
+      createTableWithComments("ui_theme_settings", createSql);
       return;
     }
     ensureColumn("ui_theme_settings", "auto_theme", "TINYINT NULL");
@@ -380,14 +387,14 @@ public class DatabaseSchemaInitializer implements SmartLifecycle {
   private void ensureUiFooterSettingsTable() {
     if (!tableExists("ui_footer_settings")) {
       log.info("create table ui_footer_settings");
-      jdbc.execute(
+      String createSql =
         "CREATE TABLE IF NOT EXISTS ui_footer_settings (" +
           "id BIGINT PRIMARY KEY AUTO_INCREMENT, " +
           "footer_company VARCHAR(100), " +
           "footer_icp VARCHAR(100), " +
           "copyright_start_year VARCHAR(10)" +
-          ")"
-      );
+          ")";
+      createTableWithComments("ui_footer_settings", createSql);
       return;
     }
     ensureColumn("ui_footer_settings", "footer_company", "VARCHAR(100) NULL");
@@ -398,13 +405,13 @@ public class DatabaseSchemaInitializer implements SmartLifecycle {
   private void ensureUiLoginSettingsTable() {
     if (!tableExists("ui_login_settings")) {
       log.info("create table ui_login_settings");
-      jdbc.execute(
+      String createSql =
         "CREATE TABLE IF NOT EXISTS ui_login_settings (" +
           "id BIGINT PRIMARY KEY AUTO_INCREMENT, " +
           "login_bg_url VARCHAR(255), " +
           "allow_multi_device_login TINYINT" +
-          ")"
-      );
+          ")";
+      createTableWithComments("ui_login_settings", createSql);
       return;
     }
     ensureColumn("ui_login_settings", "login_bg_url", "VARCHAR(255) NULL");
@@ -414,13 +421,13 @@ public class DatabaseSchemaInitializer implements SmartLifecycle {
   private void ensureUiLegalSettingsTable() {
     if (!tableExists("ui_legal_settings")) {
       log.info("create table ui_legal_settings");
-      jdbc.execute(
+      String createSql =
         "CREATE TABLE IF NOT EXISTS ui_legal_settings (" +
           "id BIGINT PRIMARY KEY AUTO_INCREMENT, " +
           "user_agreement TEXT, " +
           "privacy_agreement TEXT" +
-          ")"
-      );
+          ")";
+      createTableWithComments("ui_legal_settings", createSql);
       return;
     }
     ensureColumn("ui_legal_settings", "user_agreement", "TEXT NULL");
@@ -430,13 +437,13 @@ public class DatabaseSchemaInitializer implements SmartLifecycle {
   private void ensureUiSystemSettingsTable() {
     if (!tableExists("ui_system_settings")) {
       log.info("create table ui_system_settings");
-      jdbc.execute(
+      String createSql =
         "CREATE TABLE IF NOT EXISTS ui_system_settings (" +
           "id BIGINT PRIMARY KEY AUTO_INCREMENT, " +
           "log_retention_days INT, " +
           "ai_assistant_enabled TINYINT" +
-          ")"
-      );
+          ")";
+      createTableWithComments("ui_system_settings", createSql);
       return;
     }
     ensureColumn("ui_system_settings", "log_retention_days", "INT NULL");
@@ -446,7 +453,7 @@ public class DatabaseSchemaInitializer implements SmartLifecycle {
   private void ensureVerificationSmsSettingsTable() {
     if (!tableExists("verification_sms_settings")) {
       log.info("create table verification_sms_settings");
-      jdbc.execute(
+      String createSql =
         "CREATE TABLE IF NOT EXISTS verification_sms_settings (" +
           "id BIGINT PRIMARY KEY AUTO_INCREMENT, " +
           "sms_enabled TINYINT, " +
@@ -466,8 +473,8 @@ public class DatabaseSchemaInitializer implements SmartLifecycle {
           "sms_tencent_region VARCHAR(64), " +
           "sms_tencent_endpoint VARCHAR(255), " +
           "sms_sdk_app_id VARCHAR(64)" +
-          ")"
-      );
+          ")";
+      createTableWithComments("verification_sms_settings", createSql);
       return;
     }
     ensureColumn("verification_sms_settings", "sms_enabled", "TINYINT NULL");
@@ -492,7 +499,7 @@ public class DatabaseSchemaInitializer implements SmartLifecycle {
   private void ensureVerificationEmailSettingsTable() {
     if (!tableExists("verification_email_settings")) {
       log.info("create table verification_email_settings");
-      jdbc.execute(
+      String createSql =
         "CREATE TABLE IF NOT EXISTS verification_email_settings (" +
           "id BIGINT PRIMARY KEY AUTO_INCREMENT, " +
           "email_enabled TINYINT, " +
@@ -502,8 +509,8 @@ public class DatabaseSchemaInitializer implements SmartLifecycle {
           "email_password VARCHAR(256), " +
           "email_from VARCHAR(128), " +
           "email_ssl TINYINT" +
-          ")"
-      );
+          ")";
+      createTableWithComments("verification_email_settings", createSql);
       return;
     }
     ensureColumn("verification_email_settings", "email_enabled", "TINYINT NULL");
@@ -518,14 +525,14 @@ public class DatabaseSchemaInitializer implements SmartLifecycle {
   private void ensureSecurityTokenSettingsTable() {
     if (!tableExists("security_token_settings")) {
       log.info("create table security_token_settings");
-      jdbc.execute(
+      String createSql =
         "CREATE TABLE IF NOT EXISTS security_token_settings (" +
           "id BIGINT PRIMARY KEY AUTO_INCREMENT, " +
           "session_timeout_minutes INT, " +
           "token_timeout_minutes INT, " +
           "token_refresh_grace_minutes INT" +
-          ")"
-      );
+          ")";
+      createTableWithComments("security_token_settings", createSql);
       return;
     }
     ensureColumn("security_token_settings", "session_timeout_minutes", "INT NULL");
@@ -536,7 +543,7 @@ public class DatabaseSchemaInitializer implements SmartLifecycle {
   private void ensureSecurityCaptchaSettingsTable() {
     if (!tableExists("security_captcha_settings")) {
       log.info("create table security_captcha_settings");
-      jdbc.execute(
+      String createSql =
         "CREATE TABLE IF NOT EXISTS security_captcha_settings (" +
           "id BIGINT PRIMARY KEY AUTO_INCREMENT, " +
           "captcha_enabled TINYINT, " +
@@ -546,8 +553,8 @@ public class DatabaseSchemaInitializer implements SmartLifecycle {
           "drag_captcha_threshold INT, " +
           "image_captcha_length INT, " +
           "image_captcha_noise_lines INT" +
-          ")"
-      );
+          ")";
+      createTableWithComments("security_captcha_settings", createSql);
       return;
     }
     ensureColumn("security_captcha_settings", "captcha_enabled", "TINYINT NULL");
@@ -562,7 +569,7 @@ public class DatabaseSchemaInitializer implements SmartLifecycle {
   private void ensureSecurityPasswordPolicyTable() {
     if (!tableExists("security_password_policy")) {
       log.info("create table security_password_policy");
-      jdbc.execute(
+      String createSql =
         "CREATE TABLE IF NOT EXISTS security_password_policy (" +
           "id BIGINT PRIMARY KEY AUTO_INCREMENT, " +
           "password_min_length INT, " +
@@ -570,8 +577,8 @@ public class DatabaseSchemaInitializer implements SmartLifecycle {
           "password_require_lowercase TINYINT, " +
           "password_require_special TINYINT, " +
           "password_allow_sequential TINYINT" +
-          ")"
-      );
+          ")";
+      createTableWithComments("security_password_policy", createSql);
       return;
     }
     ensureColumn("security_password_policy", "password_min_length", "INT NULL");
@@ -584,7 +591,7 @@ public class DatabaseSchemaInitializer implements SmartLifecycle {
   private void ensureOperationLogsTable() {
     if (!tableExists("operation_logs")) {
       log.info("创建表 operation_logs");
-      jdbc.execute(
+      String createSql =
         "CREATE TABLE IF NOT EXISTS operation_logs (" +
           "id BIGINT PRIMARY KEY AUTO_INCREMENT, " +
           "action VARCHAR(32) NOT NULL, " +
@@ -598,8 +605,8 @@ public class DatabaseSchemaInitializer implements SmartLifecycle {
           "os VARCHAR(64), " +
           "browser VARCHAR(64), " +
           "created_at DATETIME" +
-          ")"
-      );
+          ")";
+      createTableWithComments("operation_logs", createSql);
       return;
     }
     ensureColumn("operation_logs", "action", "VARCHAR(32) NOT NULL");
@@ -618,7 +625,7 @@ public class DatabaseSchemaInitializer implements SmartLifecycle {
   private void ensureUserParametersTable() {
     if (!tableExists("user_parameters")) {
       log.info("创建表 user_parameters");
-      jdbc.execute(
+      String createSql =
         "CREATE TABLE IF NOT EXISTS user_parameters (" +
           "id BIGINT PRIMARY KEY AUTO_INCREMENT, " +
           "user_id BIGINT NOT NULL, " +
@@ -627,15 +634,15 @@ public class DatabaseSchemaInitializer implements SmartLifecycle {
           "description VARCHAR(255), " +
           "created_at DATETIME, " +
           "updated_at DATETIME" +
-          ")"
-      );
+          ")";
+      createTableWithComments("user_parameters", createSql);
     }
   }
 
   private void ensureStorageSettingsTable() {
     if (!tableExists("storage_settings")) {
       log.info("创建表 storage_settings");
-      jdbc.execute(
+      String createSql =
         "CREATE TABLE IF NOT EXISTS storage_settings (" +
           "id BIGINT PRIMARY KEY AUTO_INCREMENT, " +
           "provider VARCHAR(20) NOT NULL, " +
@@ -647,8 +654,8 @@ public class DatabaseSchemaInitializer implements SmartLifecycle {
           "custom_domain VARCHAR(255), " +
           "path_prefix VARCHAR(128), " +
           "public_read TINYINT" +
-          ")"
-      );
+          ")";
+      createTableWithComments("storage_settings", createSql);
       return;
     }
     ensureColumn("storage_settings", "provider", "VARCHAR(20) NOT NULL");
@@ -665,7 +672,7 @@ public class DatabaseSchemaInitializer implements SmartLifecycle {
   private void ensureAnnouncementTable() {
     if (!tableExists("announcements")) {
       log.info("创建表 announcements");
-      jdbc.execute(
+      String createSql =
         "CREATE TABLE IF NOT EXISTS announcements (" +
           "id BIGINT PRIMARY KEY AUTO_INCREMENT, " +
           "title VARCHAR(200) NOT NULL, " +
@@ -683,8 +690,8 @@ public class DatabaseSchemaInitializer implements SmartLifecycle {
           "created_by_id BIGINT, " +
           "created_by_name VARCHAR(64), " +
           "is_broadcasted TINYINT NOT NULL DEFAULT 0" +
-          ")"
-      );
+          ")";
+      createTableWithComments("announcements", createSql);
     } else {
       ensureColumn("announcements", "summary", "VARCHAR(200) NULL");
       ensureColumn("announcements", "cover_url", "VARCHAR(255) NULL");
@@ -701,7 +708,7 @@ public class DatabaseSchemaInitializer implements SmartLifecycle {
   private void ensureNotificationTable() {
     if (!tableExists("notifications")) {
       log.info("创建表 notifications");
-      jdbc.execute(
+      String createSql =
         "CREATE TABLE IF NOT EXISTS notifications (" +
           "id BIGINT PRIMARY KEY AUTO_INCREMENT, " +
           "title VARCHAR(200) NOT NULL, " +
@@ -718,8 +725,8 @@ public class DatabaseSchemaInitializer implements SmartLifecycle {
           "updated_at DATETIME, " +
           "created_by_id BIGINT, " +
           "created_by_name VARCHAR(64)" +
-          ")"
-      );
+          ")";
+      createTableWithComments("notifications", createSql);
       return;
     }
     ensureColumn("notifications", "summary", "VARCHAR(200) NULL");
@@ -735,7 +742,7 @@ public class DatabaseSchemaInitializer implements SmartLifecycle {
   private void ensureAiProviderSettingsTable() {
     if (!tableExists("ai_provider_settings")) {
       log.info("创建表 ai_provider_settings");
-      jdbc.execute(
+      String createSql =
         "CREATE TABLE IF NOT EXISTS ai_provider_settings (" +
           "id BIGINT PRIMARY KEY AUTO_INCREMENT, " +
           "name VARCHAR(64) NOT NULL, " +
@@ -756,8 +763,8 @@ public class DatabaseSchemaInitializer implements SmartLifecycle {
           "last_tested_at DATETIME, " +
           "created_at DATETIME, " +
           "updated_at DATETIME" +
-          ")"
-      );
+          ")";
+      createTableWithComments("ai_provider_settings", createSql);
       return;
     }
     ensureColumn("ai_provider_settings", "endpoint_path", "VARCHAR(255) NULL");
@@ -778,15 +785,15 @@ public class DatabaseSchemaInitializer implements SmartLifecycle {
   private void ensureSensitiveWordsTable() {
     if (!tableExists("sensitive_words")) {
       log.info("创建表 sensitive_words");
-      jdbc.execute(
+      String createSql =
         "CREATE TABLE IF NOT EXISTS sensitive_words (" +
           "id BIGINT PRIMARY KEY AUTO_INCREMENT, " +
           "word VARCHAR(200) NOT NULL UNIQUE, " +
           "enabled TINYINT NOT NULL, " +
           "created_at DATETIME, " +
           "updated_at DATETIME" +
-          ")"
-      );
+          ")";
+      createTableWithComments("sensitive_words", createSql);
       return;
     }
     ensureColumn("sensitive_words", "word", "VARCHAR(200) NOT NULL");
@@ -798,7 +805,7 @@ public class DatabaseSchemaInitializer implements SmartLifecycle {
   private void ensureSensitivePageSettingsTable() {
     if (!tableExists("sensitive_page_settings")) {
       log.info("创建表 sensitive_page_settings");
-      jdbc.execute(
+      String createSql =
         "CREATE TABLE IF NOT EXISTS sensitive_page_settings (" +
           "id BIGINT PRIMARY KEY AUTO_INCREMENT, " +
           "page_key VARCHAR(255) NOT NULL UNIQUE, " +
@@ -806,8 +813,8 @@ public class DatabaseSchemaInitializer implements SmartLifecycle {
           "enabled TINYINT NOT NULL, " +
           "created_at DATETIME, " +
           "updated_at DATETIME" +
-          ")"
-      );
+          ")";
+      createTableWithComments("sensitive_page_settings", createSql);
       return;
     }
     ensureColumn("sensitive_page_settings", "page_key", "VARCHAR(255) NOT NULL");
@@ -820,13 +827,13 @@ public class DatabaseSchemaInitializer implements SmartLifecycle {
   private void ensureSensitiveSettingsTable() {
     if (!tableExists("sensitive_settings")) {
       log.info("创建表 sensitive_settings");
-      jdbc.execute(
+      String createSql =
         "CREATE TABLE IF NOT EXISTS sensitive_settings (" +
           "id BIGINT PRIMARY KEY AUTO_INCREMENT, " +
           "enabled TINYINT NOT NULL, " +
           "updated_at DATETIME" +
-          ")"
-      );
+          ")";
+      createTableWithComments("sensitive_settings", createSql);
       return;
     }
     ensureColumn("sensitive_settings", "enabled", "TINYINT NOT NULL");
@@ -916,5 +923,142 @@ public class DatabaseSchemaInitializer implements SmartLifecycle {
     String sql = "ALTER TABLE " + tableName + " ADD COLUMN " + columnName + " " + ddlType;
     log.info("补齐字段: {}.{}", tableName, columnName);
     jdbc.execute(sql);
+  }
+
+  private void createTableWithComments(String tableName, String createSql) {
+    jdbc.execute(createSql);
+    applyTableComments(tableName, createSql);
+  }
+
+  private void applyTableComments(String tableName, String createSql) {
+    DatabaseDialect dialect = getDatabaseDialect();
+    if (dialect == DatabaseDialect.OTHER) return;
+
+    String tableComment = "表: " + tableName;
+    Map<String, String> columns = extractColumnDefinitions(createSql);
+
+    switch (dialect) {
+      case MYSQL -> {
+        jdbc.execute(
+          "ALTER TABLE `" + tableName + "` COMMENT = '" + escapeSqlComment(tableComment) + "'"
+        );
+        for (Map.Entry<String, String> entry : columns.entrySet()) {
+          String columnName = entry.getKey();
+          String definition = entry.getValue();
+          jdbc.execute(
+            "ALTER TABLE `" +
+              tableName +
+              "` MODIFY COLUMN `" +
+              columnName +
+              "` " +
+              definition +
+              " COMMENT '" +
+              escapeSqlComment(columnName) +
+              "'"
+          );
+        }
+      }
+      case POSTGRESQL, ORACLE -> {
+        jdbc.execute(
+          "COMMENT ON TABLE " + tableName + " IS '" + escapeSqlComment(tableComment) + "'"
+        );
+        for (String columnName : columns.keySet()) {
+          jdbc.execute(
+            "COMMENT ON COLUMN " +
+              tableName +
+              "." +
+              columnName +
+              " IS '" +
+              escapeSqlComment(columnName) +
+              "'"
+          );
+        }
+      }
+      case SQLSERVER -> {
+        jdbc.execute(
+          "EXEC sys.sp_addextendedproperty @name = N'MS_Description', @value = N'" +
+            escapeSqlComment(tableComment) +
+            "', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'" +
+            tableName +
+            "'"
+        );
+        for (String columnName : columns.keySet()) {
+          jdbc.execute(
+            "EXEC sys.sp_addextendedproperty @name = N'MS_Description', @value = N'" +
+              escapeSqlComment(columnName) +
+              "', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'" +
+              tableName +
+              "', @level2type = N'COLUMN', @level2name = N'" +
+              columnName +
+              "'"
+          );
+        }
+      }
+      default -> {
+      }
+    }
+  }
+
+  private Map<String, String> extractColumnDefinitions(String createSql) {
+    int start = createSql.indexOf('(');
+    int end = createSql.lastIndexOf(')');
+    if (start < 0 || end <= start) return Map.of();
+    String body = createSql.substring(start + 1, end);
+    String[] parts = body.split(", ");
+    Map<String, String> columns = new LinkedHashMap<>();
+    for (String part : parts) {
+      String trimmed = part.trim();
+      if (trimmed.startsWith("PRIMARY KEY")
+        || trimmed.startsWith("UNIQUE KEY")
+        || trimmed.startsWith("UNIQUE")
+        || trimmed.startsWith("INDEX")
+        || trimmed.startsWith("KEY")
+        || trimmed.startsWith("CONSTRAINT")) {
+        continue;
+      }
+      int firstSpace = trimmed.indexOf(' ');
+      if (firstSpace <= 0) continue;
+      String columnName = trimmed.substring(0, firstSpace);
+      String definition = trimmed.substring(firstSpace + 1);
+      columns.put(columnName, definition);
+    }
+    return columns;
+  }
+
+  private String escapeSqlComment(String comment) {
+    return comment.replace("'", "''");
+  }
+
+  private DatabaseDialect getDatabaseDialect() {
+    if (databaseDialect != null) {
+      return databaseDialect;
+    }
+    try (Connection connection = Objects.requireNonNull(jdbc.getDataSource()).getConnection()) {
+      DatabaseMetaData metaData = connection.getMetaData();
+      String product = metaData.getDatabaseProductName().toLowerCase();
+      if (product.contains("mysql") || product.contains("mariadb")) {
+        databaseDialect = DatabaseDialect.MYSQL;
+      } else if (product.contains("postgresql")) {
+        databaseDialect = DatabaseDialect.POSTGRESQL;
+      } else if (product.contains("oracle")) {
+        databaseDialect = DatabaseDialect.ORACLE;
+      } else if (product.contains("sql server") || product.contains("microsoft")) {
+        databaseDialect = DatabaseDialect.SQLSERVER;
+      } else {
+        databaseDialect = DatabaseDialect.OTHER;
+      }
+    } catch (Exception e) {
+      log.warn("无法识别数据库类型，将跳过注释: {}", e.getMessage());
+      databaseDialect = DatabaseDialect.OTHER;
+    }
+    return databaseDialect;
+  }
+
+  private enum DatabaseDialect {
+    MYSQL,
+    POSTGRESQL,
+    ORACLE,
+    SQLSERVER,
+    OTHER
   }
 }
