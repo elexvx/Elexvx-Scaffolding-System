@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tencent.tdesign.security.AuthTokenFilter;
 import com.tencent.tdesign.vo.ApiResponse;
 import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
@@ -67,7 +68,7 @@ public class SecurityConfig {
     return http.build();
   }
 
-  private void writeError(HttpServletResponse response, HttpStatus status) throws Exception {
+  private void writeError(HttpServletResponse response, HttpStatus status) throws IOException {
     response.setStatus(status.value());
     response.setContentType(MediaType.APPLICATION_JSON_VALUE);
     ApiResponse<Void> body = ApiResponse.failure(status.value(), status == HttpStatus.UNAUTHORIZED
