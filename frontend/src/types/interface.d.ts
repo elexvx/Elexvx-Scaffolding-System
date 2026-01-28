@@ -30,6 +30,8 @@ export interface UserInfo {
 export interface LoginResponse {
   status: 'ok' | 'pending';
   token?: string;
+  accessToken?: string;
+  refreshToken?: string;
   expiresIn?: number; // token 过期时间（秒）
   requestId?: string;
   requestKey?: string;

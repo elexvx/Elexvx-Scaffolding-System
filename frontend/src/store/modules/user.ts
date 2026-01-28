@@ -2,7 +2,7 @@ import { defineStore } from 'pinia';
 
 import { useNotificationStore, usePermissionStore } from '@/store';
 import type { LoginResponse, UserInfo } from '@/types/interface';
-import { clearTokenStorage, saveToken } from '@/utils/secureToken';
+import { clearTokenStorage, saveRefreshToken, saveToken } from '@/utils/secureToken';
 import { clearTokenExpireTimer } from '@/utils/tokenExpire';
 
 const InitUserInfo: UserInfo = {
@@ -19,6 +19,7 @@ const InitUserInfo: UserInfo = {
 export const useUserStore = defineStore('user', {
   state: () => ({
     token: '',
+    refreshToken: '',
     tokenExpiresAt: null as number | null,
     userInfo: { ...InitUserInfo },
     userInfoLoaded: false,
@@ -32,11 +33,14 @@ export const useUserStore = defineStore('user', {
     async login(userInfo: Record<string, unknown>): Promise<LoginResponse> {
       const { request } = await import('@/utils/request');
       const res = await request.post<LoginResponse>({ url: '/auth/login', data: userInfo }, { withToken: false });
-      if (res?.status === 'ok' && res.token) {
-        this.token = res.token;
+      const accessToken = res?.token || res?.accessToken;
+      if (res?.status === 'ok' && accessToken) {
+        this.token = accessToken;
+        this.refreshToken = res?.refreshToken || '';
         this.tokenExpiresAt = res.expiresIn ? Date.now() + res.expiresIn * 1000 : null;
         this.userInfoLoaded = false;
-        await saveToken(res.token);
+        await saveToken(accessToken);
+        await saveRefreshToken(this.refreshToken);
         const { useTabsRouterStore } = await import('@/store/modules/tabs-router');
         if (typeof window !== 'undefined') {
           window.localStorage.removeItem('tabsRouter');
@@ -51,11 +55,14 @@ export const useUserStore = defineStore('user', {
         { url: '/auth/login/confirm', data: { requestId, requestKey } },
         { withToken: false },
       );
-      if (res?.status === 'ok' && res.token) {
-        this.token = res.token;
+      const accessToken = res?.token || res?.accessToken;
+      if (res?.status === 'ok' && accessToken) {
+        this.token = accessToken;
+        this.refreshToken = res?.refreshToken || '';
         this.tokenExpiresAt = res.expiresIn ? Date.now() + res.expiresIn * 1000 : null;
         this.userInfoLoaded = false;
-        await saveToken(res.token);
+        await saveToken(accessToken);
+        await saveRefreshToken(this.refreshToken);
         const { useTabsRouterStore } = await import('@/store/modules/tabs-router');
         if (typeof window !== 'undefined') {
           window.localStorage.removeItem('tabsRouter');
@@ -67,11 +74,14 @@ export const useUserStore = defineStore('user', {
     async loginBySms(payload: { phone: string; code: string; force?: boolean }): Promise<LoginResponse> {
       const { request } = await import('@/utils/request');
       const res = await request.post<LoginResponse>({ url: '/auth/login/sms', data: payload }, { withToken: false });
-      if (res?.status === 'ok' && res.token) {
-        this.token = res.token;
+      const accessToken = res?.token || res?.accessToken;
+      if (res?.status === 'ok' && accessToken) {
+        this.token = accessToken;
+        this.refreshToken = res?.refreshToken || '';
         this.tokenExpiresAt = res.expiresIn ? Date.now() + res.expiresIn * 1000 : null;
         this.userInfoLoaded = false;
-        await saveToken(res.token);
+        await saveToken(accessToken);
+        await saveRefreshToken(this.refreshToken);
         const { useTabsRouterStore } = await import('@/store/modules/tabs-router');
         if (typeof window !== 'undefined') {
           window.localStorage.removeItem('tabsRouter');
@@ -83,11 +93,14 @@ export const useUserStore = defineStore('user', {
     async loginByEmail(payload: { email: string; code: string; force?: boolean }): Promise<LoginResponse> {
       const { request } = await import('@/utils/request');
       const res = await request.post<LoginResponse>({ url: '/auth/login/email', data: payload }, { withToken: false });
-      if (res?.status === 'ok' && res.token) {
-        this.token = res.token;
+      const accessToken = res?.token || res?.accessToken;
+      if (res?.status === 'ok' && accessToken) {
+        this.token = accessToken;
+        this.refreshToken = res?.refreshToken || '';
         this.tokenExpiresAt = res.expiresIn ? Date.now() + res.expiresIn * 1000 : null;
         this.userInfoLoaded = false;
-        await saveToken(res.token);
+        await saveToken(accessToken);
+        await saveRefreshToken(this.refreshToken);
         const { useTabsRouterStore } = await import('@/store/modules/tabs-router');
         if (typeof window !== 'undefined') {
           window.localStorage.removeItem('tabsRouter');
@@ -98,10 +111,14 @@ export const useUserStore = defineStore('user', {
     },
     async restoreTokenFromStorage() {
       if (this.token) return this.token;
-      const { loadToken } = await import('@/utils/secureToken');
+      const { loadRefreshToken, loadToken } = await import('@/utils/secureToken');
       const token = await loadToken();
       if (token) {
         this.token = token;
+      }
+      const refreshToken = await loadRefreshToken();
+      if (refreshToken) {
+        this.refreshToken = refreshToken;
       }
       return token;
     },
@@ -117,6 +134,7 @@ export const useUserStore = defineStore('user', {
       clearTokenExpireTimer();
       await request.post({ url: '/auth/logout' });
       this.token = '';
+      this.refreshToken = '';
       this.tokenExpiresAt = null;
       this.userInfo = { ...InitUserInfo };
       this.userInfoLoaded = false;

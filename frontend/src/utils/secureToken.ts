@@ -1,5 +1,6 @@
 const TOKEN_STORAGE_KEY = 'tdesign.auth.token';
 const TOKEN_KEY_STORAGE_KEY = 'tdesign.auth.token.key';
+const REFRESH_TOKEN_STORAGE_KEY = 'tdesign.auth.refreshToken';
 
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
@@ -113,9 +114,27 @@ export const loadToken = async () => {
   return decryptToken(stored);
 };
 
+export const saveRefreshToken = async (token: string) => {
+  if (typeof window === 'undefined') return;
+  if (!token) {
+    localStorage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
+    return;
+  }
+  const encrypted = await encryptToken(token);
+  localStorage.setItem(REFRESH_TOKEN_STORAGE_KEY, encrypted);
+};
+
+export const loadRefreshToken = async () => {
+  if (typeof window === 'undefined') return '';
+  const stored = localStorage.getItem(REFRESH_TOKEN_STORAGE_KEY);
+  if (!stored) return '';
+  return decryptToken(stored);
+};
+
 export const clearTokenStorage = () => {
   if (typeof window === 'undefined') return;
   localStorage.removeItem(TOKEN_STORAGE_KEY);
+  localStorage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
   localStorage.removeItem(TOKEN_KEY_STORAGE_KEY);
   sessionStorage.removeItem(TOKEN_KEY_STORAGE_KEY);
 };

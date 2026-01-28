@@ -1,9 +1,9 @@
 package com.tencent.tdesign.controller;
 
-import cn.dev33.satoken.stp.StpUtil;
 import com.tencent.tdesign.annotation.RepeatSubmit;
 import com.tencent.tdesign.dto.UserCreateRequest;
 import com.tencent.tdesign.dto.UserUpdateRequest;
+import com.tencent.tdesign.security.AuthContext;
 import com.tencent.tdesign.service.UserAdminService;
 import com.tencent.tdesign.util.PermissionUtil;
 import com.tencent.tdesign.vo.ApiResponse;
@@ -24,9 +24,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/system/user")
 public class SystemUserController {
   private final UserAdminService userAdminService;
+  private final AuthContext authContext;
 
-  public SystemUserController(UserAdminService userAdminService) {
+  public SystemUserController(UserAdminService userAdminService, AuthContext authContext) {
     this.userAdminService = userAdminService;
+    this.authContext = authContext;
   }
 
   @GetMapping("/page")
@@ -70,7 +72,7 @@ public class SystemUserController {
   @RepeatSubmit
   public ApiResponse<Boolean> delete(@PathVariable long id) {
     PermissionUtil.check("system:SystemUser:delete");
-    long self = StpUtil.getLoginIdAsLong();
+    long self = authContext.requireUserId();
     if (self == id) throw new IllegalArgumentException("不允许删除当前登录用户");
     return ApiResponse.success(userAdminService.delete(id));
   }

@@ -3,7 +3,6 @@ package com.tencent.tdesign.config;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import cn.dev33.satoken.filter.SaPathCheckFilterForJakartaServlet;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tencent.tdesign.service.SensitiveService;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
@@ -32,16 +31,6 @@ public class WebConfig implements WebMvcConfigurer {
     FilterRegistrationBean<CorsFilter> registration = new FilterRegistrationBean<>(new CorsFilter(source));
     registration.setAsyncSupported(true);
     registration.setOrder(Ordered.HIGHEST_PRECEDENCE);
-    return registration;
-  }
-
-  @Bean
-  public FilterRegistrationBean<SaPathCheckFilterForJakartaServlet> saTokenPathCheckFilterRegistration(
-    SaPathCheckFilterForJakartaServlet filter
-  ) {
-    FilterRegistrationBean<SaPathCheckFilterForJakartaServlet> registration = new FilterRegistrationBean<>(filter);
-    registration.setAsyncSupported(true);
-    registration.setOrder(Ordered.HIGHEST_PRECEDENCE + 1);
     return registration;
   }
 

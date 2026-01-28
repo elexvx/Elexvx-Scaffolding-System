@@ -1,6 +1,5 @@
 package com.tencent.tdesign.controller;
 
-import cn.dev33.satoken.annotation.SaCheckLogin;
 import com.tencent.tdesign.annotation.RepeatSubmit;
 import com.tencent.tdesign.dto.FileUploadCompleteRequest;
 import com.tencent.tdesign.dto.FileUploadInitRequest;
@@ -24,7 +23,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/system/file")
-@SaCheckLogin
 public class FileUploadController {
   private static final Logger log = LoggerFactory.getLogger(FileUploadController.class);
   private static final long MAX_FILE_SIZE = 10L * 1024 * 1024 * 1024;

@@ -1,9 +1,9 @@
 package com.tencent.tdesign.service;
 
-import cn.dev33.satoken.stp.StpUtil;
 import com.tencent.tdesign.dto.NotificationUpsertRequest;
 import com.tencent.tdesign.entity.Notification;
 import com.tencent.tdesign.mapper.NotificationMapper;
+import com.tencent.tdesign.security.AuthContext;
 import com.tencent.tdesign.socket.NettySocketService;
 import com.tencent.tdesign.util.PermissionUtil;
 import com.tencent.tdesign.vo.NotificationResponse;
@@ -24,17 +24,20 @@ public class NotificationService {
   private final MessageService messageService;
   private final OperationLogService operationLogService;
   private final Optional<NettySocketService> nettySocketService;
+  private final AuthContext authContext;
 
   public NotificationService(
     NotificationMapper mapper,
     MessageService messageService,
     OperationLogService operationLogService,
-    Optional<NettySocketService> nettySocketService
+    Optional<NettySocketService> nettySocketService,
+    AuthContext authContext
   ) {
     this.mapper = mapper;
     this.messageService = messageService;
     this.operationLogService = operationLogService;
     this.nettySocketService = nettySocketService;
+    this.authContext = authContext;
   }
 
   @Transactional
@@ -45,9 +48,9 @@ public class NotificationService {
     n.setStatus(StringUtils.hasText(req.getStatus()) ? req.getStatus() : DEFAULT_STATUS);
     n.setCreatedAt(LocalDateTime.now());
     n.setUpdatedAt(LocalDateTime.now());
-    long userId = StpUtil.getLoginIdAsLong();
+    long userId = authContext.requireUserId();
     n.setCreatedById(userId);
-    n.setCreatedByName(String.valueOf(StpUtil.getLoginId()));
+    n.setCreatedByName(String.valueOf(userId));
     if ("published".equalsIgnoreCase(n.getStatus())) {
       n.setPublishAt(LocalDateTime.now());
     }

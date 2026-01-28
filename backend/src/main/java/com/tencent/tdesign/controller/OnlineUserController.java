@@ -1,8 +1,8 @@
 package com.tencent.tdesign.controller;
 
-import cn.dev33.satoken.stp.StpUtil;
 import com.tencent.tdesign.service.OnlineUserService;
 import com.tencent.tdesign.service.OperationLogService;
+import com.tencent.tdesign.security.AccessControlService;
 import com.tencent.tdesign.vo.ApiResponse;
 import com.tencent.tdesign.vo.OnlineUserVO;
 import com.tencent.tdesign.vo.PageResult;
@@ -13,10 +13,16 @@ import org.springframework.web.bind.annotation.*;
 public class OnlineUserController {
   private final OnlineUserService onlineUserService;
   private final OperationLogService operationLogService;
+  private final AccessControlService accessControlService;
 
-  public OnlineUserController(OnlineUserService onlineUserService, OperationLogService operationLogService) {
+  public OnlineUserController(
+    OnlineUserService onlineUserService,
+    OperationLogService operationLogService,
+    AccessControlService accessControlService
+  ) {
     this.onlineUserService = onlineUserService;
     this.operationLogService = operationLogService;
+    this.accessControlService = accessControlService;
   }
 
   @GetMapping("/online")
@@ -26,13 +32,13 @@ public class OnlineUserController {
     @RequestParam(defaultValue = "0") int page,
     @RequestParam(defaultValue = "10") int size
   ) {
-    StpUtil.checkRole("admin");
+    accessControlService.checkRole("admin");
     return ApiResponse.success(onlineUserService.getOnlineUsers(loginAddress, userName, page, size));
   }
 
   @DeleteMapping("/online/{sessionId}")
   public ApiResponse<Boolean> forceLogout(@PathVariable String sessionId) {
-    StpUtil.checkRole("admin");
+    accessControlService.checkRole("admin");
     OnlineUserVO target = onlineUserService.getOnlineUser(sessionId);
     boolean ok = onlineUserService.forceLogout(sessionId);
     if (ok) {

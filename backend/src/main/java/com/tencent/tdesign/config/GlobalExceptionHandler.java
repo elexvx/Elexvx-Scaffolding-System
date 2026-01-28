@@ -1,8 +1,5 @@
 package com.tencent.tdesign.config;
 
-import cn.dev33.satoken.exception.NotLoginException;
-import cn.dev33.satoken.exception.NotPermissionException;
-import cn.dev33.satoken.exception.NotRoleException;
 import com.tencent.tdesign.exception.ConcurrentLoginException;
 import com.tencent.tdesign.exception.RepeatSubmitException;
 import com.tencent.tdesign.mapper.MenuItemMapper;
@@ -17,6 +14,8 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.lang.NonNull;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.validation.BindException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.context.request.async.AsyncRequestTimeoutException;
@@ -40,22 +39,15 @@ public class GlobalExceptionHandler {
   }
 
   /**
-   * 处理 Sa-Token 未登录异常
+   * 处理未登录异常
    */
-  @ExceptionHandler(NotLoginException.class)
-  public Object handleNotLoginException(NotLoginException e, HttpServletRequest request) {
+  @ExceptionHandler(AuthenticationCredentialsNotFoundException.class)
+  public Object handleAuthenticationCredentialsNotFoundException(
+    AuthenticationCredentialsNotFoundException e,
+    HttpServletRequest request
+  ) {
     log.debug("用户未登录或token已过期: {}", e.getMessage());
-    String type = e.getType();
-    String msg;
-    if (NotLoginException.KICK_OUT.equals(type)) {
-      msg = "已被系统管理员强制下线，请重新登录";
-    } else if (NotLoginException.BE_REPLACED.equals(type)) {
-      msg = "账号在其他地方登录，你已被迫下线，请重新登录";
-    } else if (NotLoginException.TOKEN_TIMEOUT.equals(type)) {
-      msg = "登录已过期，请重新登录";
-    } else {
-      msg = "未登录或登录已失效，请重新登录";
-    }
+    String msg = e.getMessage() == null || e.getMessage().isBlank() ? "未登录或登录已失效，请重新登录" : e.getMessage();
     if (isSseRequest(request)) {
       String payload = "event: unauthorized\ndata: " + escapeSseData(msg) + "\n\n";
       return ResponseEntity.status(HttpStatus.UNAUTHORIZED).contentType(SSE_MEDIA_TYPE).body(payload);
@@ -64,23 +56,13 @@ public class GlobalExceptionHandler {
   }
 
   /**
-   * 处理 Sa-Token 权限不足异常
+   * 处理权限不足异常
    */
-  @ExceptionHandler(NotPermissionException.class)
-  public ResponseEntity<ApiResponse<Void>> handleNotPermissionException(NotPermissionException e) {
+  @ExceptionHandler(AccessDeniedException.class)
+  public ResponseEntity<ApiResponse<Void>> handleAccessDeniedException(AccessDeniedException e) {
     log.warn("权限不足: {}", e.getMessage());
     return ResponseEntity.status(HttpStatus.FORBIDDEN)
-      .body(ApiResponse.failure(403, buildPermissionMessage(e.getPermission())));
-  }
-
-  /**
-   * 处理 Sa-Token 角色不足异常
-   */
-  @ExceptionHandler(NotRoleException.class)
-  public ResponseEntity<ApiResponse<Void>> handleNotRoleException(NotRoleException e) {
-    log.warn("角色不足: {}", e.getMessage());
-    return ResponseEntity.status(HttpStatus.FORBIDDEN)
-      .body(ApiResponse.failure(403, "权限不足，请联系管理员开通"));
+      .body(ApiResponse.failure(403, e.getMessage() == null ? "权限不足，请联系管理员开通" : e.getMessage()));
   }
 
   /**

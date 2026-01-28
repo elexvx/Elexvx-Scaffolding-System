@@ -1,9 +1,9 @@
 package com.tencent.tdesign.aop;
 
-import cn.dev33.satoken.stp.StpUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tencent.tdesign.annotation.RepeatSubmit;
 import com.tencent.tdesign.exception.RepeatSubmitException;
+import com.tencent.tdesign.security.AuthContext;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
@@ -36,11 +36,13 @@ public class RepeatSubmitAspect {
   private static final long STALE_TIME_MS = 24 * 60 * 60 * 1000L;
 
   private final ObjectMapper objectMapper;
+  private final AuthContext authContext;
   private final Map<String, SubmitRecord> cache = new ConcurrentHashMap<>();
   private final AtomicLong counter = new AtomicLong();
 
-  public RepeatSubmitAspect(ObjectMapper objectMapper) {
+  public RepeatSubmitAspect(ObjectMapper objectMapper, AuthContext authContext) {
     this.objectMapper = objectMapper;
+    this.authContext = authContext;
   }
 
   @Around("@annotation(repeatSubmit)")
@@ -93,15 +95,13 @@ public class RepeatSubmitAspect {
   }
 
   private String resolveUserKey(HttpServletRequest request) {
-    if (StpUtil.isLogin()) {
-      return "uid:" + StpUtil.getLoginIdAsLong();
+    if (authContext.isAuthenticated()) {
+      return "uid:" + authContext.requireUserId();
     }
-    try {
-      String token = StpUtil.getTokenValue();
-      if (token != null && !token.isBlank()) {
-        return "token:" + token;
-      }
-    } catch (Exception ignored) {}
+    String token = authContext.getToken();
+    if (token != null && !token.isBlank()) {
+      return "token:" + token;
+    }
     if (request != null) {
       String ip = resolveClientIp(request);
       if (ip != null && !ip.isBlank()) {

@@ -1,7 +1,8 @@
 package com.tencent.tdesign.controller;
 
-import cn.dev33.satoken.stp.StpUtil;
 import com.tencent.tdesign.service.OperationLogService;
+import com.tencent.tdesign.security.AccessControlService;
+import com.tencent.tdesign.security.AuthContext;
 import com.tencent.tdesign.util.PermissionUtil;
 import com.tencent.tdesign.vo.ApiResponse;
 import com.tencent.tdesign.vo.OperationLogVO;
@@ -25,9 +26,17 @@ import org.springframework.web.bind.annotation.RestController;
 public class OperationLogController {
   private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
   private final OperationLogService service;
+  private final AuthContext authContext;
+  private final AccessControlService accessControlService;
 
-  public OperationLogController(OperationLogService service) {
+  public OperationLogController(
+    OperationLogService service,
+    AuthContext authContext,
+    AccessControlService accessControlService
+  ) {
     this.service = service;
+    this.authContext = authContext;
+    this.accessControlService = accessControlService;
   }
 
   @GetMapping("/page")
@@ -42,7 +51,7 @@ public class OperationLogController {
     PermissionUtil.check("system:SystemLog:query");
     LocalDate startDate = parseDate(start);
     LocalDate endDate = parseDate(end);
-    Long userId = StpUtil.hasRole("admin") ? null : StpUtil.getLoginIdAsLong();
+    Long userId = accessControlService.hasRole("admin") ? null : authContext.requireUserId();
     return ApiResponse.success(service.page(keyword, action, startDate, endDate, userId, page, size));
   }
 
@@ -56,7 +65,7 @@ public class OperationLogController {
     PermissionUtil.check("system:SystemLog:query");
     LocalDate startDate = parseDate(start);
     LocalDate endDate = parseDate(end);
-    Long userId = StpUtil.hasRole("admin") ? null : StpUtil.getLoginIdAsLong();
+    Long userId = accessControlService.hasRole("admin") ? null : authContext.requireUserId();
     List<OperationLogVO> list = service.listAll(keyword, action, startDate, endDate, userId);
 
     StringBuilder sb = new StringBuilder();

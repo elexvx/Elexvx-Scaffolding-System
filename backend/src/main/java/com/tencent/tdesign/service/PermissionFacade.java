@@ -1,8 +1,8 @@
 package com.tencent.tdesign.service;
 
-import cn.dev33.satoken.session.SaSession;
-import cn.dev33.satoken.stp.StpUtil;
 import com.tencent.tdesign.dao.AuthQueryDao;
+import com.tencent.tdesign.security.AuthContext;
+import com.tencent.tdesign.security.AuthSession;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -16,9 +16,13 @@ public class PermissionFacade {
   private static final String KEY_ASSUMED_PERMISSIONS = "assumedPermissions";
 
   private final AuthQueryDao authDao;
+  private final AuthTokenService authTokenService;
+  private final AuthContext authContext;
 
-  public PermissionFacade(AuthQueryDao authDao) {
+  public PermissionFacade(AuthQueryDao authDao, AuthTokenService authTokenService, AuthContext authContext) {
     this.authDao = authDao;
+    this.authTokenService = authTokenService;
+    this.authContext = authContext;
   }
 
   public List<String> getAssignedRoles(long userId) {
@@ -67,23 +71,25 @@ public class PermissionFacade {
       throw new IllegalArgumentException("以下角色不存在: " + String.join(", ", missing));
     }
     List<String> permissions = authDao.findPermissionsByRoleNames(normalized);
-    SaSession session = StpUtil.getSessionByLoginId(userId);
-    session.set(KEY_ASSUMED_ROLES, normalized);
-    session.set(KEY_ASSUMED_PERMISSIONS, permissions);
+    AuthSession session = getCurrentSession(userId);
+    session.getAttributes().put(KEY_ASSUMED_ROLES, normalized);
+    session.getAttributes().put(KEY_ASSUMED_PERMISSIONS, permissions);
+    authTokenService.updateSession(authContext.requireToken(), session);
     return normalized;
   }
 
   public void clearAssumedRoles(long userId) {
-    SaSession session = StpUtil.getSessionByLoginId(userId, false);
+    AuthSession session = getCurrentSessionIfExists(userId);
     if (session == null) return;
-    session.delete(KEY_ASSUMED_ROLES);
-    session.delete(KEY_ASSUMED_PERMISSIONS);
+    session.getAttributes().remove(KEY_ASSUMED_ROLES);
+    session.getAttributes().remove(KEY_ASSUMED_PERMISSIONS);
+    authTokenService.updateSession(authContext.requireToken(), session);
   }
 
   private List<String> getAssumedRoles(long userId) {
-    SaSession session = StpUtil.getSessionByLoginId(userId, false);
+    AuthSession session = getCurrentSessionIfExists(userId);
     if (session == null) return Collections.emptyList();
-    Object value = session.get(KEY_ASSUMED_ROLES);
+    Object value = session.getAttributes().get(KEY_ASSUMED_ROLES);
     if (value instanceof List<?>) {
       List<?> raw = (List<?>) value;
       List<String> list = new ArrayList<>();
@@ -96,9 +102,9 @@ public class PermissionFacade {
   }
 
   private List<String> getAssumedPermissions(long userId) {
-    SaSession session = StpUtil.getSessionByLoginId(userId, false);
+    AuthSession session = getCurrentSessionIfExists(userId);
     if (session == null) return Collections.emptyList();
-    Object value = session.get(KEY_ASSUMED_PERMISSIONS);
+    Object value = session.getAttributes().get(KEY_ASSUMED_PERMISSIONS);
     if (value instanceof List<?>) {
       List<String> list = new ArrayList<>();
       for (Object it : (List<?>) value) {
@@ -122,5 +128,22 @@ public class PermissionFacade {
     for (String r : set) list.add(r);
     list.sort(String.CASE_INSENSITIVE_ORDER);
     return list;
+  }
+
+  private AuthSession getCurrentSession(long userId) {
+    String token = authContext.requireToken();
+    AuthSession session = authTokenService.getSession(token);
+    if (session == null || session.getUserId() != userId) {
+      throw new IllegalArgumentException("登录已失效，请重新登录");
+    }
+    return session;
+  }
+
+  private AuthSession getCurrentSessionIfExists(long userId) {
+    String token = authContext.getToken();
+    if (token == null) return null;
+    AuthSession session = authTokenService.getSession(token);
+    if (session == null || session.getUserId() != userId) return null;
+    return session;
   }
 }

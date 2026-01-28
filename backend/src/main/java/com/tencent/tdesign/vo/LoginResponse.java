@@ -3,6 +3,8 @@ package com.tencent.tdesign.vo;
 public class LoginResponse {
   private String status;
   private String token;
+  private String accessToken;
+  private String refreshToken;
   private Long expiresIn;
   private String requestId;
   private String requestKey;
@@ -13,6 +15,7 @@ public class LoginResponse {
     LoginResponse r = new LoginResponse();
     r.setStatus("ok");
     r.setToken(token);
+    r.setAccessToken(token);
     r.setExpiresIn(expiresIn);
     return r;
   }
@@ -39,6 +42,22 @@ public class LoginResponse {
 
   public void setToken(String token) {
     this.token = token;
+  }
+
+  public String getAccessToken() {
+    return accessToken;
+  }
+
+  public void setAccessToken(String accessToken) {
+    this.accessToken = accessToken;
+  }
+
+  public String getRefreshToken() {
+    return refreshToken;
+  }
+
+  public void setRefreshToken(String refreshToken) {
+    this.refreshToken = refreshToken;
   }
 
   public Long getExpiresIn() {

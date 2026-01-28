@@ -1,6 +1,5 @@
 package com.tencent.tdesign.service;
 
-import cn.dev33.satoken.stp.StpUtil;
 import com.tencent.tdesign.dao.AuthQueryDao;
 import com.tencent.tdesign.dto.UserCreateRequest;
 import com.tencent.tdesign.dto.UserUpdateRequest;
@@ -10,6 +9,7 @@ import com.tencent.tdesign.mapper.RoleMapper;
 import com.tencent.tdesign.mapper.UserDepartmentMapper;
 import com.tencent.tdesign.mapper.UserMapper;
 import com.tencent.tdesign.mapper.UserOrgUnitMapper;
+import com.tencent.tdesign.security.AuthContext;
 import com.tencent.tdesign.util.SensitiveMaskUtil;
 import com.tencent.tdesign.vo.PageResult;
 import com.tencent.tdesign.vo.UserListItem;
@@ -34,6 +34,7 @@ public class UserAdminService {
   private final OperationLogService operationLogService;
   private final PermissionFacade permissionFacade;
   private final PasswordPolicyService passwordPolicyService;
+  private final AuthContext authContext;
 
   public UserAdminService(
     UserMapper userMapper,
@@ -44,7 +45,8 @@ public class UserAdminService {
     UserDepartmentMapper userDepartmentMapper,
     OperationLogService operationLogService,
     PermissionFacade permissionFacade,
-    PasswordPolicyService passwordPolicyService
+    PasswordPolicyService passwordPolicyService,
+    AuthContext authContext
   ) {
     this.userMapper = userMapper;
     this.roleMapper = roleMapper;
@@ -55,6 +57,7 @@ public class UserAdminService {
     this.operationLogService = operationLogService;
     this.permissionFacade = permissionFacade;
     this.passwordPolicyService = passwordPolicyService;
+    this.authContext = authContext;
   }
 
   @AiFunction(
@@ -244,7 +247,7 @@ public class UserAdminService {
   }
 
   private void ensureManageableTarget(UserEntity targetUser) {
-    long currentUserId = StpUtil.getLoginIdAsLong();
+    long currentUserId = authContext.requireUserId();
     long targetUserId = Objects.requireNonNull(targetUser.getId());
     boolean targetIsAdmin = permissionFacade.isAdminAccount(targetUserId);
     boolean currentIsAdmin = permissionFacade.isAdminAccount(currentUserId);

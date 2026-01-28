@@ -1,8 +1,8 @@
 package com.tencent.tdesign.service;
 
-import cn.dev33.satoken.stp.StpUtil;
 import com.tencent.tdesign.entity.UserParameterEntity;
 import com.tencent.tdesign.mapper.UserParameterMapper;
+import com.tencent.tdesign.security.AuthContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,19 +13,21 @@ import java.time.LocalDateTime;
 public class UserParameterService {
 
     private final UserParameterMapper mapper;
+    private final AuthContext authContext;
 
-    public UserParameterService(UserParameterMapper mapper) {
+    public UserParameterService(UserParameterMapper mapper, AuthContext authContext) {
         this.mapper = mapper;
+        this.authContext = authContext;
     }
 
     public List<UserParameterEntity> getCurrentUserParameters() {
-        long userId = StpUtil.getLoginIdAsLong();
+        long userId = authContext.requireUserId();
         return mapper.selectByUserId(userId);
     }
 
     @Transactional
     public UserParameterEntity saveParameter(UserParameterEntity parameter) {
-        long userId = StpUtil.getLoginIdAsLong();
+        long userId = authContext.requireUserId();
         parameter.setUserId(userId);
         LocalDateTime now = LocalDateTime.now();
         if (parameter.getId() == null) {
@@ -41,7 +43,7 @@ public class UserParameterService {
 
     @Transactional
     public void deleteParameter(Long id) {
-        long userId = StpUtil.getLoginIdAsLong();
+        long userId = authContext.requireUserId();
         UserParameterEntity p = mapper.selectById(id);
         if (p != null && p.getUserId().equals(userId)) {
             mapper.deleteById(id);
@@ -50,7 +52,7 @@ public class UserParameterService {
 
     @Transactional
     public UserParameterEntity updateParameter(Long id, UserParameterEntity updated) {
-        long userId = StpUtil.getLoginIdAsLong();
+        long userId = authContext.requireUserId();
         UserParameterEntity p = mapper.selectById(id);
         if (p == null || !p.getUserId().equals(userId)) {
             throw new RuntimeException("Parameter not found or unauthorized");
