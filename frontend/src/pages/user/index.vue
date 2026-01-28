@@ -65,8 +65,8 @@
             <t-descriptions-item label="手机">{{ profile.mobile || '-' }}</t-descriptions-item>
             <t-descriptions-item label="座机">{{ profile.phone || '-' }}</t-descriptions-item>
             <t-descriptions-item label="邮箱">{{ profile.email || '-' }}</t-descriptions-item>
-            <t-descriptions-item label="角色">{{ formatList(profile.roles) }}</t-descriptions-item>
-            <t-descriptions-item label="所属部门" :span="2">{{ formatList(profile.orgUnitNames) }}</t-descriptions-item>
+            <t-descriptions-item label="角色">{{ formatList(displayedRoles) }}</t-descriptions-item>
+            <t-descriptions-item label="所属部门" :span="2">{{ formatList(displayedOrgUnits) }}</t-descriptions-item>
             <t-descriptions-item label="座位">{{ profile.seat || '-' }}</t-descriptions-item>
             <t-descriptions-item label="主体">{{ profile.entity || '-' }}</t-descriptions-item>
             <t-descriptions-item label="上级">{{ profile.leader || '-' }}</t-descriptions-item>
@@ -92,6 +92,16 @@
             @submit="handleUpdateProfile"
           >
             <t-row :gutter="[24, 24]">
+              <t-col :xs="24" :sm="12">
+                <t-form-item label="角色">
+                  <t-input :value="formatList(displayedRoles)" readonly />
+                </t-form-item>
+              </t-col>
+              <t-col :xs="24" :sm="12">
+                <t-form-item label="所属部门">
+                  <t-input :value="formatList(displayedOrgUnits)" readonly />
+                </t-form-item>
+              </t-col>
               <t-col :xs="24" :sm="12">
                 <t-form-item label="姓名" name="name">
                   <t-input v-model="profileForm.name" placeholder="请输入姓名" />
@@ -277,6 +287,20 @@ const formatList = (items?: string[]) => {
   if (!items || items.length === 0) return '-';
   return items.join(' / ');
 };
+
+const displayedRoles = computed(() => {
+  if (profile.value?.roles && profile.value.roles.length > 0) {
+    return profile.value.roles;
+  }
+  return userStore.userInfo?.roles || [];
+});
+
+const displayedOrgUnits = computed(() => {
+  if (profile.value?.orgUnitNames && profile.value.orgUnitNames.length > 0) {
+    return profile.value.orgUnitNames;
+  }
+  return userStore.userInfo?.orgUnitNames || [];
+});
 
 // 资料表单
 const profileFormRef = ref<FormInstanceFunctions>();
