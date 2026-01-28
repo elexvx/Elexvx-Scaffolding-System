@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 
-import { usePermissionStore } from '@/store';
+import { useNotificationStore, usePermissionStore } from '@/store';
 import type { LoginResponse, UserInfo } from '@/types/interface';
 import { clearTokenStorage, saveToken } from '@/utils/secureToken';
 import { clearTokenExpireTimer } from '@/utils/tokenExpire';
@@ -119,6 +119,7 @@ export const useUserStore = defineStore('user', {
       this.tokenExpiresAt = null;
       this.userInfo = { ...InitUserInfo };
       this.userInfoLoaded = false;
+      useNotificationStore().stopSocket();
       const { useTabsRouterStore } = await import('@/store/modules/tabs-router');
       if (typeof window !== 'undefined') {
         window.localStorage.removeItem('tabsRouter');

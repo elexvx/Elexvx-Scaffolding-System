@@ -1,4 +1,16 @@
+import { resolveApiHost } from '@/utils/apiHost';
 import { request } from '@/utils/request';
+
+export interface NotificationSocketPayload {
+  type: string;
+  token?: string;
+  clientId?: string;
+  userId?: number;
+  message?: string;
+  category?: string;
+  priority?: string;
+  timestamp?: number;
+}
 
 export interface NotificationPayload {
   id?: number;
@@ -85,3 +97,37 @@ export function deleteNotification(id: number) {
 export function broadcastNotification(payload: NotificationPayload) {
   return request.post<NotificationItem>({ url: '/notification/broadcast', data: payload });
 }
+
+const resolveSocketBase = () => {
+  const envUrl = import.meta.env.VITE_NETTY_WS_URL;
+  if (envUrl) return envUrl;
+  const apiHost = resolveApiHost();
+  if (apiHost) {
+    try {
+      const parsed = new URL(apiHost);
+      const protocol = parsed.protocol === 'https:' ? 'wss:' : 'ws:';
+      const portOverride = import.meta.env.VITE_NETTY_PORT;
+      const port = portOverride || parsed.port;
+      const host = parsed.hostname;
+      const finalPort = port ? `:${port}` : '';
+      return `${protocol}//${host}${finalPort}`;
+    } catch {
+      return '';
+    }
+  }
+  if (typeof window !== 'undefined') {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const portOverride = import.meta.env.VITE_NETTY_PORT;
+    const port = portOverride || window.location.port;
+    const host = window.location.hostname;
+    const finalPort = port ? `:${port}` : '';
+    return `${protocol}//${host}${finalPort}`;
+  }
+  return '';
+};
+
+export const createNotificationSocketUrl = () => {
+  const base = resolveSocketBase();
+  if (!base) return '';
+  return `${base}/ws`;
+};
