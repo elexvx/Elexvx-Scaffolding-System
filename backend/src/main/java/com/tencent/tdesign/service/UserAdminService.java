@@ -5,8 +5,10 @@ import com.tencent.tdesign.dao.AuthQueryDao;
 import com.tencent.tdesign.dto.UserCreateRequest;
 import com.tencent.tdesign.dto.UserUpdateRequest;
 import com.tencent.tdesign.entity.UserEntity;
+import com.tencent.tdesign.mapper.OrgUnitMapper;
 import com.tencent.tdesign.mapper.RoleMapper;
 import com.tencent.tdesign.mapper.UserMapper;
+import com.tencent.tdesign.mapper.UserOrgUnitMapper;
 import com.tencent.tdesign.util.SensitiveMaskUtil;
 import com.tencent.tdesign.vo.PageResult;
 import com.tencent.tdesign.vo.UserListItem;
@@ -25,6 +27,8 @@ public class UserAdminService {
   private final UserMapper userMapper;
   private final RoleMapper roleMapper;
   private final AuthQueryDao authDao;
+  private final OrgUnitMapper orgUnitMapper;
+  private final UserOrgUnitMapper userOrgUnitMapper;
   private final OperationLogService operationLogService;
   private final PermissionFacade permissionFacade;
   private final PasswordPolicyService passwordPolicyService;
@@ -33,6 +37,8 @@ public class UserAdminService {
     UserMapper userMapper,
     RoleMapper roleMapper,
     AuthQueryDao authDao,
+    OrgUnitMapper orgUnitMapper,
+    UserOrgUnitMapper userOrgUnitMapper,
     OperationLogService operationLogService,
     PermissionFacade permissionFacade,
     PasswordPolicyService passwordPolicyService
@@ -40,6 +46,8 @@ public class UserAdminService {
     this.userMapper = userMapper;
     this.roleMapper = roleMapper;
     this.authDao = authDao;
+    this.orgUnitMapper = orgUnitMapper;
+    this.userOrgUnitMapper = userOrgUnitMapper;
     this.operationLogService = operationLogService;
     this.permissionFacade = permissionFacade;
     this.passwordPolicyService = passwordPolicyService;
@@ -50,17 +58,30 @@ public class UserAdminService {
     description = "查询用户列表，支持按账号或姓名模糊搜索",
     requiredPermissions = { "system:SystemUser:query" }
   )
-  public PageResult<UserListItem> page(String keyword, int page, int size) {
+  public PageResult<UserListItem> page(
+    String keyword,
+    String mobile,
+    Long orgUnitId,
+    Integer status,
+    java.time.LocalDateTime startTime,
+    java.time.LocalDateTime endTime,
+    int page,
+    int size
+  ) {
     int safePage = Math.max(page, 0);
     int safeSize = Math.min(Math.max(size, 1), 200);
     int offset = safePage * safeSize;
     String kw = (keyword == null || keyword.isBlank()) ? null : keyword.trim();
-    List<UserEntity> rows = userMapper.selectPage(kw, offset, safeSize);
-    long total = userMapper.countByKeyword(kw);
+    String mobileKeyword = (mobile == null || mobile.isBlank()) ? null : mobile.trim();
+    List<UserEntity> rows =
+      userMapper.selectPage(kw, mobileKeyword, orgUnitId, status, startTime, endTime, offset, safeSize);
+    long total = userMapper.countByKeyword(kw, mobileKeyword, orgUnitId, status, startTime, endTime);
     List<UserListItem> list = new ArrayList<>();
     for (UserEntity u : rows) {
       UserListItem item = toListItem(u);
       item.setRoles(authDao.findRoleNamesByUserId(Objects.requireNonNull(u.getId())));
+      item.setOrgUnitNames(orgUnitMapper.selectNamesByUserId(u.getId()));
+      item.setOrgUnitIds(orgUnitMapper.selectIdsByUserId(u.getId()));
       list.add(item);
     }
     return new PageResult<>(list, total);
@@ -75,6 +96,8 @@ public class UserAdminService {
     UserEntity u = Optional.ofNullable(userMapper.selectById(id)).orElseThrow(() -> new IllegalArgumentException("用户不存在"));
     UserListItem item = toListItem(u);
     item.setRoles(authDao.findRoleNamesByUserId(id));
+    item.setOrgUnitNames(orgUnitMapper.selectNamesByUserId(id));
+    item.setOrgUnitIds(orgUnitMapper.selectIdsByUserId(id));
     return item;
   }
 
@@ -97,6 +120,7 @@ public class UserAdminService {
     u.setPosition(req.getPosition());
     u.setJoinDay(req.getJoinDay());
     u.setTeam(req.getTeam());
+    u.setStatus(req.getStatus() == null ? 1 : req.getStatus());
 
     String pwd = (req.getPassword() == null || req.getPassword().isBlank()) ? "123456" : req.getPassword();
     // 创建账号时也使用统一密码规范校验
@@ -108,6 +132,7 @@ public class UserAdminService {
     List<String> roles = normalizedRoles.isEmpty() ? List.of("user") : normalizedRoles;
     ensureRolesExist(roles);
     authDao.replaceUserRoles(u.getId(), roles);
+    replaceOrgUnits(u.getId(), req.getOrgUnitIds());
 
     operationLogService.log("CREATE", "用户管理", "创建用户: " + u.getAccount());
     return get(u.getId());
@@ -128,6 +153,7 @@ public class UserAdminService {
     if (req.getPosition() != null) u.setPosition(req.getPosition());
     if (req.getJoinDay() != null) u.setJoinDay(req.getJoinDay());
     if (req.getTeam() != null) u.setTeam(req.getTeam());
+    if (req.getStatus() != null) u.setStatus(req.getStatus());
     ensureGuid(u);
     saveUser(u);
 
@@ -138,6 +164,9 @@ public class UserAdminService {
       }
       ensureRolesExist(roles);
       authDao.replaceUserRoles(id, roles);
+    }
+    if (req.getOrgUnitIds() != null) {
+      replaceOrgUnits(id, req.getOrgUnitIds());
     }
     operationLogService.log("UPDATE", "用户管理", "更新用户: " + u.getAccount());
     return get(id);
@@ -227,7 +256,18 @@ public class UserAdminService {
     item.setPosition(u.getPosition());
     item.setJoinDay(u.getJoinDay());
     item.setTeam(u.getTeam());
+    item.setStatus(u.getStatus());
+    item.setCreatedAt(u.getCreatedAt());
     return item;
+  }
+
+  private void replaceOrgUnits(Long userId, List<Long> orgUnitIds) {
+    userOrgUnitMapper.deleteByUserId(userId);
+    if (orgUnitIds == null || orgUnitIds.isEmpty()) return;
+    List<Long> cleaned = orgUnitIds.stream().filter(Objects::nonNull).distinct().toList();
+    if (!cleaned.isEmpty()) {
+      userOrgUnitMapper.insertUserOrgUnits(userId, cleaned);
+    }
   }
 
   private UserEntity saveUser(UserEntity user) {

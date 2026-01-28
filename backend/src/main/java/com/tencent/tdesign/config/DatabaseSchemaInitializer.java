@@ -30,6 +30,9 @@ public class DatabaseSchemaInitializer implements SmartLifecycle {
 
     try {
       ensureUsersTable();
+      ensureOrgUnitsTable();
+      ensureOrgUnitLeadersTable();
+      ensureUserOrgUnitsTable();
       ensureRolesTables();
       ensureMenuItemsTable();
       ensureRoleMenusTable();
@@ -105,7 +108,10 @@ public class DatabaseSchemaInitializer implements SmartLifecycle {
           "leader VARCHAR(64), " +
           "position VARCHAR(64), " +
           "join_day DATE, " +
-          "team VARCHAR(255)" +
+          "team VARCHAR(255), " +
+          "status TINYINT NOT NULL DEFAULT 1, " +
+          "created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, " +
+          "updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP" +
           ")"
       );
       return;
@@ -122,6 +128,66 @@ public class DatabaseSchemaInitializer implements SmartLifecycle {
     ensureColumn("users", "position", "VARCHAR(64) NULL");
     ensureColumn("users", "join_day", "DATE NULL");
     ensureColumn("users", "team", "VARCHAR(255) NULL");
+    ensureColumn("users", "status", "TINYINT NULL");
+    ensureColumn("users", "created_at", "DATETIME NULL");
+    ensureColumn("users", "updated_at", "DATETIME NULL");
+  }
+
+  private void ensureOrgUnitsTable() {
+    if (!tableExists("org_units")) {
+      log.info("创建表 org_units");
+      jdbc.execute(
+        "CREATE TABLE IF NOT EXISTS org_units (" +
+          "id BIGINT PRIMARY KEY AUTO_INCREMENT, " +
+          "parent_id BIGINT NULL, " +
+          "name VARCHAR(128) NOT NULL, " +
+          "short_name VARCHAR(64), " +
+          "type VARCHAR(32) NOT NULL, " +
+          "sort_order INT NOT NULL DEFAULT 0, " +
+          "status TINYINT NOT NULL DEFAULT 1, " +
+          "phone VARCHAR(32), " +
+          "email VARCHAR(128), " +
+          "created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, " +
+          "updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP" +
+          ")"
+      );
+      return;
+    }
+    ensureColumn("org_units", "parent_id", "BIGINT NULL");
+    ensureColumn("org_units", "short_name", "VARCHAR(64) NULL");
+    ensureColumn("org_units", "type", "VARCHAR(32) NULL");
+    ensureColumn("org_units", "sort_order", "INT NULL");
+    ensureColumn("org_units", "status", "TINYINT NULL");
+    ensureColumn("org_units", "phone", "VARCHAR(32) NULL");
+    ensureColumn("org_units", "email", "VARCHAR(128) NULL");
+    ensureColumn("org_units", "created_at", "DATETIME NULL");
+    ensureColumn("org_units", "updated_at", "DATETIME NULL");
+  }
+
+  private void ensureOrgUnitLeadersTable() {
+    if (!tableExists("org_unit_leaders")) {
+      log.info("创建表 org_unit_leaders");
+      jdbc.execute(
+        "CREATE TABLE IF NOT EXISTS org_unit_leaders (" +
+          "org_unit_id BIGINT NOT NULL, " +
+          "user_id BIGINT NOT NULL, " +
+          "PRIMARY KEY (org_unit_id, user_id)" +
+          ")"
+      );
+    }
+  }
+
+  private void ensureUserOrgUnitsTable() {
+    if (!tableExists("user_org_units")) {
+      log.info("创建表 user_org_units");
+      jdbc.execute(
+        "CREATE TABLE IF NOT EXISTS user_org_units (" +
+          "user_id BIGINT NOT NULL, " +
+          "org_unit_id BIGINT NOT NULL, " +
+          "PRIMARY KEY (user_id, org_unit_id)" +
+          ")"
+      );
+    }
   }
 
   private void ensureRolesTables() {

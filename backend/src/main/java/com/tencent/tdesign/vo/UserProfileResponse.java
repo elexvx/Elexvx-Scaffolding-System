@@ -25,6 +25,8 @@ public class UserProfileResponse {
   private String introduction;
   private String avatar;
   private String tags;
+  private java.util.List<String> roles;
+  private java.util.List<String> orgUnitNames;
 
   public Long getId() {
     return id;
@@ -200,5 +202,21 @@ public class UserProfileResponse {
 
   public void setTags(String tags) {
     this.tags = tags;
+  }
+
+  public java.util.List<String> getRoles() {
+    return roles;
+  }
+
+  public void setRoles(java.util.List<String> roles) {
+    this.roles = roles;
+  }
+
+  public java.util.List<String> getOrgUnitNames() {
+    return orgUnitNames;
+  }
+
+  public void setOrgUnitNames(java.util.List<String> orgUnitNames) {
+    this.orgUnitNames = orgUnitNames;
   }
 }

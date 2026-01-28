@@ -32,11 +32,18 @@ public class SystemUserController {
   @GetMapping("/page")
   public ApiResponse<PageResult<UserListItem>> page(
     @RequestParam(required = false) String keyword,
+    @RequestParam(required = false) String mobile,
+    @RequestParam(required = false) Long orgUnitId,
+    @RequestParam(required = false) Integer status,
+    @RequestParam(required = false) String startTime,
+    @RequestParam(required = false) String endTime,
     @RequestParam(defaultValue = "0") int page,
     @RequestParam(defaultValue = "10") int size
   ) {
     PermissionUtil.check("system:SystemUser:query");
-    return ApiResponse.success(userAdminService.page(keyword, page, size));
+    java.time.LocalDateTime start = parseDateTime(startTime);
+    java.time.LocalDateTime end = parseDateTime(endTime);
+    return ApiResponse.success(userAdminService.page(keyword, mobile, orgUnitId, status, start, end, page, size));
   }
 
   @GetMapping("/{id}")
@@ -73,5 +80,19 @@ public class SystemUserController {
   public ApiResponse<Boolean> resetPassword(@PathVariable long id, @RequestParam(required = false) String password) {
     PermissionUtil.check("system:SystemUser:update");
     return ApiResponse.success(userAdminService.resetPassword(id, password));
+  }
+
+  private java.time.LocalDateTime parseDateTime(String value) {
+    if (value == null || value.isBlank()) return null;
+    try {
+      return java.time.LocalDateTime.parse(value);
+    } catch (Exception ignored) {
+      try {
+        java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        return java.time.LocalDateTime.parse(value, formatter);
+      } catch (Exception ignored2) {
+        return null;
+      }
+    }
   }
 }

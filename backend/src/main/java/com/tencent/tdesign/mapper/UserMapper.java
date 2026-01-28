@@ -1,6 +1,7 @@
 package com.tencent.tdesign.mapper;
 
 import com.tencent.tdesign.entity.UserEntity;
+import java.util.Collection;
 import java.util.List;
 import org.apache.ibatis.annotations.Param;
 
@@ -11,9 +12,26 @@ public interface UserMapper {
   UserEntity selectByPhone(@Param("phone") String phone);
   UserEntity selectByEmail(@Param("email") String email);
   List<UserEntity> selectAll();
+  List<UserEntity> selectByIds(@Param("ids") Collection<Long> ids);
   List<Long> selectAllIds();
-  List<UserEntity> selectPage(@Param("keyword") String keyword, @Param("offset") int offset, @Param("limit") int limit);
-  long countByKeyword(@Param("keyword") String keyword);
+  List<UserEntity> selectPage(
+    @Param("keyword") String keyword,
+    @Param("mobile") String mobile,
+    @Param("orgUnitId") Long orgUnitId,
+    @Param("status") Integer status,
+    @Param("startTime") java.time.LocalDateTime startTime,
+    @Param("endTime") java.time.LocalDateTime endTime,
+    @Param("offset") int offset,
+    @Param("limit") int limit
+  );
+  long countByKeyword(
+    @Param("keyword") String keyword,
+    @Param("mobile") String mobile,
+    @Param("orgUnitId") Long orgUnitId,
+    @Param("status") Integer status,
+    @Param("startTime") java.time.LocalDateTime startTime,
+    @Param("endTime") java.time.LocalDateTime endTime
+  );
   long countByAccount(@Param("account") String account);
   long countByEmailIgnoreCase(@Param("email") String email);
   long countByIdCard(@Param("idCard") String idCard);

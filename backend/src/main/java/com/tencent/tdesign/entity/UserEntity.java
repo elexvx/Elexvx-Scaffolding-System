@@ -1,6 +1,7 @@
 package com.tencent.tdesign.entity;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 public class UserEntity {
   private Long id;
@@ -50,6 +51,12 @@ public class UserEntity {
   private String avatar;
 
   private String tags;
+
+  private Integer status;
+
+  private LocalDateTime createdAt;
+
+  private LocalDateTime updatedAt;
 
   public Long getId() {
     return id;
@@ -241,5 +248,29 @@ public class UserEntity {
 
   public void setTags(String tags) {
     this.tags = tags;
+  }
+
+  public Integer getStatus() {
+    return status;
+  }
+
+  public void setStatus(Integer status) {
+    this.status = status;
+  }
+
+  public LocalDateTime getCreatedAt() {
+    return createdAt;
+  }
+
+  public void setCreatedAt(LocalDateTime createdAt) {
+    this.createdAt = createdAt;
+  }
+
+  public LocalDateTime getUpdatedAt() {
+    return updatedAt;
+  }
+
+  public void setUpdatedAt(LocalDateTime updatedAt) {
+    this.updatedAt = updatedAt;
   }
 }

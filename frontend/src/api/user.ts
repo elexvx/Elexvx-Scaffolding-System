@@ -23,6 +23,8 @@ export interface UserProfile {
   introduction: string;
   avatar: string;
   tags: string;
+  roles?: string[];
+  orgUnitNames?: string[];
 }
 
 export interface UserProfileUpdate {

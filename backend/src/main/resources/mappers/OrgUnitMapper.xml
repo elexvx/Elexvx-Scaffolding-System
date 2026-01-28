@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tencent.tdesign.mapper.OrgUnitMapper">
+  <sql id="BaseSelect">
+    SELECT id,
+      parent_id,
+      name,
+      short_name,
+      type,
+      sort_order,
+      status,
+      phone,
+      email,
+      created_at,
+      updated_at
+    FROM org_units
+  </sql>
+
+  <select id="selectById" resultType="com.tencent.tdesign.entity.OrgUnitEntity">
+    <include refid="BaseSelect" />
+    WHERE id = #{id}
+  </select>
+
+  <select id="selectAll" resultType="com.tencent.tdesign.entity.OrgUnitEntity">
+    <include refid="BaseSelect" />
+    ORDER BY sort_order ASC, id ASC
+  </select>
+
+  <select id="selectByUserId" resultType="com.tencent.tdesign.entity.OrgUnitEntity">
+    <include refid="BaseSelect" />
+    WHERE id IN (
+      SELECT org_unit_id FROM user_org_units WHERE user_id = #{userId}
+    )
+    ORDER BY sort_order ASC, id ASC
+  </select>
+
+  <select id="selectNamesByUserId" resultType="string">
+    SELECT ou.name
+    FROM org_units ou
+    JOIN user_org_units uou ON uou.org_unit_id = ou.id
+    WHERE uou.user_id = #{userId}
+    ORDER BY ou.sort_order ASC, ou.id ASC
+  </select>
+
+  <select id="selectIdsByUserId" resultType="long">
+    SELECT org_unit_id
+    FROM user_org_units
+    WHERE user_id = #{userId}
+  </select>
+
+  <select id="selectByIds" resultType="com.tencent.tdesign.entity.OrgUnitEntity">
+    <include refid="BaseSelect" />
+    WHERE id IN
+    <foreach collection="ids" item="id" open="(" close=")" separator=",">
+      #{id}
+    </foreach>
+  </select>
+
+  <insert id="insert" parameterType="com.tencent.tdesign.entity.OrgUnitEntity" useGeneratedKeys="true" keyProperty="id">
+    INSERT INTO org_units (
+      parent_id,
+      name,
+      short_name,
+      type,
+      sort_order,
+      status,
+      phone,
+      email
+    )
+    VALUES (
+      #{parentId},
+      #{name},
+      #{shortName},
+      #{type},
+      #{sortOrder},
+      #{status},
+      #{phone},
+      #{email}
+    )
+  </insert>
+
+  <update id="update" parameterType="com.tencent.tdesign.entity.OrgUnitEntity">
+    UPDATE org_units
+    SET
+      parent_id = #{parentId},
+      name = #{name},
+      short_name = #{shortName},
+      type = #{type},
+      sort_order = #{sortOrder},
+      status = #{status},
+      phone = #{phone},
+      email = #{email}
+    WHERE id = #{id}
+  </update>
+
+  <delete id="deleteById">
+    DELETE FROM org_units WHERE id = #{id}
+  </delete>
+
+  <select id="countChildren" resultType="long">
+    SELECT COUNT(1) FROM org_units WHERE parent_id = #{id}
+  </select>
+</mapper>

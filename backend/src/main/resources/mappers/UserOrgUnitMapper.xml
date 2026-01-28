@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tencent.tdesign.mapper.UserOrgUnitMapper">
+  <select id="selectOrgUnitIdsByUserId" resultType="long">
+    SELECT org_unit_id
+    FROM user_org_units
+    WHERE user_id = #{userId}
+  </select>
+
+  <delete id="deleteByUserId">
+    DELETE FROM user_org_units WHERE user_id = #{userId}
+  </delete>
+
+  <insert id="insertUserOrgUnits">
+    INSERT INTO user_org_units (user_id, org_unit_id)
+    VALUES
+    <foreach collection="orgUnitIds" item="orgUnitId" separator=",">
+      (#{userId}, #{orgUnitId})
+    </foreach>
+  </insert>
+</mapper>

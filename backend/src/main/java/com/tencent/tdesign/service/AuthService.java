@@ -16,6 +16,7 @@ import com.tencent.tdesign.dto.ChangePasswordRequest;
 import com.tencent.tdesign.dto.ForgotPasswordRequest;
 import com.tencent.tdesign.entity.UserEntity;
 import com.tencent.tdesign.entity.VerificationSetting;
+import com.tencent.tdesign.mapper.OrgUnitMapper;
 import com.tencent.tdesign.mapper.UserMapper;
 import com.tencent.tdesign.mapper.RoleMapper;
 import com.tencent.tdesign.vo.LoginResponse;
@@ -38,6 +39,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class AuthService {
   private final UserMapper userMapper;
+  private final OrgUnitMapper orgUnitMapper;
   private final UiSettingService uiSettingService;
   private final RoleMapper roleMapper;
   private final AuthQueryDao authDao;
@@ -56,7 +58,8 @@ public class AuthService {
   private final SecuritySettingService securitySettingService;
 
   public AuthService(
-      UserMapper userMapper,
+    UserMapper userMapper,
+    OrgUnitMapper orgUnitMapper,
       UiSettingService uiSettingService,
       RoleMapper roleMapper,
       AuthQueryDao authDao,
@@ -74,6 +77,7 @@ public class AuthService {
       VerificationSettingService verificationSettingService,
       SecuritySettingService securitySettingService) {
     this.userMapper = userMapper;
+    this.orgUnitMapper = orgUnitMapper;
     this.uiSettingService = uiSettingService;
     this.roleMapper = roleMapper;
     this.authDao = authDao;
@@ -525,7 +529,7 @@ public class AuthService {
     long userId = StpUtil.getLoginIdAsLong();
     UserEntity user = Optional.ofNullable(userMapper.selectById(userId))
         .orElseThrow(() -> new IllegalArgumentException("用户不存在"));
-    return toProfile(user);
+    return enrichProfile(toProfile(user), userId);
   }
 
   @Transactional
@@ -585,7 +589,13 @@ public class AuthService {
     }
     operationLogService.log("UPDATE", "个人资料", "更新个人资料");
 
-    return toProfile(u);
+    return enrichProfile(toProfile(u), userId);
+  }
+
+  private UserProfileResponse enrichProfile(UserProfileResponse profile, long userId) {
+    profile.setRoles(permissionFacade.getEffectiveRoles(userId));
+    profile.setOrgUnitNames(orgUnitMapper.selectNamesByUserId(userId));
+    return profile;
   }
 
   private UserProfileResponse toProfile(UserEntity u) {
