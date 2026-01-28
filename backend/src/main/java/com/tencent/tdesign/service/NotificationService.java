@@ -4,6 +4,7 @@ import cn.dev33.satoken.stp.StpUtil;
 import com.tencent.tdesign.dto.NotificationUpsertRequest;
 import com.tencent.tdesign.entity.Notification;
 import com.tencent.tdesign.mapper.NotificationMapper;
+import com.tencent.tdesign.socket.NettySocketService;
 import com.tencent.tdesign.util.PermissionUtil;
 import com.tencent.tdesign.vo.NotificationResponse;
 import com.tencent.tdesign.vo.NotificationSummary;
@@ -22,15 +23,18 @@ public class NotificationService {
   private final NotificationMapper mapper;
   private final MessageService messageService;
   private final OperationLogService operationLogService;
+  private final Optional<NettySocketService> nettySocketService;
 
   public NotificationService(
     NotificationMapper mapper,
     MessageService messageService,
-    OperationLogService operationLogService
+    OperationLogService operationLogService,
+    Optional<NettySocketService> nettySocketService
   ) {
     this.mapper = mapper;
     this.messageService = messageService;
     this.operationLogService = operationLogService;
+    this.nettySocketService = nettySocketService;
   }
 
   @Transactional
@@ -175,6 +179,7 @@ public class NotificationService {
         : stripHtml(n.getContent());
       String message = n.getTitle() + "\uff1a" + trimPreview(content, 120);
       messageService.broadcast(message, "notification", priorityToQuality(n.getPriority()));
+      nettySocketService.ifPresent(service -> service.broadcastNotification(n, message));
     } catch (Exception e) {
       operationLogService.log("WARN", "\u901a\u77e5\u7ba1\u7406", "\u901a\u77e5\u63a8\u9001\u5931\u8d25: " + e.getMessage());
     }

@@ -5,7 +5,7 @@ import { MessagePlugin } from 'tdesign-vue-next';
 import type { RouteRecordRaw } from 'vue-router';
 
 import router from '@/router';
-import { getPermissionStore, useAppStore, useSettingStore, useUserStore } from '@/store';
+import { getPermissionStore, useAppStore, useNotificationStore, useSettingStore, useUserStore } from '@/store';
 import { PAGE_NOT_FOUND_ROUTE } from '@/utils/route/constant';
 import { clearTokenStorage } from '@/utils/secureToken';
 import { handleTokenExpired, isLocalTokenExpired, setTokenExpireTimer } from '@/utils/tokenExpire';
@@ -118,6 +118,7 @@ router.beforeEach(async (to, from, next) => {
     if (isAuthPage(to.path)) {
       try {
         await userStore.getUserInfo();
+        useNotificationStore().startSocket();
         const { asyncRoutes } = permissionStore;
         if (asyncRoutes && asyncRoutes.length === 0) {
           const routeList = await permissionStore.buildAsyncRoutes(userStore.userInfo);
@@ -150,6 +151,7 @@ router.beforeEach(async (to, from, next) => {
     }
     try {
       await userStore.getUserInfo();
+      useNotificationStore().startSocket();
 
       const { asyncRoutes } = permissionStore;
 

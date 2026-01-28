@@ -1,7 +1,7 @@
 import { MessagePlugin } from 'tdesign-vue-next';
 
 import router from '@/router';
-import { useUserStore } from '@/store';
+import { useNotificationStore, useUserStore } from '@/store';
 import { clearTokenStorage } from '@/utils/secureToken';
 
 /**
@@ -81,6 +81,7 @@ export function handleTokenExpired() {
   userStore.tokenExpiresAt = null;
   userStore.userInfoLoaded = false;
   clearTokenStorage();
+  useNotificationStore().stopSocket();
 
   // 显示提示信息
   MessagePlugin.warning('登录状态已过期，请重新登录');
