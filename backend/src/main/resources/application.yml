@@ -8,12 +8,14 @@ spring:
     banner-mode: console # 控制台显示 Banner
     log-startup-info: false # 是否打印启动信息日志
   datasource:
-    # 数据库连接 URL（可通过 MYSQL_URL 覆盖）
-    url: ${MYSQL_URL:jdbc:mysql://localhost:3306/tdesign?createDatabaseIfNotExist=true&useSSL=false&characterEncoding=utf8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true}
-    # 数据库用户名（可通过 MYSQL_USER 覆盖）
-    username: ${MYSQL_USER:root}
-    # 数据库密码（可通过 MYSQL_PASSWORD 覆盖）
-    password: ${MYSQL_PASSWORD:123456}
+    # 数据库连接 URL（可通过 TDESIGN_DB_URL 覆盖）
+    url: ${TDESIGN_DB_URL:jdbc:mysql://localhost:3306/tdesign?createDatabaseIfNotExist=true&useSSL=false&characterEncoding=utf8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true}
+    # 数据库用户名（可通过 TDESIGN_DB_USER 覆盖）
+    username: ${TDESIGN_DB_USER:root}
+    # 数据库密码（可通过 TDESIGN_DB_PASSWORD 覆盖）
+    password: ${TDESIGN_DB_PASSWORD:123456}
+    # 数据库驱动（可通过 TDESIGN_DB_DRIVER 覆盖）
+    driver-class-name: ${TDESIGN_DB_DRIVER:com.mysql.cj.jdbc.Driver}
     # 数据库连接池类型（使用 Druid）
     type: com.alibaba.druid.pool.DruidDataSource
   flyway:
@@ -45,6 +47,29 @@ mybatis:
 
 # 自定义配置
 tdesign:
+  db:
+    # 数据库类型（mysql/postgresql/oracle/sqlserver）
+    type: ${TDESIGN_DB_TYPE:mysql}
+    # 数据库方言（用于 DDL 生成、SQL 兼容提示）
+    dialect: ${TDESIGN_DB_DIALECT:mysql}
+    # 连接模板（按需替换 spring.datasource.*）
+    templates:
+      mysql:
+        url: jdbc:mysql://localhost:3306/tdesign?createDatabaseIfNotExist=true&useSSL=false&characterEncoding=utf8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        dialect: mysql
+      postgresql:
+        url: jdbc:postgresql://localhost:5432/tdesign
+        driver-class-name: org.postgresql.Driver
+        dialect: postgresql
+      oracle:
+        url: jdbc:oracle:thin:@localhost:1521/tdesign
+        driver-class-name: oracle.jdbc.OracleDriver
+        dialect: oracle
+      sqlserver:
+        url: jdbc:sqlserver://localhost:1433;databaseName=tdesign;encrypt=false
+        driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+        dialect: sqlserver
   system:
     version: ${TDESIGN_SYSTEM_VERSION:1.0.0}
     update-check-url: ${TDESIGN_UPDATE_CHECK_URL:}

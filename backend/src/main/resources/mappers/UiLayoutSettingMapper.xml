@@ -7,7 +7,17 @@
     SELECT id, default_home, show_footer, is_sidebar_compact, show_breadcrumb, menu_auto_collapsed, layout, split_menu, side_mode, is_footer_aside, is_sidebar_fixed, is_header_fixed, is_use_tabs_router, show_header
     FROM ui_layout_settings
     ORDER BY id ASC
-    LIMIT 1
+    <choose>
+      <when test="_databaseId == 'sqlserver'">
+        OFFSET 0 ROWS FETCH NEXT 1 ROWS ONLY
+      </when>
+      <when test="_databaseId == 'oracle'">
+        FETCH FIRST 1 ROWS ONLY
+      </when>
+      <otherwise>
+        LIMIT 1
+      </otherwise>
+    </choose>
   </select>
 
   <insert id="insert" parameterType="com.tencent.tdesign.entity.UiLayoutSetting" useGeneratedKeys="true" keyProperty="id">

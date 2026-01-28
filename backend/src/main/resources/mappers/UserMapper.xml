@@ -80,12 +80,12 @@
     <include refid="BaseSelect" />
     <where>
       <if test="keyword != null and keyword != ''">
-        AND (account LIKE CONCAT('%', #{keyword}, '%')
-          OR name LIKE CONCAT('%', #{keyword}, '%'))
+        AND (account LIKE CONCAT(CONCAT('%', #{keyword}), '%')
+          OR name LIKE CONCAT(CONCAT('%', #{keyword}), '%'))
       </if>
       <if test="mobile != null and mobile != ''">
-        AND (mobile LIKE CONCAT('%', #{mobile}, '%')
-          OR phone LIKE CONCAT('%', #{mobile}, '%'))
+        AND (mobile LIKE CONCAT(CONCAT('%', #{mobile}), '%')
+          OR phone LIKE CONCAT(CONCAT('%', #{mobile}), '%'))
       </if>
       <if test="status != null">
         AND status = #{status}
@@ -103,7 +103,14 @@
       </if>
     </where>
     ORDER BY id ASC
-    LIMIT #{limit} OFFSET #{offset}
+    <choose>
+      <when test="_databaseId == 'oracle' or _databaseId == 'sqlserver'">
+        OFFSET #{offset} ROWS FETCH NEXT #{limit} ROWS ONLY
+      </when>
+      <otherwise>
+        LIMIT #{limit} OFFSET #{offset}
+      </otherwise>
+    </choose>
   </select>
 
   <select id="countByKeyword" resultType="long">
@@ -111,12 +118,12 @@
     FROM users
     <where>
       <if test="keyword != null and keyword != ''">
-        AND (account LIKE CONCAT('%', #{keyword}, '%')
-          OR name LIKE CONCAT('%', #{keyword}, '%'))
+        AND (account LIKE CONCAT(CONCAT('%', #{keyword}), '%')
+          OR name LIKE CONCAT(CONCAT('%', #{keyword}), '%'))
       </if>
       <if test="mobile != null and mobile != ''">
-        AND (mobile LIKE CONCAT('%', #{mobile}, '%')
-          OR phone LIKE CONCAT('%', #{mobile}, '%'))
+        AND (mobile LIKE CONCAT(CONCAT('%', #{mobile}), '%')
+          OR phone LIKE CONCAT(CONCAT('%', #{mobile}), '%'))
       </if>
       <if test="status != null">
         AND status = #{status}

@@ -24,7 +24,14 @@
   <select id="selectPage" resultType="com.tencent.tdesign.entity.FileResource">
     <include refid="BaseSelect" />
     ORDER BY created_at DESC
-    LIMIT #{limit} OFFSET #{offset}
+    <choose>
+      <when test="_databaseId == 'oracle' or _databaseId == 'sqlserver'">
+        OFFSET #{offset} ROWS FETCH NEXT #{limit} ROWS ONLY
+      </when>
+      <otherwise>
+        LIMIT #{limit} OFFSET #{offset}
+      </otherwise>
+    </choose>
   </select>
 
   <select id="count" resultType="long">

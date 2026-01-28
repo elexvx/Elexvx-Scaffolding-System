@@ -16,7 +16,17 @@
       public_read
     FROM storage_settings
     ORDER BY id ASC
-    LIMIT 1
+    <choose>
+      <when test="_databaseId == 'sqlserver'">
+        OFFSET 0 ROWS FETCH NEXT 1 ROWS ONLY
+      </when>
+      <when test="_databaseId == 'oracle'">
+        FETCH FIRST 1 ROWS ONLY
+      </when>
+      <otherwise>
+        LIMIT 1
+      </otherwise>
+    </choose>
   </select>
 
   <insert id="insert" parameterType="com.tencent.tdesign.entity.StorageSetting" useGeneratedKeys="true" keyProperty="id">
