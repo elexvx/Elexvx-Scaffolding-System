@@ -28,6 +28,9 @@
             {{ row.status === 1 ? '正常' : '停用' }}
           </t-tag>
         </template>
+        <template #createdAt="{ row }">
+          <span>{{ formatTime(row.createdAt) }}</span>
+        </template>
         <template #op="{ row }">
           <t-space class="org-table-actions">
             <t-link theme="primary" @click="openCreate(row)">新增</t-link>
@@ -181,6 +184,7 @@
 <script setup lang="ts">
 import type { FormInstanceFunctions, FormRule, PageInfo, PrimaryTableCol } from 'tdesign-vue-next';
 import { DialogPlugin, MessagePlugin } from 'tdesign-vue-next';
+import dayjs from 'dayjs';
 import { computed, onMounted, reactive, ref } from 'vue';
 
 import { request } from '@/utils/request';
@@ -429,7 +433,9 @@ const applyFilter = (nodes: OrgUnitNode[], keywordValue?: string, status?: numbe
   const matched: OrgUnitNode[] = [];
   nodes.forEach((node) => {
     const children = node.children ? applyFilter(node.children, keywordValue, status) : [];
-    const keywordMatch = keywordValue ? node.name.includes(keywordValue) : true;
+    const keywordMatch = keywordValue
+      ? node.name.includes(keywordValue) || node.shortName?.includes(keywordValue)
+      : true;
     const statusMatch = status == null ? true : node.status === status;
     if ((keywordMatch && statusMatch) || children.length > 0) {
       matched.push({ ...node, children });
@@ -442,7 +448,7 @@ const filterTreeByKeyword = (nodes: OrgUnitNode[], keywordValue: string): OrgUni
   const matched: OrgUnitNode[] = [];
   nodes.forEach((node) => {
     const children = node.children ? filterTreeByKeyword(node.children, keywordValue) : [];
-    if (node.name.includes(keywordValue) || children.length > 0) {
+    if (node.name.includes(keywordValue) || node.shortName?.includes(keywordValue) || children.length > 0) {
       matched.push({ ...node, children });
     }
   });
@@ -511,6 +517,11 @@ const confirmLeaderSelection = () => {
   form.leaderIds = leaderSelection.value.map((user) => user.id);
   selectedLeaderNames.value = leaderSelection.value.map((user) => user.name);
   leaderDialogVisible.value = false;
+};
+
+const formatTime = (value?: string) => {
+  if (!value) return '-';
+  return dayjs(value).format('YYYY-MM-DD HH:mm');
 };
 
 onMounted(async () => {
