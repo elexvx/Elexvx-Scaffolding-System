@@ -58,6 +58,9 @@
           <template #orgUnitNames="{ row }">
             <span>{{ formatOrgUnits(row.orgUnitNames) }}</span>
           </template>
+          <template #departmentNames="{ row }">
+            <span>{{ formatDepartments(row.departmentNames) }}</span>
+          </template>
           <template #status="{ row }">
             <t-switch
               :value="row.status === 1"
@@ -137,9 +140,23 @@
             </t-form-item>
           </t-col>
           <t-col :xs="24" :sm="12">
-            <t-form-item label="所属部门" name="orgUnitIds">
+            <t-form-item label="所属机构" name="orgUnitIds">
               <t-tree-select
                 v-model="form.orgUnitIds"
+                :data="orgTree"
+                multiple
+                clearable
+                filterable
+                placeholder="选择机构"
+                :keys="orgTreeKeys"
+                style="max-width: 500px; width: 100%"
+              />
+            </t-form-item>
+          </t-col>
+          <t-col :xs="24" :sm="12">
+            <t-form-item label="所属部门" name="departmentIds">
+              <t-tree-select
+                v-model="form.departmentIds"
                 :data="orgTree"
                 multiple
                 clearable
@@ -239,6 +256,8 @@ interface UserRow {
   roles?: string[];
   orgUnitIds?: number[];
   orgUnitNames?: string[];
+  departmentIds?: number[];
+  departmentNames?: string[];
   status?: number;
   createdAt?: string;
 }
@@ -292,7 +311,8 @@ const roleOptions = computed<SelectOption[]>(() => (roles.value || []).map((r) =
 
 const columns: PrimaryTableCol[] = [
   { colKey: 'name', title: '用户名称', width: 140 },
-  { colKey: 'orgUnitNames', title: '所属部门', width: 180, ellipsis: true },
+  { colKey: 'orgUnitNames', title: '所属机构', width: 180, ellipsis: true },
+  { colKey: 'departmentNames', title: '所属部门', width: 180, ellipsis: true },
   { colKey: 'account', title: '系统账号', width: 160, ellipsis: true },
   { colKey: 'guid', title: '系统编号', width: 260, ellipsis: true },
   { colKey: 'mobile', title: '手机号', width: 140, ellipsis: true },
@@ -323,6 +343,7 @@ const form = reactive({
   joinDay: '' as string | '',
   team: '',
   orgUnitIds: [] as number[],
+  departmentIds: [] as number[],
   status: 1,
 });
 
@@ -434,6 +455,7 @@ const resetForm = () => {
   form.joinDay = '';
   form.team = '';
   form.orgUnitIds = [];
+  form.departmentIds = [];
   form.status = 1;
 };
 
@@ -544,6 +566,7 @@ const openEdit = (row: UserRow) => {
   form.joinDay = row.joinDay || '';
   form.team = row.team || '';
   form.orgUnitIds = [...(row.orgUnitIds || [])];
+  form.departmentIds = [...(row.departmentIds || [])];
   form.status = row.status ?? 1;
   drawerVisible.value = true;
 };
@@ -567,6 +590,7 @@ const submitForm = async () => {
           joinDay: form.joinDay || undefined,
           team: form.team || undefined,
           orgUnitIds: form.orgUnitIds,
+          departmentIds: form.departmentIds,
           status: form.status,
         },
       });
@@ -583,6 +607,7 @@ const submitForm = async () => {
           joinDay: form.joinDay || undefined,
           team: form.team || undefined,
           orgUnitIds: form.orgUnitIds,
+          departmentIds: form.departmentIds,
           status: form.status,
         },
       });
@@ -674,6 +699,11 @@ const isDeleteDisabled = (row: UserRow) => {
 };
 
 const formatOrgUnits = (names?: string[]) => {
+  if (!names || names.length === 0) return '-';
+  return names.join(' / ');
+};
+
+const formatDepartments = (names?: string[]) => {
   if (!names || names.length === 0) return '-';
   return names.join(' / ');
 };

@@ -33,6 +33,7 @@ public class DatabaseSchemaInitializer implements SmartLifecycle {
       ensureOrgUnitsTable();
       ensureOrgUnitLeadersTable();
       ensureUserOrgUnitsTable();
+      ensureUserDepartmentsTable();
       ensureRolesTables();
       ensureMenuItemsTable();
       ensureRoleMenusTable();
@@ -185,6 +186,19 @@ public class DatabaseSchemaInitializer implements SmartLifecycle {
           "user_id BIGINT NOT NULL, " +
           "org_unit_id BIGINT NOT NULL, " +
           "PRIMARY KEY (user_id, org_unit_id)" +
+          ")"
+      );
+    }
+  }
+
+  private void ensureUserDepartmentsTable() {
+    if (!tableExists("user_departments")) {
+      log.info("创建表 user_departments");
+      jdbc.execute(
+        "CREATE TABLE IF NOT EXISTS user_departments (" +
+          "user_id BIGINT NOT NULL, " +
+          "department_id BIGINT NOT NULL, " +
+          "PRIMARY KEY (user_id, department_id)" +
           ")"
       );
     }
