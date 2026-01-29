@@ -73,6 +73,14 @@ const transform: AxiosTransform = {
     if (code === 401) {
       const user = useUserStore();
       const humanMsg = msg.replace(/\s*\[\d{3}\]\s*$/, '').trim();
+      const resetAuthState = () => {
+        user.token = '';
+        user.refreshToken = '';
+        user.tokenExpiresAt = null;
+        user.userInfo = { name: '', avatar: '', roles: [] };
+        user.userInfoLoaded = false;
+        clearTokenStorage();
+      };
       const redirectToLogin = () => {
         if (router.currentRoute.value.path !== '/login') {
           router.replace({
@@ -110,12 +118,7 @@ const transform: AxiosTransform = {
       if (isForcedOffline) {
         hasNotifiedUnauthorized = true;
         // 清除本地token
-        user.token = '';
-        user.refreshToken = '';
-        user.tokenExpiresAt = null;
-        user.userInfo = { name: '', avatar: '', roles: [] };
-        user.userInfoLoaded = false;
-        clearTokenStorage();
+        resetAuthState();
 
         // 先跳转到登录页
         redirectToLogin();
@@ -125,17 +128,14 @@ const transform: AxiosTransform = {
         try {
           await user.logout();
         } catch {}
+      } else if (router.currentRoute.value.path === '/login') {
+        resetAuthState();
       } else if (!hasNotifiedUnauthorized && router.currentRoute.value.path !== '/login') {
         hasNotifiedUnauthorized = true;
         MessagePlugin.warning('登录已过期，请重新登录');
 
         // 清除本地token
-        user.token = '';
-        user.refreshToken = '';
-        user.tokenExpiresAt = null;
-        user.userInfo = { name: '', avatar: '', roles: [] };
-        user.userInfoLoaded = false;
-        clearTokenStorage();
+        resetAuthState();
         // 尝试调用退出接口，不等待
         user.logout().catch(() => {});
 

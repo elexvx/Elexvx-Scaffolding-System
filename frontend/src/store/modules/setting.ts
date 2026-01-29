@@ -107,8 +107,10 @@ export const useSettingStore = defineStore('setting', {
     },
     async loadUiSetting() {
       const { request } = await import('@/utils/request');
+      const { useUserStore } = await import('@/store');
+      const userStore = useUserStore();
       try {
-        const s = await request.get<any>({ url: '/system/ui' });
+        const s = await request.get<any>({ url: '/system/ui' }, { withToken: !!userStore.token });
         if (!s) {
           this.ensureOfflineAssetFallbacks();
           return;
