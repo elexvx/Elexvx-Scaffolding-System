@@ -225,6 +225,7 @@ INSERT INTO `role_menus` VALUES (1, 1004);
 INSERT INTO `role_menus` VALUES (1, 1005);
 INSERT INTO `role_menus` VALUES (1, 1006);
 INSERT INTO `role_menus` VALUES (1, 1007);
+INSERT INTO `role_menus` VALUES (1, 1008);
 INSERT INTO `role_menus` VALUES (1, 1013);
 INSERT INTO `role_menus` VALUES (1, 1018);
 INSERT INTO `role_menus` VALUES (1, 1019);
@@ -591,6 +592,7 @@ INSERT INTO `sys_menu_items` VALUES (911, 910, 'PAGE', 'index', 'UserIndex', '/u
 INSERT INTO `sys_menu_items` VALUES (1000, NULL, 'DIR', '/system', 'system', 'LAYOUT', NULL, '系统设置', 'System', 'setting', 0, 1, NULL, 0, 1, NULL, NULL, 6, 7, '2025-12-14 03:19:00', '2026-01-18 21:21:03', NULL);
 INSERT INTO `sys_menu_items` VALUES (1001, 1019, 'PAGE', 'user', 'SystemUser', '/system/user/index', NULL, '用户管理', 'Users', 'user', 0, 1, NULL, 0, 1, 'admin', NULL, 0, 16, '2025-12-14 03:19:00', '2026-01-18 21:21:03', 'create,update,delete,query');
 INSERT INTO `sys_menu_items` VALUES (1002, 1019, 'PAGE', 'role', 'SystemRole', '/system/role/index', NULL, '角色管理', 'Roles', 'usergroup', 0, 1, NULL, 0, 1, 'admin', NULL, 1, 12, '2025-12-14 03:19:00', '2026-01-18 21:21:03', 'create,update,delete,query');
+INSERT INTO `sys_menu_items` VALUES (1008, 1019, 'PAGE', 'org', 'SystemOrg', '/system/org/index', NULL, '机构管理', 'Organization', 'tree-round-dot-vertical', 0, 1, NULL, 0, 1, 'admin', NULL, 2, 0, '2025-12-14 03:19:00', '2026-01-18 21:21:03', 'create,update,delete,query');
 INSERT INTO `sys_menu_items` VALUES (1003, 1000, 'PAGE', 'menu', 'SystemMenu', '/system/menu/index', NULL, '目录/页面管理', 'Menu Manager', 'tree-round-dot-vertical', 0, 1, NULL, 0, 1, 'admin', NULL, 0, 7, '2025-12-14 03:19:00', '2026-01-18 21:21:03', 'create,update,delete,query');
 INSERT INTO `sys_menu_items` VALUES (1004, NULL, 'DIR', '/monitor', 'SystemMonitor', 'LAYOUT', NULL, '系统监控', 'Monitor', 'chart-bar', 0, 1, NULL, 0, 1, 'admin', NULL, 5, 14, '2025-12-16 01:38:31', '2026-01-18 21:21:03', 'query,create,update,delete');
 INSERT INTO `sys_menu_items` VALUES (1005, 1004, 'PAGE', 'online-user', 'SystemMonitorOnlineUser', '/system/monitor/online-user/index', NULL, '在线用户', 'Online User', 'usergroup-add', 0, 1, NULL, 0, 1, 'admin', NULL, 0, 5, '2025-12-16 01:38:31', '2026-01-18 21:22:37', 'create,update,delete,query');

@@ -135,7 +135,9 @@ onMounted(async () => {
       await request.get({ url: '/system/ui' }, { withToken: false, retry: { count: 0, delay: 0 } });
       appStore.setBackendReady(true);
       try {
-        await store.loadUiSetting();
+        if (userStore.token || !isAuthPage(route.path)) {
+          await store.loadUiSetting();
+        }
       } catch {}
 
       const waitedKey = 'backend_waited_for_ready';
