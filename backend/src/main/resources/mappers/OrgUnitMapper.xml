@@ -58,6 +58,19 @@
     </foreach>
   </select>
 
+  <select id="selectMaxSortOrder" resultType="int">
+    SELECT COALESCE(MAX(sort_order), 0)
+    FROM org_units
+    <where>
+      <if test="parentId == null">
+        (parent_id IS NULL OR parent_id = 0)
+      </if>
+      <if test="parentId != null">
+        parent_id = #{parentId}
+      </if>
+    </where>
+  </select>
+
   <insert id="insert" parameterType="com.tencent.tdesign.entity.OrgUnitEntity" useGeneratedKeys="true" keyProperty="id">
     INSERT INTO org_units (
       parent_id,
@@ -92,6 +105,14 @@
       status = #{status},
       phone = #{phone},
       email = #{email}
+    WHERE id = #{id}
+  </update>
+
+  <update id="updateParentAndSort">
+    UPDATE org_units
+    SET
+      parent_id = #{parentId},
+      sort_order = #{sortOrder}
     WHERE id = #{id}
   </update>
 

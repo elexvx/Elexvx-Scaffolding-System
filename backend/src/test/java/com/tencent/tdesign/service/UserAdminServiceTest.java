@@ -8,37 +8,34 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 public class UserAdminServiceTest {
 
   @Test
-  void rootAdminCannotBeManagedEvenBySelf() {
-    assertThrows(
-      IllegalArgumentException.class,
-      () -> UserAdminService.validateManageableTarget(1L, 1L, "admin", true, true)
-    );
+  void rootAdminCanBeManagedBySelfWhenAllowed() {
+    assertDoesNotThrow(() -> UserAdminService.validateManageableTarget(1L, 1L, "admin", true, true, true));
   }
 
   @Test
-  void rootAdminCannotBeManagedByOtherAdmin() {
+  void rootAdminCannotBeManagedByOtherAdminWhenNotAllowed() {
     assertThrows(
       IllegalArgumentException.class,
-      () -> UserAdminService.validateManageableTarget(2L, 1L, "ADMIN", true, true)
+      () -> UserAdminService.validateManageableTarget(2L, 1L, "ADMIN", true, true, false)
     );
   }
 
   @Test
   void adminRoleUserCanBeManagedByAdmin() {
-    assertDoesNotThrow(() -> UserAdminService.validateManageableTarget(2L, 1L, "alice", true, true));
+    assertDoesNotThrow(() -> UserAdminService.validateManageableTarget(2L, 1L, "alice", true, true, false));
   }
 
   @Test
   void adminRoleUserCannotBeManagedByNonAdmin() {
     assertThrows(
       IllegalArgumentException.class,
-      () -> UserAdminService.validateManageableTarget(2L, 1L, "alice", true, false)
+      () -> UserAdminService.validateManageableTarget(2L, 1L, "alice", true, false, false)
     );
   }
 
   @Test
   void selfManageAllowedWhenNotRootAdmin() {
-    assertDoesNotThrow(() -> UserAdminService.validateManageableTarget(1L, 1L, "alice", true, false));
+    assertDoesNotThrow(() -> UserAdminService.validateManageableTarget(1L, 1L, "alice", true, false, false));
   }
 }
 

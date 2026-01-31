@@ -61,8 +61,9 @@ public class GlobalExceptionHandler {
   @ExceptionHandler(AccessDeniedException.class)
   public ResponseEntity<ApiResponse<Void>> handleAccessDeniedException(AccessDeniedException e) {
     log.warn("权限不足: {}", e.getMessage());
+    String message = buildPermissionMessage(e.getMessage());
     return ResponseEntity.status(HttpStatus.FORBIDDEN)
-      .body(ApiResponse.failure(403, e.getMessage() == null ? "权限不足，请联系管理员开通" : e.getMessage()));
+      .body(ApiResponse.failure(403, message));
   }
 
   /**

@@ -1,5 +1,6 @@
 package com.tencent.tdesign.service;
 
+import com.tencent.tdesign.dto.OrgUnitReorderRequest;
 import com.tencent.tdesign.dto.OrgUnitUpsertRequest;
 import com.tencent.tdesign.entity.OrgUnitEntity;
 import com.tencent.tdesign.entity.UserEntity;
@@ -86,6 +87,43 @@ public class OrgUnitService {
   }
 
   @Transactional
+  public boolean reorder(OrgUnitReorderRequest req) {
+    List<OrgUnitReorderRequest.Item> items = req.getItems();
+    Set<Long> ids = new HashSet<>();
+    for (OrgUnitReorderRequest.Item it : items) {
+      if (!ids.add(it.getId())) throw new IllegalArgumentException("items 存在重复 id");
+      if (it.getParentId() != null && Objects.equals(it.getId(), it.getParentId())) {
+        throw new IllegalArgumentException("parentId 不能指向自己");
+      }
+    }
+
+    List<OrgUnitEntity> all = orgUnitMapper.selectAll();
+    Map<Long, OrgUnitEntity> allMap = new HashMap<>();
+    Map<Long, Long> parentMap = new HashMap<>();
+    for (OrgUnitEntity e : all) {
+      allMap.put(e.getId(), e);
+      parentMap.put(e.getId(), e.getParentId());
+    }
+
+    for (OrgUnitReorderRequest.Item it : items) {
+      if (!allMap.containsKey(it.getId())) throw new IllegalArgumentException("存在无效机构 id");
+      Long pid = it.getParentId();
+      if (pid != null && pid == 0) pid = null;
+      if (pid != null && !allMap.containsKey(pid)) throw new IllegalArgumentException("parentId 无效: " + pid);
+      parentMap.put(it.getId(), pid);
+    }
+
+    ensureNoCycles(parentMap);
+
+    for (OrgUnitReorderRequest.Item it : items) {
+      Long pid = it.getParentId();
+      if (pid != null && pid == 0) pid = null;
+      orgUnitMapper.updateParentAndSort(it.getId(), pid, it.getSortOrder());
+    }
+    return true;
+  }
+
+  @Transactional
   public boolean delete(long id) {
     if (orgUnitMapper.countChildren(id) > 0) {
       throw new IllegalArgumentException("请先删除子级机构");
@@ -102,10 +140,35 @@ public class OrgUnitService {
     OrgUnitType type = OrgUnitType.fromValue(req.getType());
     if (type == null) throw new IllegalArgumentException("机构类型不合法");
     entity.setType(type.name());
-    entity.setSortOrder(req.getSortOrder() == null ? 0 : req.getSortOrder());
+    Integer sortOrder = req.getSortOrder();
+    if (sortOrder == null) {
+      if (entity.getId() == null) {
+        Integer max = orgUnitMapper.selectMaxSortOrder(entity.getParentId());
+        sortOrder = (max == null ? 0 : max) + 1;
+      } else {
+        sortOrder = entity.getSortOrder();
+      }
+    }
+    entity.setSortOrder(sortOrder == null ? 0 : sortOrder);
     entity.setStatus(req.getStatus() == null ? 1 : req.getStatus());
     entity.setPhone(req.getPhone());
     entity.setEmail(req.getEmail());
+  }
+
+  private void ensureNoCycles(Map<Long, Long> parentMap) {
+    Set<Long> visiting = new HashSet<>();
+    Set<Long> visited = new HashSet<>();
+    for (Long id : parentMap.keySet()) {
+      if (visited.contains(id)) continue;
+      Long cur = id;
+      visiting.clear();
+      while (cur != null) {
+        if (!parentMap.containsKey(cur)) break;
+        if (!visiting.add(cur)) throw new IllegalArgumentException("检测到循环引用");
+        cur = parentMap.get(cur);
+      }
+      visited.addAll(visiting);
+    }
   }
 
   private OrgUnitNode toNode(OrgUnitEntity entity) {

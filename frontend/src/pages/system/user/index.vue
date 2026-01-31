@@ -2,13 +2,7 @@
   <div class="user-management">
     <div class="user-management__left">
       <t-card title="组织机构" :bordered="false" class="org-panel">
-        <t-input
-          v-model="orgKeyword"
-          type="search"
-          clearable
-          placeholder="请输入部门名称"
-          @change="filterOrgTree"
-        />
+        <t-input v-model="orgKeyword" type="search" clearable placeholder="请输入部门名称" @change="filterOrgTree" />
         <t-tree
           class="org-tree"
           :data="filteredOrgTree"
@@ -36,12 +30,14 @@
               value-type="YYYY-MM-DD"
               placeholder="开始日期 - 结束日期"
             />
+            <div class="user-filter__buttons">
+              <t-space size="small">
+                <t-button theme="primary" @click="reload">搜索</t-button>
+                <t-button variant="outline" @click="resetFilters">重置</t-button>
+              </t-space>
+            </div>
           </div>
           <div class="user-filter__actions">
-            <t-space size="small">
-              <t-button theme="primary" @click="reload">搜索</t-button>
-              <t-button variant="outline" @click="resetFilters">重置</t-button>
-            </t-space>
             <t-button v-if="canCreate" theme="primary" @click="openCreate">新增</t-button>
           </div>
         </div>
@@ -65,7 +61,7 @@
             <t-switch
               :value="row.status === 1"
               :disabled="!canUpdate"
-              @change="(val) => toggleStatus(row, val)"
+              @change="(val) => toggleStatus(row, Boolean(val))"
             />
           </template>
           <template #roles="{ row }">
@@ -91,7 +87,7 @@
       </t-card>
     </div>
 
-    <confirm-drawer v-model:visible="drawerVisible" :header="drawerTitle" size="760px">
+    <confirm-drawer v-model:visible="drawerVisible" :header="drawerTitle" size="720px">
       <t-form
         ref="formRef"
         :data="form"
@@ -143,7 +139,7 @@
             <t-form-item label="所属机构" name="orgUnitIds">
               <t-tree-select
                 v-model="form.orgUnitIds"
-                :data="orgTree"
+                :data="orgUnitTree"
                 multiple
                 clearable
                 filterable
@@ -157,11 +153,12 @@
             <t-form-item label="所属部门" name="departmentIds">
               <t-tree-select
                 v-model="form.departmentIds"
-                :data="orgTree"
+                :data="departmentTree"
                 multiple
                 clearable
                 filterable
-                placeholder="选择部门"
+                :disabled="form.orgUnitIds.length === 0"
+                placeholder="请先选择机构"
                 :keys="orgTreeKeys"
                 style="max-width: 500px; width: 100%"
               />
@@ -221,7 +218,7 @@
 <script setup lang="ts">
 import type { FormInstanceFunctions, FormRule, PageInfo, PrimaryTableCol, SelectOption } from 'tdesign-vue-next';
 import { DialogPlugin, MessagePlugin } from 'tdesign-vue-next';
-import { computed, onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
 
 import ConfirmDrawer from '@/components/ConfirmDrawer.vue';
 import { useUserStore } from '@/store';
@@ -239,7 +236,11 @@ interface RoleRow {
 
 interface OrgUnitNode {
   id: number;
+  parentId?: number | null;
   name: string;
+  type?: string;
+  typeLabel?: string;
+  disabled?: boolean;
   children?: OrgUnitNode[];
 }
 
@@ -277,6 +278,7 @@ const orgTree = ref<OrgUnitNode[]>([]);
 const filteredOrgTree = ref<OrgUnitNode[]>([]);
 const orgKeyword = ref('');
 const selectedOrgUnitId = ref<number | null>(null);
+const selectedDepartmentId = ref<number | null>(null);
 const expandedOrgIds = ref<number[]>([]);
 
 const filters = reactive({
@@ -306,6 +308,78 @@ const pagination = reactive({
 });
 
 const orgTreeKeys = { value: 'id', label: 'name', children: 'children' };
+const ORG_UNIT_TYPES = new Set(['UNIT']);
+const DEPARTMENT_TYPES = new Set(['DEPARTMENT', 'SECTION', 'TEAM']);
+const TYPE_LABEL_MAP = new Map([
+  ['单位', 'UNIT'],
+  ['部门', 'DEPARTMENT'],
+  ['科室', 'SECTION'],
+  ['班组', 'TEAM'],
+  ['用户', 'USER'],
+]);
+
+const normalizeOrgUnitType = (value?: string | null) => (value || '').toString().trim().toUpperCase();
+
+const buildOrgUnitTree = (nodes: OrgUnitNode[]): OrgUnitNode[] => {
+  const result = nodes
+    .map((node) => {
+      const isOrg = ORG_UNIT_TYPES.has(node.type || '');
+      if (!isOrg) return null;
+      const children = node.children ? buildOrgUnitTree(node.children) : [];
+      return { ...node, children };
+    })
+    .filter((node) => node !== null);
+  return result as OrgUnitNode[];
+};
+
+const findNodeById = (nodes: OrgUnitNode[], targetId: number | string): OrgUnitNode | null => {
+  for (const node of nodes) {
+    if (String(node.id) === String(targetId)) return node;
+    if (node.children && node.children.length) {
+      const found = findNodeById(node.children, targetId);
+      if (found) return found;
+    }
+  }
+  return null;
+};
+
+const buildDepartmentSubtree = (node: OrgUnitNode): OrgUnitNode | null => {
+  const children = node.children
+    ? node.children.map((child) => buildDepartmentSubtree(child)).filter((child): child is OrgUnitNode => !!child)
+    : [];
+  const type = node.type || '';
+  const isDept = DEPARTMENT_TYPES.has(type);
+  const isOrg = ORG_UNIT_TYPES.has(type);
+  if (!isDept && !isOrg && children.length === 0) return null;
+  return { ...node, children, disabled: !isDept };
+};
+
+const buildDepartmentTree = (nodes: OrgUnitNode[], selectedOrgIds: number[]): OrgUnitNode[] => {
+  if (!selectedOrgIds || selectedOrgIds.length === 0) return [];
+  const roots = selectedOrgIds.map((id) => findNodeById(nodes, id)).filter((node): node is OrgUnitNode => !!node);
+  return roots.map((root) => buildDepartmentSubtree(root)).filter((node): node is OrgUnitNode => !!node);
+};
+
+const collectSelectableIds = (
+  nodes: OrgUnitNode[],
+  predicate: (node: OrgUnitNode) => boolean,
+  bucket: Set<number> = new Set(),
+): Set<number> => {
+  nodes.forEach((node) => {
+    if (predicate(node)) bucket.add(node.id);
+    if (node.children && node.children.length) collectSelectableIds(node.children, predicate, bucket);
+  });
+  return bucket;
+};
+
+const orgUnitTree = computed(() => buildOrgUnitTree(orgTree.value));
+const departmentTree = computed(() => buildDepartmentTree(orgTree.value, form.orgUnitIds));
+const orgSelectableIds = computed(() =>
+  collectSelectableIds(orgUnitTree.value, (node) => ORG_UNIT_TYPES.has(node.type || '')),
+);
+const departmentSelectableIds = computed(() =>
+  collectSelectableIds(departmentTree.value, (node) => DEPARTMENT_TYPES.has(node.type || '')),
+);
 
 const roleOptions = computed<SelectOption[]>(() => (roles.value || []).map((r) => ({ label: r.name, value: r.name })));
 
@@ -459,6 +533,43 @@ const resetForm = () => {
   form.status = 1;
 };
 
+const syncOrgSelection = () => {
+  if (orgTree.value.length === 0) return;
+  if (!Array.isArray(form.orgUnitIds)) {
+    form.orgUnitIds = [];
+    return;
+  }
+  if (form.orgUnitIds.length === 0) return;
+  const allowed = orgSelectableIds.value;
+  const next = form.orgUnitIds.filter((id) => allowed.has(id));
+  const changed = next.length !== form.orgUnitIds.length || next.some((id, idx) => id !== form.orgUnitIds[idx]);
+  if (changed) form.orgUnitIds = next;
+};
+
+const syncDepartmentSelection = () => {
+  if (orgTree.value.length === 0) return;
+  if (!Array.isArray(form.departmentIds)) {
+    form.departmentIds = [];
+    return;
+  }
+  if (form.departmentIds.length === 0) return;
+  const allowed = departmentSelectableIds.value;
+  const next = form.departmentIds.filter((id) => allowed.has(id));
+  const changed = next.length !== form.departmentIds.length || next.some((id, idx) => id !== form.departmentIds[idx]);
+  if (changed) form.departmentIds = next;
+};
+
+watch(orgSelectableIds, syncOrgSelection, { immediate: true });
+watch(departmentSelectableIds, syncDepartmentSelection, { immediate: true });
+watch(
+  () => form.orgUnitIds,
+  () => {
+    syncOrgSelection();
+    syncDepartmentSelection();
+  },
+  { deep: true },
+);
+
 const loadRoles = async () => {
   roles.value = await request.get<RoleRow[]>({ url: '/system/role/list' });
 };
@@ -501,6 +612,7 @@ const reload = async () => {
         keyword: filters.keyword || undefined,
         mobile: filters.mobile || undefined,
         orgUnitId: selectedOrgUnitId.value || undefined,
+        departmentId: selectedDepartmentId.value || undefined,
         status: filters.status ?? undefined,
         startTime: startDate ? `${startDate} 00:00:00` : undefined,
         endTime: endDate ? `${endDate} 23:59:59` : undefined,
@@ -527,13 +639,41 @@ const resetFilters = () => {
   filters.status = null;
   filters.createdRange = [];
   selectedOrgUnitId.value = null;
+  selectedDepartmentId.value = null;
   reload();
 };
 
 const handleOrgSelect = (ctx: any) => {
   const node = ctx?.node;
   if (!node) return;
-  selectedOrgUnitId.value = node.value ?? node.id;
+  const rawNode = node.data || (node.getModel?.() as any) || node;
+  const rawId = rawNode?.id ?? node.value ?? node.id;
+  const nodeId = Number(rawId);
+  if (Number.isNaN(nodeId)) return;
+  const resolvedNode = findNodeById(orgTree.value, nodeId);
+  let nodeType = normalizeOrgUnitType(resolvedNode?.type ?? rawNode?.type);
+  if (!nodeType && rawNode?.typeLabel) {
+    nodeType = TYPE_LABEL_MAP.get(rawNode.typeLabel.trim()) || '';
+  }
+  if (!nodeType) {
+    const parentId = resolvedNode?.parentId ?? rawNode?.parentId;
+    if (parentId != null && parentId !== 0) {
+      const parentNode = findNodeById(orgTree.value, parentId);
+      const parentType = normalizeOrgUnitType(parentNode?.type ?? parentNode?.typeLabel);
+      if (ORG_UNIT_TYPES.has(parentType)) nodeType = 'DEPARTMENT';
+    }
+  }
+  if (DEPARTMENT_TYPES.has(nodeType)) {
+    selectedDepartmentId.value = nodeId;
+    selectedOrgUnitId.value = null;
+  } else if (ORG_UNIT_TYPES.has(nodeType)) {
+    selectedOrgUnitId.value = nodeId;
+    selectedDepartmentId.value = null;
+  } else {
+    selectedOrgUnitId.value = nodeId;
+    selectedDepartmentId.value = null;
+  }
+  pagination.current = 1;
   reload();
 };
 
@@ -681,7 +821,7 @@ const isRootAdmin = (row: UserRow) => {
 
 const isEditDisabled = (row: UserRow) => {
   if (!row) return false;
-  return isRootAdmin(row);
+  return false;
 };
 
 const isResetDisabled = (row: UserRow) => {
@@ -774,15 +914,19 @@ onMounted(async () => {
 
 .user-filter {
   display: grid;
-  grid-template-columns: repeat(4, minmax(160px, 1fr));
+  grid-template-columns: repeat(4, minmax(160px, 1fr)) auto;
   gap: 12px;
   align-items: center;
 }
 
+.user-filter__buttons {
+  display: flex;
+  justify-content: flex-end;
+}
+
 .user-filter__actions {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  justify-content: flex-end;
 }
 
 .user-table {
@@ -804,23 +948,13 @@ onMounted(async () => {
   }
 
   .user-filter {
-    grid-template-columns: repeat(2, minmax(140px, 1fr));
-  }
-
-  .user-filter__actions {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
+    grid-template-columns: repeat(2, minmax(140px, 1fr)) auto;
   }
 }
 
 @media (max-width: 768px) {
   .user-filter {
     grid-template-columns: 1fr;
-  }
-
-  .user-filter__actions {
-    width: 100%;
   }
 }
 </style>

@@ -10,6 +10,12 @@
     </t-space>
 
     <t-table :data="filteredMessages" :columns="columns" row-key="id" :loading="loading">
+      <template #empty>
+        <div class="tdesign-table-empty">
+          <img :src="emptyImage" alt="暂无数据" />
+          <div>暂无数据</div>
+        </div>
+      </template>
       <template #content="{ row }">
         <span class="message-content" @click="openDetail(row)">{{ row.content }}</span>
       </template>
@@ -47,6 +53,7 @@ import { storeToRefs } from 'pinia';
 import type { PrimaryTableCol } from 'tdesign-vue-next';
 import { computed, onMounted, ref } from 'vue';
 
+import emptyImage from '@/assets/assets-empty.svg?url';
 import { useNotificationStore } from '@/store';
 import type { NotificationItem } from '@/types/interface';
 

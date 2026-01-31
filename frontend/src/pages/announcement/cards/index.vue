@@ -48,9 +48,9 @@
                   </div>
                 </t-col>
               </t-row>
-              <div v-else-if="!loading" class="empty-content">
+              <div v-else-if="!loading" class="tdesign-table-empty">
                 <img :src="placeholderImage" alt="空" />
-                <p>暂无数据</p>
+                <div>暂无数据</div>
               </div>
               <t-pagination
                 v-if="pagination.total > pagination.pageSize"

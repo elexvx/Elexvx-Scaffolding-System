@@ -1,5 +1,5 @@
 <template>
-  <t-config-provider :global-config="getComponentsLocale">
+  <t-config-provider :global-config="globalConfig">
     <watermark-overlay />
     <concurrent-login-listener />
     <route-loading :visible="isRouteLoading" />
@@ -7,9 +7,10 @@
   </t-config-provider>
 </template>
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, watch } from 'vue';
+import { computed, h, onMounted, onUnmounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
+import emptyImage from '@/assets/assets-empty.svg?url';
 import ConcurrentLoginListener from '@/components/ConcurrentLoginListener.vue';
 import RouteLoading from '@/components/RouteLoading.vue';
 import WatermarkOverlay from '@/components/WatermarkOverlay.vue';
@@ -35,6 +36,21 @@ const mode = computed(() => {
 const isRouteLoading = computed(() => appStore.routeLoading || !appStore.backendReady);
 
 const { getComponentsLocale, locale } = useLocale();
+const globalConfig = computed(() => {
+  const baseConfig = getComponentsLocale.value as any;
+  const emptyText = baseConfig?.table?.empty || '暂无数据';
+  return {
+    ...baseConfig,
+    table: {
+      ...(baseConfig?.table || {}),
+      empty: () =>
+        h('div', { class: 'tdesign-table-empty' }, [
+          h('img', { src: emptyImage, alt: emptyText }),
+          h('div', { class: 'tdesign-table-empty-text' }, emptyText),
+        ]),
+    },
+  };
+});
 
 const loadSystemSettings = async () => {
   if (!userStore.token) return;

@@ -18,6 +18,7 @@ public interface UserMapper {
     @Param("keyword") String keyword,
     @Param("mobile") String mobile,
     @Param("orgUnitId") Long orgUnitId,
+    @Param("departmentId") Long departmentId,
     @Param("status") Integer status,
     @Param("startTime") java.time.LocalDateTime startTime,
     @Param("endTime") java.time.LocalDateTime endTime,
@@ -28,6 +29,7 @@ public interface UserMapper {
     @Param("keyword") String keyword,
     @Param("mobile") String mobile,
     @Param("orgUnitId") Long orgUnitId,
+    @Param("departmentId") Long departmentId,
     @Param("status") Integer status,
     @Param("startTime") java.time.LocalDateTime startTime,
     @Param("endTime") java.time.LocalDateTime endTime

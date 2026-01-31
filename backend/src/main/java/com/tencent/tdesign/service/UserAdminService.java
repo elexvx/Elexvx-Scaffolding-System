@@ -69,6 +69,7 @@ public class UserAdminService {
     String keyword,
     String mobile,
     Long orgUnitId,
+    Long departmentId,
     Integer status,
     java.time.LocalDateTime startTime,
     java.time.LocalDateTime endTime,
@@ -81,8 +82,8 @@ public class UserAdminService {
     String kw = (keyword == null || keyword.isBlank()) ? null : keyword.trim();
     String mobileKeyword = (mobile == null || mobile.isBlank()) ? null : mobile.trim();
     List<UserEntity> rows =
-      userMapper.selectPage(kw, mobileKeyword, orgUnitId, status, startTime, endTime, offset, safeSize);
-    long total = userMapper.countByKeyword(kw, mobileKeyword, orgUnitId, status, startTime, endTime);
+      userMapper.selectPage(kw, mobileKeyword, orgUnitId, departmentId, status, startTime, endTime, offset, safeSize);
+    long total = userMapper.countByKeyword(kw, mobileKeyword, orgUnitId, departmentId, status, startTime, endTime);
     List<UserListItem> list = new ArrayList<>();
     for (UserEntity u : rows) {
       UserListItem item = toListItem(u);
@@ -153,7 +154,7 @@ public class UserAdminService {
   @Transactional
   public UserListItem update(long id, UserUpdateRequest req) {
     UserEntity u = Optional.ofNullable(userMapper.selectById(id)).orElseThrow(() -> new IllegalArgumentException("用户不存在"));
-    ensureManageableTarget(u);
+    ensureManageableTarget(u, true);
     if (req.getName() != null) u.setName(req.getName());
     if (req.getMobile() != null && !SensitiveMaskUtil.isMasked(req.getMobile())) u.setMobile(req.getMobile());
     if (req.getPhone() != null && !SensitiveMaskUtil.isMasked(req.getPhone())) u.setPhone(req.getPhone());
@@ -235,9 +236,10 @@ public class UserAdminService {
     long targetUserId,
     String targetAccount,
     boolean targetIsAdminRole,
-    boolean currentIsAdminRole
+    boolean currentIsAdminRole,
+    boolean allowRootAdmin
   ) {
-    if (targetAccount != null && targetAccount.equalsIgnoreCase(ROOT_ADMIN_ACCOUNT)) {
+    if (!allowRootAdmin && targetAccount != null && targetAccount.equalsIgnoreCase(ROOT_ADMIN_ACCOUNT)) {
       throw new IllegalArgumentException("禁止操作系统管理员账号");
     }
     if (currentUserId == targetUserId) return;
@@ -246,12 +248,16 @@ public class UserAdminService {
     }
   }
 
-  private void ensureManageableTarget(UserEntity targetUser) {
+  private void ensureManageableTarget(UserEntity targetUser, boolean allowRootAdmin) {
     long currentUserId = authContext.requireUserId();
     long targetUserId = Objects.requireNonNull(targetUser.getId());
     boolean targetIsAdmin = permissionFacade.isAdminAccount(targetUserId);
     boolean currentIsAdmin = permissionFacade.isAdminAccount(currentUserId);
-    validateManageableTarget(currentUserId, targetUserId, targetUser.getAccount(), targetIsAdmin, currentIsAdmin);
+    validateManageableTarget(currentUserId, targetUserId, targetUser.getAccount(), targetIsAdmin, currentIsAdmin, allowRootAdmin);
+  }
+
+  private void ensureManageableTarget(UserEntity targetUser) {
+    ensureManageableTarget(targetUser, false);
   }
 
   private UserListItem toListItem(UserEntity u) {

@@ -16,22 +16,29 @@
           placeholder="机构状态"
           style="width: 160px"
         />
-          <t-button theme="primary" @click="reload">搜索</t-button>
-          <t-button variant="outline" @click="resetFilters">重置</t-button>
-        <t-button theme="primary" @click="openCreate">新增</t-button>
-        <t-button variant="outline" @click="toggleExpand">展开/折叠</t-button>
-        </t-space>
+        <t-button theme="primary" @click="reload">搜索</t-button>
+        <t-button variant="outline" @click="resetFilters">重置</t-button>
+        <t-button theme="primary" @click="() => openCreate()">新增</t-button>
+        <t-button variant="outline" @click="toggleExpand">{{ expandAll ? '收起全部' : '展开全部' }}</t-button>
+        <t-button theme="primary" :disabled="!dirty" :loading="savingOrder" @click="saveOrder">保存排序</t-button>
+      </t-space>
 
-      <t-table
+      <t-enhanced-table
+        ref="tableRef"
+        v-model:expanded-tree-nodes="expandedTreeNodes"
         row-key="id"
+        drag-sort="row-handler"
         :data="filteredTree"
         :columns="columns"
         :loading="loading"
         :tree="treeConfig"
+        :before-drag-sort="beforeDragSort"
+        @abnormal-drag-sort="onAbnormalDragSort"
+        @drag-sort="onDragSort"
       >
         <template #leaderNames="{ row }">
           <span>{{ formatList(row.leaderNames) }}</span>
-      </template>
+        </template>
         <template #status="{ row }">
           <t-tag :theme="row.status === 1 ? 'success' : 'danger'" variant="light">
             {{ row.status === 1 ? '正常' : '停用' }}
@@ -47,7 +54,7 @@
             <t-link theme="danger" @click="removeRow(row)">删除</t-link>
           </t-space>
         </template>
-      </t-table>
+      </t-enhanced-table>
     </t-card>
 
     <confirm-drawer v-model:visible="dialogVisible" :header="dialogTitle" size="760px">
@@ -88,19 +95,9 @@
               <t-select v-model="form.type" :options="typeOptions" placeholder="请选择机构类型" />
             </t-form-item>
           </t-col>
-          <t-col :xs="24" :sm="12">
-            <t-form-item label="显示排序" name="sortOrder">
-              <t-input-number v-model="form.sortOrder" :min="0" />
-            </t-form-item>
-          </t-col>
           <t-col :xs="24">
             <t-form-item label="负责人" name="leaderIds">
-              <t-input
-                v-model="leaderDisplay"
-                readonly
-                placeholder="请选择部门领导"
-                @click="openLeaderDialog"
-              >
+              <t-input v-model="leaderDisplay" readonly placeholder="请选择部门领导" @click="openLeaderDialog">
                 <template #suffixIcon>
                   <t-icon name="user" />
                 </template>
@@ -208,12 +205,19 @@
   </div>
 </template>
 <script setup lang="ts">
-import type { FormInstanceFunctions, FormRule, PageInfo, PrimaryTableCol } from 'tdesign-vue-next';
-import { DialogPlugin, MessagePlugin } from 'tdesign-vue-next';
 import dayjs from 'dayjs';
-import ConfirmDrawer from '@/components/ConfirmDrawer.vue';
-import { computed, onMounted, reactive, ref } from 'vue';
+import { MoveIcon } from 'tdesign-icons-vue-next';
+import type {
+  EnhancedTableInstanceFunctions,
+  FormInstanceFunctions,
+  FormRule,
+  PageInfo,
+  PrimaryTableCol,
+} from 'tdesign-vue-next';
+import { DialogPlugin, MessagePlugin } from 'tdesign-vue-next';
+import { computed, h, nextTick, onMounted, reactive, ref } from 'vue';
 
+import ConfirmDrawer from '@/components/ConfirmDrawer.vue';
 import { request } from '@/utils/request';
 
 interface OrgUnitNode {
@@ -247,9 +251,14 @@ interface PageResult<T> {
 
 const loading = ref(false);
 const saving = ref(false);
+const savingOrder = ref(false);
+const dirty = ref(false);
 const dialogVisible = ref(false);
 const leaderDialogVisible = ref(false);
 const editingId = ref<number | null>(null);
+const tableRef = ref<EnhancedTableInstanceFunctions<OrgUnitNode> | null>(null);
+const expandedTreeNodes = ref<Array<string | number>>([]);
+const expandAll = ref(true);
 
 const orgTree = ref<OrgUnitNode[]>([]);
 const filteredTree = ref<OrgUnitNode[]>([]);
@@ -265,7 +274,6 @@ const form = reactive({
   name: '',
   shortName: '',
   type: 'DEPARTMENT',
-  sortOrder: 0,
   status: 1,
   leaderIds: [] as number[],
   phone: '',
@@ -285,18 +293,37 @@ const typeOptions = [
   { label: '用户', value: 'USER' },
 ];
 
+const ORG_UNIT_TYPES = new Set(['UNIT']);
+const DEPARTMENT_TYPES = new Set(['DEPARTMENT', 'SECTION', 'TEAM']);
+const TYPE_LABEL_MAP = new Map([
+  ['单位', 'UNIT'],
+  ['部门', 'DEPARTMENT'],
+  ['科室', 'SECTION'],
+  ['班组', 'TEAM'],
+  ['用户', 'USER'],
+]);
+const normalizeOrgUnitType = (value?: string | null) => (value || '').toString().trim().toUpperCase();
+
 const orgTreeKeys = { value: 'id', label: 'name', children: 'children' };
 
 const treeConfig = reactive({
   childrenKey: 'children',
-  expandAll: true,
+  treeNodeColumnIndex: 1,
+  indent: 24,
+  expandTreeNodeOnClick: true,
 });
 
 const columns: PrimaryTableCol[] = [
-  { colKey: 'name', title: '机构名称', width: 220, tree: true },
+  {
+    colKey: 'drag',
+    title: '排序',
+    width: 46,
+    className: 't-table__drag-col',
+    cell: () => h(MoveIcon, { class: 't-table__handle-draggable org-table__drag-handle' }),
+  },
+  { colKey: 'name', title: '机构名称', width: 220 },
   { colKey: 'typeLabel', title: '机构类型', width: 120 },
   { colKey: 'leaderNames', title: '负责人', width: 200 },
-  { colKey: 'sortOrder', title: '排序', width: 80 },
   { colKey: 'status', title: '状态', width: 100 },
   { colKey: 'createdAt', title: '创建时间', width: 180 },
   { colKey: 'op', title: '操作', width: 180, fixed: 'right' },
@@ -315,6 +342,7 @@ const leaderFilters = reactive({
   keyword: '',
   orgKeyword: '',
   orgUnitId: null as number | null,
+  departmentId: null as number | null,
 });
 
 const leaderRows = ref<UserRow[]>([]);
@@ -348,9 +376,64 @@ const reload = async () => {
   try {
     orgTree.value = await request.get<OrgUnitNode[]>({ url: '/system/org/tree' });
     filteredTree.value = applyFilter(orgTree.value, filters.keyword, filters.status);
+    dirty.value = false;
+    await nextTick();
+    expandAll.value ? tableRef.value?.expandAll() : tableRef.value?.foldAll();
   } finally {
     loading.value = false;
   }
+};
+
+const buildReorderItems = (tree: OrgUnitNode[]) => {
+  const items: Array<{ id: number; parentId: number | null; sortOrder: number }> = [];
+  const walk = (nodes: OrgUnitNode[], parentId: number | null) => {
+    nodes.forEach((n, index) => {
+      items.push({ id: n.id, parentId, sortOrder: index });
+      if (n.children?.length) walk(n.children, n.id);
+    });
+  };
+  walk(tree || [], null);
+  return items;
+};
+
+const saveOrder = async () => {
+  const tree = tableRef.value?.getTreeNode?.() || orgTree.value;
+  savingOrder.value = true;
+  try {
+    await request.put({ url: '/system/org/reorder', data: { items: buildReorderItems(tree) } });
+    MessagePlugin.success('排序已保存');
+    dirty.value = false;
+    await reload();
+  } finally {
+    savingOrder.value = false;
+  }
+};
+
+const onDragSort = (ctx: any) => {
+  dirty.value = true;
+  if (ctx?.newData) {
+    const tree = tableRef.value?.getTreeNode?.();
+    if (tree) {
+      orgTree.value = tree;
+      filteredTree.value = tree;
+    }
+  }
+};
+
+const onAbnormalDragSort = (params: any) => {
+  if (params?.code === 1001) {
+    MessagePlugin.warning('不同层级的元素，不允许直接拖拽排序');
+    return;
+  }
+  if (params?.reason) MessagePlugin.warning(String(params.reason));
+};
+
+const beforeDragSort = () => {
+  if (filters.keyword.trim() || filters.status != null) {
+    MessagePlugin.warning('请先清空筛选条件，再进行拖拽排序');
+    return false;
+  }
+  return true;
 };
 
 const resetFilters = () => {
@@ -374,7 +457,6 @@ const openEdit = (row: OrgUnitNode) => {
   form.name = row.name;
   form.shortName = row.shortName || '';
   form.type = row.type || 'DEPARTMENT';
-  form.sortOrder = row.sortOrder ?? 0;
   form.status = row.status ?? 1;
   form.phone = row.phone || '';
   form.email = row.email || '';
@@ -388,7 +470,6 @@ const resetForm = () => {
   form.name = '';
   form.shortName = '';
   form.type = 'DEPARTMENT';
-  form.sortOrder = 0;
   form.status = 1;
   form.phone = '';
   form.email = '';
@@ -406,7 +487,6 @@ const submitForm = async () => {
       name: form.name,
       shortName: form.shortName || undefined,
       type: form.type,
-      sortOrder: form.sortOrder,
       status: form.status,
       leaderIds: form.leaderIds,
       phone: form.phone || undefined,
@@ -446,8 +526,8 @@ const removeRow = (row: OrgUnitNode) => {
 };
 
 const toggleExpand = () => {
-  treeConfig.expandAll = !treeConfig.expandAll;
-  reload();
+  expandAll.value = !expandAll.value;
+  expandAll.value ? tableRef.value?.expandAll() : tableRef.value?.foldAll();
 };
 
 const formatList = (names?: string[]) => {
@@ -498,6 +578,7 @@ const loadLeaders = async () => {
     params: {
       keyword: leaderFilters.keyword || undefined,
       orgUnitId: leaderFilters.orgUnitId || undefined,
+      departmentId: leaderFilters.departmentId || undefined,
       page: leaderPagination.current - 1,
       size: leaderPagination.pageSize,
     },
@@ -516,6 +597,7 @@ const resetLeaderFilters = () => {
   leaderFilters.keyword = '';
   leaderFilters.orgKeyword = '';
   leaderFilters.orgUnitId = null;
+  leaderFilters.departmentId = null;
   leaderPagination.current = 1;
   loadLeaders();
 };
@@ -523,7 +605,24 @@ const resetLeaderFilters = () => {
 const handleLeaderOrgSelect = (ctx: any) => {
   const node = ctx?.node;
   if (!node) return;
-  leaderFilters.orgUnitId = node.value ?? node.id;
+  const rawNode = node.data || (node.getModel?.() as any) || node;
+  const rawId = rawNode?.id ?? node.value ?? node.id;
+  const nodeId = Number(rawId);
+  if (Number.isNaN(nodeId)) return;
+  let nodeType = normalizeOrgUnitType(rawNode?.type ?? rawNode?.typeLabel);
+  if (!nodeType && rawNode?.typeLabel) {
+    nodeType = TYPE_LABEL_MAP.get(rawNode.typeLabel.trim()) || '';
+  }
+  if (DEPARTMENT_TYPES.has(nodeType)) {
+    leaderFilters.departmentId = nodeId;
+    leaderFilters.orgUnitId = null;
+  } else if (ORG_UNIT_TYPES.has(nodeType)) {
+    leaderFilters.orgUnitId = nodeId;
+    leaderFilters.departmentId = null;
+  } else {
+    leaderFilters.orgUnitId = nodeId;
+    leaderFilters.departmentId = null;
+  }
   leaderPagination.current = 1;
   loadLeaders();
 };
@@ -532,11 +631,12 @@ const removeLeader = (id: number) => {
   leaderSelection.value = leaderSelection.value.filter((user) => user.id !== id);
 };
 
-const handleLeaderSelectChange = (selectedKeys: Array<number>, ctx: any) => {
+const handleLeaderSelectChange = (selectedKeys: Array<string | number>, ctx: any) => {
+  const selectedIds = selectedKeys.map((key) => Number(key)).filter((key) => !Number.isNaN(key));
   if (ctx?.selectedRowData) {
     leaderSelection.value = ctx.selectedRowData as UserRow[];
   } else {
-    leaderSelection.value = leaderRows.value.filter((row) => selectedKeys.includes(row.id));
+    leaderSelection.value = leaderRows.value.filter((row) => selectedIds.includes(row.id));
   }
 };
 
@@ -633,6 +733,15 @@ onMounted(async () => {
   flex-wrap: wrap;
   gap: 8px;
   overflow: auto;
+}
+
+.org-table__drag-handle {
+  cursor: grab;
+  color: var(--td-text-color-secondary);
+}
+
+.org-table__drag-handle:active {
+  cursor: grabbing;
 }
 
 @media (max-width: 1200px) {

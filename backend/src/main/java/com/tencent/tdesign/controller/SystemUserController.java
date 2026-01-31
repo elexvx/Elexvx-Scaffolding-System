@@ -36,6 +36,7 @@ public class SystemUserController {
     @RequestParam(required = false) String keyword,
     @RequestParam(required = false) String mobile,
     @RequestParam(required = false) Long orgUnitId,
+    @RequestParam(required = false) Long departmentId,
     @RequestParam(required = false) Integer status,
     @RequestParam(required = false) String startTime,
     @RequestParam(required = false) String endTime,
@@ -45,7 +46,7 @@ public class SystemUserController {
     PermissionUtil.check("system:SystemUser:query");
     java.time.LocalDateTime start = parseDateTime(startTime);
     java.time.LocalDateTime end = parseDateTime(endTime);
-    return ApiResponse.success(userAdminService.page(keyword, mobile, orgUnitId, status, start, end, page, size));
+    return ApiResponse.success(userAdminService.page(keyword, mobile, orgUnitId, departmentId, status, start, end, page, size));
   }
 
   @GetMapping("/{id}")

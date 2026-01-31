@@ -96,7 +96,6 @@ onMounted(() => {
   checkUpdate();
 });
 </script>
-
 <style scoped>
 .version-label {
   color: var(--td-text-color-secondary);

@@ -13,7 +13,7 @@ import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpServerCodec;
 import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler;
 import io.netty.handler.timeout.IdleStateHandler;
-import java.time.Duration;
+import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -76,10 +76,10 @@ public class NettySocketServer {
       serverChannel.close();
     }
     if (bossGroup != null) {
-      bossGroup.shutdownGracefully(Duration.ofSeconds(1), Duration.ofSeconds(3));
+      bossGroup.shutdownGracefully(1, 3, TimeUnit.SECONDS);
     }
     if (workerGroup != null) {
-      workerGroup.shutdownGracefully(Duration.ofSeconds(1), Duration.ofSeconds(3));
+      workerGroup.shutdownGracefully(1, 3, TimeUnit.SECONDS);
     }
     log.info("Netty socket server stopped.");
   }

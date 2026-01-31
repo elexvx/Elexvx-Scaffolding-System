@@ -12,8 +12,10 @@ public interface OrgUnitMapper {
   List<String> selectNamesByUserId(@Param("userId") Long userId);
   List<Long> selectIdsByUserId(@Param("userId") Long userId);
   List<OrgUnitEntity> selectByIds(@Param("ids") Collection<Long> ids);
+  Integer selectMaxSortOrder(@Param("parentId") Long parentId);
   int insert(OrgUnitEntity entity);
   int update(OrgUnitEntity entity);
   int deleteById(@Param("id") Long id);
   long countChildren(@Param("id") Long id);
+  int updateParentAndSort(@Param("id") Long id, @Param("parentId") Long parentId, @Param("sortOrder") Integer sortOrder);
 }
