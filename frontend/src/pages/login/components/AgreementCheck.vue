@@ -1,5 +1,5 @@
 <template>
-  <div class="agreement-check">
+  <div v-if="agreementEnabled" class="agreement-check">
     <t-checkbox :model-value="modelValue" @change="handleChange" />
     <div class="agreement-text">
       <span class="prefix-text" @click="toggle">我已阅读并同意</span>
@@ -21,7 +21,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref } from 'vue';
+import { computed, nextTick, onMounted, ref, watch } from 'vue';
 
 import { useSettingStore } from '@/store';
 
@@ -35,21 +35,61 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue']);
 const settingStore = useSettingStore();
 
-const AGREEMENT_ACCEPTED_KEY = 'tdesign.login.agreement.accepted';
+const AGREEMENT_ACCEPTED_KEY = 'tdesign.login.agreement.accepted.v2';
+const AGREEMENT_ACCEPTED_LEGACY_KEY = 'tdesign.login.agreement.accepted';
+
+const agreementEnabled = computed(() => {
+  const user = String(settingStore.userAgreement || '').trim();
+  const privacy = String(settingStore.privacyAgreement || '').trim();
+  return Boolean(user || privacy);
+});
+
+const hashString = (input: string) => {
+  let hash = 5381;
+  for (let i = 0; i < input.length; i += 1) {
+    hash = (hash * 33) ^ input.charCodeAt(i);
+  }
+  return (hash >>> 0).toString(36);
+};
+
+const agreementSignature = computed(() => {
+  if (!agreementEnabled.value) return '';
+  const user = String(settingStore.userAgreement || '').trim();
+  const privacy = String(settingStore.privacyAgreement || '').trim();
+  return `${hashString(user)}.${hashString(privacy)}`;
+});
 
 const hasAcceptedAgreement = () => {
+  if (!agreementEnabled.value) return true;
   if (typeof window === 'undefined') return false;
   try {
-    return window.localStorage.getItem(AGREEMENT_ACCEPTED_KEY) === '1';
+    const accepted = window.localStorage.getItem(AGREEMENT_ACCEPTED_KEY) === agreementSignature.value;
+    if (accepted) return true;
+    const legacyAccepted = window.localStorage.getItem(AGREEMENT_ACCEPTED_LEGACY_KEY) === '1';
+    if (legacyAccepted) {
+      window.localStorage.setItem(AGREEMENT_ACCEPTED_KEY, agreementSignature.value);
+      return true;
+    }
+    return false;
   } catch {
     return false;
   }
 };
 
 const persistAgreementAccepted = () => {
+  if (!agreementEnabled.value) return;
   if (typeof window === 'undefined') return;
   try {
-    window.localStorage.setItem(AGREEMENT_ACCEPTED_KEY, '1');
+    window.localStorage.setItem(AGREEMENT_ACCEPTED_KEY, agreementSignature.value);
+    window.localStorage.removeItem(AGREEMENT_ACCEPTED_LEGACY_KEY);
+  } catch {}
+};
+
+const clearAgreementAccepted = () => {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.removeItem(AGREEMENT_ACCEPTED_KEY);
+    window.localStorage.removeItem(AGREEMENT_ACCEPTED_LEGACY_KEY);
   } catch {}
 };
 
@@ -75,19 +115,32 @@ const open = (type: 'user' | 'privacy') => {
 const handleChange = (val: boolean) => {
   emit('update:modelValue', val);
   if (val) persistAgreementAccepted();
+  else clearAgreementAccepted();
 };
 
 const toggle = () => {
   const next = !props.modelValue;
   emit('update:modelValue', next);
   if (next) persistAgreementAccepted();
+  else clearAgreementAccepted();
 };
 
-onMounted(() => {
+const syncAgreementState = () => {
+  if (!agreementEnabled.value) {
+    emit('update:modelValue', true);
+    return;
+  }
   if (!props.modelValue && hasAcceptedAgreement()) {
     emit('update:modelValue', true);
   }
-});
+  if (props.modelValue && !hasAcceptedAgreement()) {
+    emit('update:modelValue', false);
+  }
+};
+
+onMounted(syncAgreementState);
+watch(agreementSignature, syncAgreementState);
+watch(agreementEnabled, syncAgreementState);
 </script>
 <style scoped lang="less">
 .agreement-check {

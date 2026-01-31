@@ -1,5 +1,6 @@
 // axios配置  可自行根据项目进行更改，只需更改该文件即可，其他文件可以不动
 import type { AxiosInstance } from 'axios';
+import axios from 'axios';
 import isString from 'lodash/isString';
 import merge from 'lodash/merge';
 import { DialogPlugin, MessagePlugin } from 'tdesign-vue-next';
@@ -65,14 +66,16 @@ const transform: AxiosTransform = {
   // 捕获 transformRequestHook 抛出的错误，聚合到统一结果页
   requestCatchHook: async (e) => {
     const msg = String(e?.message || '');
-    // 尝试从错误信息中提取错误码 [401] 或 错误码: 401 格式
+    const axiosError = axios.isAxiosError(e) ? e : null;
+    const responseStatus = axiosError?.response?.status as number | undefined;
+    const responseMessage = String(axiosError?.response?.data?.message || '').trim();
     const m = msg.match(/\[(\d{3})\]/) || msg.match(/错误码:\s*(\d{3})/);
-    const code = m ? Number(m[1]) : undefined;
+    const code = m ? Number(m[1]) : responseStatus;
 
     // 只有在特定的严重错误时才跳转页面，登录失败等一般错误不跳转
     if (code === 401) {
       const user = useUserStore();
-      const humanMsg = msg.replace(/\s*\[\d{3}\]\s*$/, '').trim();
+      const humanMsg = responseMessage || msg.replace(/\s*\[\d{3}\]\s*$/, '').trim();
       const resetAuthState = () => {
         user.token = '';
         user.refreshToken = '';
@@ -146,15 +149,15 @@ const transform: AxiosTransform = {
         }, 1500);
       }
     } else if (code === 403) {
-      const humanMsg = msg.replace(/\s*\[\d{3}\]\s*$/, '').trim();
+      const humanMsg = responseMessage || msg.replace(/\s*\[\d{3}\]\s*$/, '').trim();
       MessagePlugin.error(humanMsg || '权限不足，请联系管理员开通');
     } else if (code === 422) {
-      const humanMsg = msg.replace(/\s*\[\d{3}\]\s*$/, '').trim();
+      const humanMsg = responseMessage || msg.replace(/\s*\[\d{3}\]\s*$/, '').trim();
       if (humanMsg) {
         MessagePlugin.warning(humanMsg);
       }
     } else if (code != null && code >= 500) {
-      const humanMsg = msg.replace(/\s*\[\d{3}\]\s*$/, '').trim();
+      const humanMsg = responseMessage || msg.replace(/\s*\[\d{3}\]\s*$/, '').trim();
       MessagePlugin.error(humanMsg || '服务器错误，请稍后重试');
     }
     // 不再自动跳转到错误页面，让业务代码自己处理错误提示

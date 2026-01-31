@@ -29,6 +29,11 @@ public class ConcurrentLoginService {
     return emitter;
   }
 
+  public boolean hasActiveSubscriber(long loginId) {
+    List<SseEmitter> emitters = loginEmitters.get(loginId);
+    return emitters != null && !emitters.isEmpty();
+  }
+
   public PendingLogin createPending(
     long loginId,
     String deviceModel,

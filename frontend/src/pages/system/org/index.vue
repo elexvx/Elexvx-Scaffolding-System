@@ -1,17 +1,26 @@
 <template>
   <div class="org-management">
     <t-card title="机构管理" :bordered="false">
-      <div class="org-toolbar">
-        <t-input v-model="filters.keyword" clearable placeholder="请输入机构名称" />
-        <t-select v-model="filters.status" :options="statusOptions" clearable placeholder="机构状态" />
-        <t-button theme="primary" @click="reload">搜索</t-button>
-        <t-button variant="outline" @click="resetFilters">重置</t-button>
-      </div>
-
-      <div class="org-actions">
+      <t-space class="org-toolbar" style="flex-wrap: wrap; margin-bottom: 24px" size="24px">
+        <t-input
+          v-model="filters.keyword"
+          clearable
+          placeholder="请输入机构名称"
+          style="width: 240px"
+          @enter="reload"
+        />
+        <t-select
+          v-model="filters.status"
+          :options="statusOptions"
+          clearable
+          placeholder="机构状态"
+          style="width: 160px"
+        />
+          <t-button theme="primary" @click="reload">搜索</t-button>
+          <t-button variant="outline" @click="resetFilters">重置</t-button>
         <t-button theme="primary" @click="openCreate">新增</t-button>
         <t-button variant="outline" @click="toggleExpand">展开/折叠</t-button>
-      </div>
+        </t-space>
 
       <t-table
         row-key="id"
@@ -22,7 +31,7 @@
       >
         <template #leaderNames="{ row }">
           <span>{{ formatList(row.leaderNames) }}</span>
-        </template>
+      </template>
         <template #status="{ row }">
           <t-tag :theme="row.status === 1 ? 'success' : 'danger'" variant="light">
             {{ row.status === 1 ? '正常' : '停用' }}
@@ -41,7 +50,7 @@
       </t-table>
     </t-card>
 
-    <t-dialog v-model:visible="dialogVisible" width="760px" :header="dialogTitle" :footer="false">
+    <confirm-drawer v-model:visible="dialogVisible" :header="dialogTitle" size="760px">
       <t-form
         ref="formRef"
         :data="form"
@@ -117,49 +126,66 @@
             </t-form-item>
           </t-col>
         </t-row>
-
-        <div class="dialog-footer">
+      </t-form>
+      <template #footer>
+        <t-space class="tdesign-starter-action-bar">
           <t-button variant="outline" @click="dialogVisible = false">取消</t-button>
           <t-button theme="primary" :loading="saving" @click="submitForm">确定</t-button>
-        </div>
-      </t-form>
-    </t-dialog>
+        </t-space>
+      </template>
+    </confirm-drawer>
 
     <t-dialog v-model:visible="leaderDialogVisible" width="920px" header="用户选择" :footer="false">
       <div class="leader-dialog">
         <div class="leader-dialog__search">
-          <t-input v-model="leaderFilters.keyword" clearable placeholder="请输入用户姓名" />
-          <t-button theme="primary" @click="loadLeaders">搜索</t-button>
-          <t-button variant="outline" @click="resetLeaderFilters">重置</t-button>
+          <t-input
+            v-model="leaderFilters.keyword"
+            clearable
+            placeholder="请输入用户姓名"
+            class="leader-dialog__keyword"
+          />
+          <t-space class="leader-dialog__actions" size="small">
+            <t-button theme="primary" @click="loadLeaders">搜索</t-button>
+            <t-button variant="outline" @click="resetLeaderFilters">重置</t-button>
+          </t-space>
         </div>
         <div class="leader-dialog__content">
           <div class="leader-panel">
             <div class="leader-panel__title">组织机构</div>
-            <t-input v-model="leaderFilters.orgKeyword" clearable placeholder="请输入组织名称" />
-            <t-tree
-              class="leader-tree"
-              :data="leaderFilteredTree"
-              :keys="orgTreeKeys"
-              hover
-              activable
-              @click="handleLeaderOrgSelect"
-            />
+            <div class="leader-panel__body">
+              <t-input
+                v-model="leaderFilters.orgKeyword"
+                clearable
+                placeholder="请输入组织名称"
+                class="leader-panel__filter"
+              />
+              <t-tree
+                class="leader-tree"
+                :data="leaderFilteredTree"
+                :keys="orgTreeKeys"
+                hover
+                activable
+                @click="handleLeaderOrgSelect"
+              />
+            </div>
           </div>
           <div class="leader-panel">
             <div class="leader-panel__title">用户列表</div>
-            <t-table
-              row-key="id"
-              :data="leaderRows"
-              :columns="leaderColumns"
-              :pagination="leaderPagination"
-              :selected-row-keys="leaderSelection.map((u) => u.id)"
-              @select-change="handleLeaderSelectChange"
-              @page-change="onLeaderPageChange"
-            />
+            <div class="leader-panel__body">
+              <t-table
+                row-key="id"
+                :data="leaderRows"
+                :columns="leaderColumns"
+                :pagination="leaderPagination"
+                :selected-row-keys="leaderSelection.map((u) => u.id)"
+                @select-change="handleLeaderSelectChange"
+                @page-change="onLeaderPageChange"
+              />
+            </div>
           </div>
           <div class="leader-panel">
             <div class="leader-panel__title">已选择用户 ({{ leaderSelection.length }}人)</div>
-            <div class="leader-selected">
+            <div class="leader-panel__body leader-selected">
               <t-tag
                 v-for="user in leaderSelection"
                 :key="user.id"
@@ -185,6 +211,7 @@
 import type { FormInstanceFunctions, FormRule, PageInfo, PrimaryTableCol } from 'tdesign-vue-next';
 import { DialogPlugin, MessagePlugin } from 'tdesign-vue-next';
 import dayjs from 'dayjs';
+import ConfirmDrawer from '@/components/ConfirmDrawer.vue';
 import { computed, onMounted, reactive, ref } from 'vue';
 
 import { request } from '@/utils/request';
@@ -529,17 +556,10 @@ onMounted(async () => {
 });
 </script>
 <style scoped lang="less">
-.org-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-.org-actions {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 12px;
+.org-management {
+  :deep(.t-card__title) {
+    font-weight: 600;
+  }
 }
 
 .org-table-actions {
@@ -556,21 +576,34 @@ onMounted(async () => {
 
 .leader-dialog__search {
   display: flex;
+  align-items: center;
   gap: 12px;
   margin-bottom: 12px;
 }
 
+.leader-dialog__keyword {
+  flex: 1;
+  min-width: 240px;
+}
+
+.leader-dialog__actions {
+  flex-shrink: 0;
+}
+
 .leader-dialog__content {
   display: grid;
-  grid-template-columns: 1fr 1.2fr 1fr;
+  grid-template-columns: 220px minmax(360px, 1fr) 240px;
   gap: 16px;
+  min-height: 420px;
 }
 
 .leader-panel {
   background: var(--td-bg-color-container);
   border-radius: 8px;
   padding: 12px;
-  min-height: 360px;
+  min-height: 420px;
+  display: flex;
+  flex-direction: column;
 }
 
 .leader-panel__title {
@@ -578,9 +611,20 @@ onMounted(async () => {
   margin-bottom: 8px;
 }
 
+.leader-panel__body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+  min-height: 0;
+}
+
+.leader-panel__filter {
+  flex-shrink: 0;
+}
+
 .leader-tree {
-  margin-top: 12px;
-  max-height: 280px;
+  flex: 1;
   overflow: auto;
 }
 
@@ -588,6 +632,7 @@ onMounted(async () => {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  overflow: auto;
 }
 
 @media (max-width: 1200px) {

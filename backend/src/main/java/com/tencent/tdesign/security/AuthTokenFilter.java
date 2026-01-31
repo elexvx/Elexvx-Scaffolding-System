@@ -31,6 +31,7 @@ public class AuthTokenFilter extends OncePerRequestFilter {
     if (StringUtils.hasText(token) && SecurityContextHolder.getContext().getAuthentication() == null) {
       AuthSession session = tokenService.getSession(token);
       if (session != null) {
+        touchSession(token, session);
         AuthPrincipal principal = new AuthPrincipal(session.getUserId(), token);
         UsernamePasswordAuthenticationToken authentication =
           new UsernamePasswordAuthenticationToken(principal, token, java.util.List.of());
@@ -38,6 +39,16 @@ public class AuthTokenFilter extends OncePerRequestFilter {
       }
     }
     filterChain.doFilter(request, response);
+  }
+
+  private void touchSession(String token, AuthSession session) {
+    long now = System.currentTimeMillis();
+    Object lastAccessObj = session.getAttributes().get("lastAccessTime");
+    Long lastAccess = lastAccessObj instanceof Number ? ((Number) lastAccessObj).longValue() : null;
+    if (lastAccess == null || now - lastAccess > 30_000L) {
+      session.getAttributes().put("lastAccessTime", now);
+      tokenService.updateSession(token, session);
+    }
   }
 
   private String resolveToken(HttpServletRequest request) {

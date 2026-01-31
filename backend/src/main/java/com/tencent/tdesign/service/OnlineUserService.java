@@ -19,9 +19,11 @@ public class OnlineUserService {
   private static final Logger logger = LoggerFactory.getLogger(OnlineUserService.class);
   private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
   private final AuthTokenService authTokenService;
+  private final SecuritySettingService securitySettingService;
 
-  public OnlineUserService(AuthTokenService authTokenService) {
+  public OnlineUserService(AuthTokenService authTokenService, SecuritySettingService securitySettingService) {
     this.authTokenService = authTokenService;
+    this.securitySettingService = securitySettingService;
   }
 
   public PageResult<OnlineUserVO> getOnlineUsers(String loginAddress, String userName, int page, int size) {
@@ -31,11 +33,18 @@ public class OnlineUserService {
     List<OnlineUserVO> allUsers = new ArrayList<>();
     logger.debug("Found {} tokens in system", tokenList.size());
 
+    long now = System.currentTimeMillis();
+    long idleTimeoutMs = resolveSessionTimeoutMs();
     for (String token : tokenList) {
       try {
         AuthSession session = authTokenService.getSession(token);
         if (session == null) {
           logger.debug("No login ID found for token: {}", token);
+          authTokenService.removeToken(token);
+          continue;
+        }
+        if (isSessionExpired(session, now, idleTimeoutMs)) {
+          logger.debug("Session expired for token: {}", token);
           authTokenService.removeToken(token);
           continue;
         }
@@ -107,6 +116,12 @@ public class OnlineUserService {
     try {
       AuthSession session = authTokenService.getSession(sessionId);
       if (session == null) return null;
+      long now = System.currentTimeMillis();
+      long idleTimeoutMs = resolveSessionTimeoutMs();
+      if (isSessionExpired(session, now, idleTimeoutMs)) {
+        authTokenService.removeToken(sessionId);
+        return null;
+      }
 
       String userNameStr = (String) session.getAttributes().get("userName");
       String account = (String) session.getAttributes().get("account");
@@ -130,5 +145,42 @@ public class OnlineUserService {
     } catch (Exception e) {
       return null;
     }
+  }
+
+  private boolean isSessionExpired(AuthSession session, long now, long idleTimeoutMs) {
+    if (session.getExpiresAt() > 0 && session.getExpiresAt() <= now) {
+      return true;
+    }
+    Long lastAccess = readLongAttribute(session, "lastAccessTime");
+    if (lastAccess == null) {
+      lastAccess = readLongAttribute(session, "loginTime");
+    }
+    if (idleTimeoutMs > 0 && lastAccess != null && now - lastAccess > idleTimeoutMs) {
+      return true;
+    }
+    return false;
+  }
+
+  private long resolveSessionTimeoutMs() {
+    Integer minutes = securitySettingService.getOrCreate().getSessionTimeoutMinutes();
+    if (minutes != null && minutes > 0) {
+      return minutes * 60_000L;
+    }
+    return 0L;
+  }
+
+  private Long readLongAttribute(AuthSession session, String key) {
+    Object value = session.getAttributes().get(key);
+    if (value instanceof Number) {
+      return ((Number) value).longValue();
+    }
+    if (value instanceof String) {
+      try {
+        return Long.parseLong((String) value);
+      } catch (NumberFormatException ignored) {
+        return null;
+      }
+    }
+    return null;
   }
 }

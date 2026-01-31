@@ -207,19 +207,24 @@ public class AuthService {
     // 检查是否已经在其他设备登录
     if (!allowMultiDeviceLogin && hasActiveSession(user.getId())) {
       if (!Boolean.TRUE.equals(force)) {
-        String deviceInfo = buildDeviceInfo(snapshot.deviceModel, snapshot.os, snapshot.browser);
-        ConcurrentLoginService.PendingLogin pending = concurrentLoginService.createPending(
-            user.getId(),
-            snapshot.deviceModel,
-            snapshot.os,
-            snapshot.browser,
-            deviceInfo,
-            snapshot.ipAddress,
-            snapshot.loginLocation);
-        return LoginResponse.pending(pending.getRequestId(), pending.getRequestKey());
+        if (concurrentLoginService.hasActiveSubscriber(user.getId())) {
+          String deviceInfo = buildDeviceInfo(snapshot.deviceModel, snapshot.os, snapshot.browser);
+          ConcurrentLoginService.PendingLogin pending = concurrentLoginService.createPending(
+              user.getId(),
+              snapshot.deviceModel,
+              snapshot.os,
+              snapshot.browser,
+              deviceInfo,
+              snapshot.ipAddress,
+              snapshot.loginLocation);
+          return LoginResponse.pending(pending.getRequestId(), pending.getRequestKey());
+        }
+        // No active approval listener; revoke old sessions and continue.
+        authTokenService.removeUserTokens(user.getId());
+      } else {
+        // Force login: revoke previous sessions.
+        authTokenService.removeUserTokens(user.getId());
       }
-      // 如果 force=true，注销之前的登录
-      authTokenService.removeUserTokens(user.getId());
     }
 
     ensureUserGuid(user);
@@ -841,12 +846,58 @@ public class AuthService {
 
   private boolean hasActiveSession(long userId) {
     List<String> tokens = authTokenService.listUserTokens(userId);
+    long now = System.currentTimeMillis();
+    long idleTimeoutMs = resolveSessionTimeoutMs();
     for (String token : tokens) {
-      if (authTokenService.getSession(token) != null) {
-        return true;
+      AuthSession session = authTokenService.getSession(token);
+      if (session == null) {
+        authTokenService.removeToken(token);
+        continue;
       }
+      if (isSessionExpired(session, now, idleTimeoutMs)) {
+        authTokenService.removeToken(token);
+        continue;
+      }
+      return true;
     }
     return false;
+  }
+
+  private boolean isSessionExpired(AuthSession session, long now, long idleTimeoutMs) {
+    if (session.getExpiresAt() > 0 && session.getExpiresAt() <= now) {
+      return true;
+    }
+    Long lastAccess = readLongAttribute(session, "lastAccessTime");
+    if (lastAccess == null) {
+      lastAccess = readLongAttribute(session, "loginTime");
+    }
+    if (idleTimeoutMs > 0 && lastAccess != null && now - lastAccess > idleTimeoutMs) {
+      return true;
+    }
+    return false;
+  }
+
+  private long resolveSessionTimeoutMs() {
+    Integer minutes = securitySettingService.getOrCreate().getSessionTimeoutMinutes();
+    if (minutes != null && minutes > 0) {
+      return minutes * 60_000L;
+    }
+    return 0L;
+  }
+
+  private Long readLongAttribute(AuthSession session, String key) {
+    Object value = session.getAttributes().get(key);
+    if (value instanceof Number) {
+      return ((Number) value).longValue();
+    }
+    if (value instanceof String) {
+      try {
+        return Long.parseLong((String) value);
+      } catch (NumberFormatException ignored) {
+        return null;
+      }
+    }
+    return null;
   }
 
   private void updateSessionUserName(String userName) {
