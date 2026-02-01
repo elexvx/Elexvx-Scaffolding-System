@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tencent.tdesign.mapper.SysDictMapper">
+  <sql id="BaseSelect">
+    SELECT id,
+      name,
+      code,
+      status,
+      sort,
+      remark,
+      created_at,
+      updated_at
+    FROM sys_dict
+  </sql>
+
+  <select id="selectPage" resultType="com.tencent.tdesign.entity.SysDict">
+    <include refid="BaseSelect" />
+    <where>
+      <if test="keyword != null and keyword != ''">
+        AND (LOWER(name) LIKE CONCAT(CONCAT('%', LOWER(#{keyword})), '%')
+          OR LOWER(code) LIKE CONCAT(CONCAT('%', LOWER(#{keyword})), '%'))
+      </if>
+      <if test="status != null">
+        AND status = #{status}
+      </if>
+    </where>
+    ORDER BY sort ASC, id DESC
+    <choose>
+      <when test="_databaseId == 'oracle' or _databaseId == 'sqlserver'">
+        OFFSET #{offset} ROWS FETCH NEXT #{limit} ROWS ONLY
+      </when>
+      <otherwise>
+        LIMIT #{limit} OFFSET #{offset}
+      </otherwise>
+    </choose>
+  </select>
+
+  <select id="countByKeyword" resultType="long">
+    SELECT COUNT(1)
+    FROM sys_dict
+    <where>
+      <if test="keyword != null and keyword != ''">
+        AND (LOWER(name) LIKE CONCAT(CONCAT('%', LOWER(#{keyword})), '%')
+          OR LOWER(code) LIKE CONCAT(CONCAT('%', LOWER(#{keyword})), '%'))
+      </if>
+      <if test="status != null">
+        AND status = #{status}
+      </if>
+    </where>
+  </select>
+
+  <select id="selectById" resultType="com.tencent.tdesign.entity.SysDict">
+    <include refid="BaseSelect" />
+    WHERE id = #{id}
+  </select>
+
+  <select id="selectByCode" resultType="com.tencent.tdesign.entity.SysDict">
+    <include refid="BaseSelect" />
+    WHERE code = #{code}
+    <choose>
+      <when test="_databaseId == 'sqlserver'">
+        OFFSET 0 ROWS FETCH NEXT 1 ROWS ONLY
+      </when>
+      <when test="_databaseId == 'oracle'">
+        FETCH FIRST 1 ROWS ONLY
+      </when>
+      <otherwise>
+        LIMIT 1
+      </otherwise>
+    </choose>
+  </select>
+
+  <insert id="insert" parameterType="com.tencent.tdesign.entity.SysDict" useGeneratedKeys="true" keyProperty="id">
+    INSERT INTO sys_dict (
+      name,
+      code,
+      status,
+      sort,
+      remark,
+      created_at,
+      updated_at
+    )
+    VALUES (
+      #{name},
+      #{code},
+      #{status},
+      #{sort},
+      #{remark},
+      #{createdAt},
+      #{updatedAt}
+    )
+  </insert>
+
+  <update id="update" parameterType="com.tencent.tdesign.entity.SysDict">
+    UPDATE sys_dict
+    SET
+      name = #{name},
+      code = #{code},
+      status = #{status},
+      sort = #{sort},
+      remark = #{remark},
+      updated_at = #{updatedAt}
+    WHERE id = #{id}
+  </update>
+
+  <delete id="deleteById">
+    DELETE FROM sys_dict WHERE id = #{id}
+  </delete>
+</mapper>

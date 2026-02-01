@@ -616,6 +616,7 @@ INSERT INTO `sys_menu_items` VALUES (1038, 1000, 'PAGE', 'ai', 'SystemAi', '/sys
 INSERT INTO `sys_menu_items` VALUES (1039, 1035, 'PAGE', 'send', 'MessageSend', '/message/send/index', NULL, '消息发送', 'Message Send', NULL, 0, 1, NULL, 0, 1, NULL, NULL, 0, 4, '2026-01-08 22:43:25', '2026-01-18 21:21:03', 'create,update,delete,query');
 INSERT INTO `sys_menu_items` VALUES (1040, NULL, 'DIR', '/console', 'console', 'LAYOUT', '/console/download', '文件下载', 'Console', 'download', 0, 1, NULL, 0, 1, NULL, NULL, 1, 4, '2026-01-14 02:30:00', '2026-01-18 21:21:03', NULL);
 INSERT INTO `sys_menu_items` VALUES (1041, 1040, 'PAGE', 'download', 'ConsoleDownload', '/console/download/index', NULL, '文件下载', 'File Download', 'download', 0, 1, NULL, 0, 1, NULL, NULL, 0, 3, '2026-01-14 02:30:00', '2026-01-18 21:21:03', 'create,update,delete,query');
+INSERT INTO `sys_menu_items` VALUES (1042, 1000, 'PAGE', 'dict', 'SystemDict', '/system/dict/index', NULL, '字典管理', 'Dictionary', 'book', 0, 1, NULL, 0, 1, 'admin', NULL, 8, 4, '2026-01-18 21:21:03', '2026-01-18 21:21:03', 'create,update,delete,query');
 
 -- ----------------------------
 -- Table structure for ui_brand_settings
@@ -749,6 +750,58 @@ CREATE TABLE `ui_theme_settings`  (
 -- Records of ui_theme_settings
 -- ----------------------------
 INSERT INTO `ui_theme_settings` VALUES (1, 0, '06:00', '18:00', 'light', NULL);
+
+-- ----------------------------
+-- Table structure for sys_dict
+-- ----------------------------
+DROP TABLE IF EXISTS `sys_dict`;
+CREATE TABLE `sys_dict`  (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `name` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  `code` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  `status` tinyint NOT NULL DEFAULT 1,
+  `sort` int NOT NULL DEFAULT 0,
+  `remark` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE INDEX `uk_sys_dict_code`(`code` ASC) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Table structure for sys_dict_items
+-- ----------------------------
+DROP TABLE IF EXISTS `sys_dict_items`;
+CREATE TABLE `sys_dict_items`  (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `dict_id` bigint NOT NULL,
+  `label` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  `value` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  `value_type` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT 'string',
+  `status` tinyint NOT NULL DEFAULT 1,
+  `sort` int NOT NULL DEFAULT 0,
+  `tag_color` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE INDEX `uk_sys_dict_item_value`(`dict_id` ASC, `value` ASC) USING BTREE,
+  INDEX `idx_sys_dict_item_dict`(`dict_id` ASC) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Records of sys_dict
+-- ----------------------------
+INSERT INTO `sys_dict` VALUES (2001, '性别', 'gender', 1, 1, '性别选项', '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+INSERT INTO `sys_dict` VALUES (2002, '地址-省', 'address_province', 1, 2, '地址省份', '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+INSERT INTO `sys_dict` VALUES (2003, '地址-市', 'address_city', 1, 3, '地址城市', '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+INSERT INTO `sys_dict` VALUES (2004, '地址-区', 'address_district', 1, 4, '地址区县', '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+
+-- ----------------------------
+-- Records of sys_dict_items
+-- ----------------------------
+INSERT INTO `sys_dict_items` VALUES (2101, 2001, '男', 'male', 'string', 1, 1, 'success', '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+INSERT INTO `sys_dict_items` VALUES (2102, 2001, '女', 'female', 'string', 1, 2, 'danger', '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+INSERT INTO `sys_dict_items` VALUES (2103, 2001, '未知', 'unknown', 'string', 1, 3, 'warning', '2026-01-18 21:21:03', '2026-01-18 21:21:03');
 
 -- ----------------------------
 -- Table structure for user_parameters
@@ -1265,6 +1318,26 @@ ALTER TABLE `verification_sms_settings` MODIFY COLUMN `sms_tencent_template_id` 
 ALTER TABLE `verification_sms_settings` MODIFY COLUMN `sms_tencent_region` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'sms_tencent_region';
 ALTER TABLE `verification_sms_settings` MODIFY COLUMN `sms_tencent_endpoint` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'sms_tencent_endpoint';
 ALTER TABLE `verification_sms_settings` MODIFY COLUMN `sms_sdk_app_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'sms_sdk_app_id';
+ALTER TABLE `sys_dict` COMMENT = '表: sys_dict';
+ALTER TABLE `sys_dict` MODIFY COLUMN `id` bigint NOT NULL AUTO_INCREMENT COMMENT 'id';
+ALTER TABLE `sys_dict` MODIFY COLUMN `name` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT 'name';
+ALTER TABLE `sys_dict` MODIFY COLUMN `code` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT 'code';
+ALTER TABLE `sys_dict` MODIFY COLUMN `status` tinyint NOT NULL DEFAULT 1 COMMENT 'status';
+ALTER TABLE `sys_dict` MODIFY COLUMN `sort` int NOT NULL DEFAULT 0 COMMENT 'sort';
+ALTER TABLE `sys_dict` MODIFY COLUMN `remark` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'remark';
+ALTER TABLE `sys_dict` MODIFY COLUMN `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'created_at';
+ALTER TABLE `sys_dict` MODIFY COLUMN `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'updated_at';
+ALTER TABLE `sys_dict_items` COMMENT = '表: sys_dict_items';
+ALTER TABLE `sys_dict_items` MODIFY COLUMN `id` bigint NOT NULL AUTO_INCREMENT COMMENT 'id';
+ALTER TABLE `sys_dict_items` MODIFY COLUMN `dict_id` bigint NOT NULL COMMENT 'dict_id';
+ALTER TABLE `sys_dict_items` MODIFY COLUMN `label` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT 'label';
+ALTER TABLE `sys_dict_items` MODIFY COLUMN `value` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT 'value';
+ALTER TABLE `sys_dict_items` MODIFY COLUMN `value_type` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT 'string' COMMENT 'value_type';
+ALTER TABLE `sys_dict_items` MODIFY COLUMN `status` tinyint NOT NULL DEFAULT 1 COMMENT 'status';
+ALTER TABLE `sys_dict_items` MODIFY COLUMN `sort` int NOT NULL DEFAULT 0 COMMENT 'sort';
+ALTER TABLE `sys_dict_items` MODIFY COLUMN `tag_color` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'tag_color';
+ALTER TABLE `sys_dict_items` MODIFY COLUMN `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'created_at';
+ALTER TABLE `sys_dict_items` MODIFY COLUMN `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'updated_at';
 ALTER TABLE `watermark_settings` COMMENT = '表: watermark_settings';
 ALTER TABLE `watermark_settings` MODIFY COLUMN `id` bigint NOT NULL AUTO_INCREMENT COMMENT 'id';
 ALTER TABLE `watermark_settings` MODIFY COLUMN `type` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT 'type';

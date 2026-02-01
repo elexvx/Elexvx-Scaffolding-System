@@ -213,6 +213,27 @@
         </t-space>
       </template>
     </confirm-drawer>
+
+    <t-dialog v-model:visible="resetDialogVisible" header="重置密码" width="480px" :close-on-overlay-click="false">
+      <t-form
+        ref="resetFormRef"
+        :data="resetPasswordForm"
+        :rules="resetRules"
+        label-width="90px"
+        layout="vertical"
+        @submit="onResetSubmit"
+      >
+        <t-form-item label="新密码" name="password" :help="resetPasswordHelp">
+          <t-input v-model="resetPasswordForm.password" type="password" :placeholder="resetPasswordPlaceholder" />
+        </t-form-item>
+      </t-form>
+      <template #footer>
+        <t-space>
+          <t-button variant="outline" @click="closeResetDialog">取消</t-button>
+          <t-button theme="primary" :loading="resetSubmitting" @click="submitResetPassword">确认重置</t-button>
+        </t-space>
+      </template>
+    </t-dialog>
   </div>
 </template>
 <script setup lang="ts">
@@ -398,6 +419,10 @@ const columns: PrimaryTableCol[] = [
 const drawerVisible = ref(false);
 const mode = ref<Mode>('create');
 const editingId = ref<number | null>(null);
+const resetDialogVisible = ref(false);
+const resetSubmitting = ref(false);
+const resetFormRef = ref<FormInstanceFunctions>();
+const resetTarget = ref<UserRow | null>(null);
 const drawerTitle = computed(() => (mode.value === 'create' ? '新增用户' : '编辑用户'));
 const currentUserId = computed(() => userStore.userInfo?.id);
 const canCreate = computed(() => hasPerm('system:SystemUser:create'));
@@ -419,6 +444,10 @@ const form = reactive({
   orgUnitIds: [] as number[],
   departmentIds: [] as number[],
   status: 1,
+});
+
+const resetPasswordForm = reactive({
+  password: '',
 });
 
 const minPasswordLength = computed(() =>
@@ -449,6 +478,10 @@ const passwordHelp = computed(() =>
 );
 
 const passwordPlaceholder = computed(() => (requiresCustomPassword.value ? '请输入初始密码' : '默认 123456'));
+const resetPasswordPlaceholder = computed(() => (requiresCustomPassword.value ? '请输入新密码' : '留空则默认 123456'));
+const resetPasswordHelp = computed(() =>
+  requiresCustomPassword.value ? `需符合密码规范：${passwordRequirementMessage.value}` : '留空则默认 123456',
+);
 
 const hasSequentialChars = (value: string) => {
   if (!value || value.length < 3) return false;
@@ -515,6 +548,21 @@ const rules = computed<Record<string, FormRule[]>>(() => {
         type: 'error',
       },
     ],
+  };
+});
+
+const resetRules = computed<Record<string, FormRule[]>>(() => {
+  const resetPasswordRules: FormRule[] = [];
+  if (requiresCustomPassword.value) {
+    resetPasswordRules.push({ required: true, message: '请输入新密码', type: 'error' });
+  }
+  resetPasswordRules.push({
+    validator: (val: string) => validatePasswordPolicy(val || ''),
+    message: `密码需满足：${passwordRequirementMessage.value}`,
+    type: 'error',
+  });
+  return {
+    password: resetPasswordRules,
   };
 });
 
@@ -770,16 +818,9 @@ const resetPwd = (row: UserRow) => {
     return;
   }
   if (isResetDisabled(row)) return;
-  const dialog = DialogPlugin.confirm({
-    header: '重置密码',
-    body: `确认将用户「${row.account}」密码重置为 123456？`,
-    confirmBtn: '重置',
-    onConfirm: async () => {
-      await request.post({ url: `/system/user/${row.id}/reset-password` });
-      MessagePlugin.success('已重置');
-      dialog.hide();
-    },
-  });
+  resetTarget.value = row;
+  resetPasswordForm.password = '';
+  resetDialogVisible.value = true;
 };
 
 const removeRow = (row: UserRow) => {
@@ -829,6 +870,31 @@ const isResetDisabled = (row: UserRow) => {
   if (isRootAdmin(row)) return true;
   if (currentUserId.value && row.id === currentUserId.value) return true;
   return false;
+};
+
+const closeResetDialog = () => {
+  resetDialogVisible.value = false;
+  resetPasswordForm.password = '';
+  resetTarget.value = null;
+};
+
+const submitResetPassword = async () => {
+  if (!resetTarget.value) return;
+  resetSubmitting.value = true;
+  try {
+    const valid = await resetFormRef.value?.validate();
+    if (valid !== true) return;
+    const payload = resetPasswordForm.password ? { password: resetPasswordForm.password } : undefined;
+    await request.post({ url: `/system/user/${resetTarget.value.id}/reset-password`, data: payload });
+    MessagePlugin.success('已重置');
+    closeResetDialog();
+  } finally {
+    resetSubmitting.value = false;
+  }
+};
+
+const onResetSubmit = (ctx: any) => {
+  if (ctx?.validateResult === true) submitResetPassword();
 };
 
 const isDeleteDisabled = (row: UserRow) => {

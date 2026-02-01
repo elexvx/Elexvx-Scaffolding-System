@@ -8,6 +8,7 @@ setActivePinia(store);
 export { store };
 
 export * from './modules/app';
+export * from './modules/dictionary';
 export * from './modules/notification';
 export * from './modules/permission';
 export * from './modules/setting';

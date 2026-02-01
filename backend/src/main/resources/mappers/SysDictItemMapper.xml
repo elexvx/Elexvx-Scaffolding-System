@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tencent.tdesign.mapper.SysDictItemMapper">
+  <sql id="BaseSelect">
+    SELECT id,
+      dict_id,
+      label,
+      value,
+      value_type,
+      status,
+      sort,
+      tag_color,
+      created_at,
+      updated_at
+    FROM sys_dict_items
+  </sql>
+
+  <select id="selectPage" resultType="com.tencent.tdesign.entity.SysDictItem">
+    <include refid="BaseSelect" />
+    <where>
+      <if test="dictId != null">
+        AND dict_id = #{dictId}
+      </if>
+      <if test="keyword != null and keyword != ''">
+        AND (LOWER(label) LIKE CONCAT(CONCAT('%', LOWER(#{keyword})), '%')
+          OR LOWER(value) LIKE CONCAT(CONCAT('%', LOWER(#{keyword})), '%'))
+      </if>
+      <if test="status != null">
+        AND status = #{status}
+      </if>
+    </where>
+    ORDER BY sort ASC, id ASC
+    <choose>
+      <when test="_databaseId == 'oracle' or _databaseId == 'sqlserver'">
+        OFFSET #{offset} ROWS FETCH NEXT #{limit} ROWS ONLY
+      </when>
+      <otherwise>
+        LIMIT #{limit} OFFSET #{offset}
+      </otherwise>
+    </choose>
+  </select>
+
+  <select id="countByDictId" resultType="long">
+    SELECT COUNT(1)
+    FROM sys_dict_items
+    <where>
+      <if test="dictId != null">
+        AND dict_id = #{dictId}
+      </if>
+      <if test="keyword != null and keyword != ''">
+        AND (LOWER(label) LIKE CONCAT(CONCAT('%', LOWER(#{keyword})), '%')
+          OR LOWER(value) LIKE CONCAT(CONCAT('%', LOWER(#{keyword})), '%'))
+      </if>
+      <if test="status != null">
+        AND status = #{status}
+      </if>
+    </where>
+  </select>
+
+  <select id="selectByDictId" resultType="com.tencent.tdesign.entity.SysDictItem">
+    <include refid="BaseSelect" />
+    WHERE dict_id = #{dictId}
+    ORDER BY sort ASC, id ASC
+  </select>
+
+  <select id="selectEnabledByDictCode" resultType="com.tencent.tdesign.entity.SysDictItem">
+    SELECT i.id,
+      i.dict_id,
+      i.label,
+      i.value,
+      i.value_type,
+      i.status,
+      i.sort,
+      i.tag_color,
+      i.created_at,
+      i.updated_at
+    FROM sys_dict_items i
+    JOIN sys_dict d ON d.id = i.dict_id
+    WHERE d.code = #{code} AND d.status = 1 AND i.status = 1
+    ORDER BY i.sort ASC, i.id ASC
+  </select>
+
+  <select id="selectById" resultType="com.tencent.tdesign.entity.SysDictItem">
+    <include refid="BaseSelect" />
+    WHERE id = #{id}
+  </select>
+
+  <select id="selectByDictValue" resultType="com.tencent.tdesign.entity.SysDictItem">
+    <include refid="BaseSelect" />
+    WHERE dict_id = #{dictId} AND value = #{value}
+    <choose>
+      <when test="_databaseId == 'sqlserver'">
+        OFFSET 0 ROWS FETCH NEXT 1 ROWS ONLY
+      </when>
+      <when test="_databaseId == 'oracle'">
+        FETCH FIRST 1 ROWS ONLY
+      </when>
+      <otherwise>
+        LIMIT 1
+      </otherwise>
+    </choose>
+  </select>
+
+  <insert id="insert" parameterType="com.tencent.tdesign.entity.SysDictItem" useGeneratedKeys="true" keyProperty="id">
+    INSERT INTO sys_dict_items (
+      dict_id,
+      label,
+      value,
+      value_type,
+      status,
+      sort,
+      tag_color,
+      created_at,
+      updated_at
+    )
+    VALUES (
+      #{dictId},
+      #{label},
+      #{value},
+      #{valueType},
+      #{status},
+      #{sort},
+      #{tagColor},
+      #{createdAt},
+      #{updatedAt}
+    )
+  </insert>
+
+  <update id="update" parameterType="com.tencent.tdesign.entity.SysDictItem">
+    UPDATE sys_dict_items
+    SET
+      label = #{label},
+      value = #{value},
+      value_type = #{valueType},
+      status = #{status},
+      sort = #{sort},
+      tag_color = #{tagColor},
+      updated_at = #{updatedAt}
+    WHERE id = #{id}
+  </update>
+
+  <delete id="deleteById">
+    DELETE FROM sys_dict_items WHERE id = #{id}
+  </delete>
+
+  <delete id="deleteByDictId">
+    DELETE FROM sys_dict_items WHERE dict_id = #{dictId}
+  </delete>
+</mapper>
