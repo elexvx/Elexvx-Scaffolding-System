@@ -35,6 +35,7 @@ public class UserAdminService {
   private final PermissionFacade permissionFacade;
   private final PasswordPolicyService passwordPolicyService;
   private final AuthContext authContext;
+  private final AuthTokenService authTokenService;
 
   public UserAdminService(
     UserMapper userMapper,
@@ -46,7 +47,8 @@ public class UserAdminService {
     OperationLogService operationLogService,
     PermissionFacade permissionFacade,
     PasswordPolicyService passwordPolicyService,
-    AuthContext authContext
+    AuthContext authContext,
+    AuthTokenService authTokenService
   ) {
     this.userMapper = userMapper;
     this.roleMapper = roleMapper;
@@ -58,6 +60,7 @@ public class UserAdminService {
     this.permissionFacade = permissionFacade;
     this.passwordPolicyService = passwordPolicyService;
     this.authContext = authContext;
+    this.authTokenService = authTokenService;
   }
 
   @AiFunction(
@@ -155,6 +158,7 @@ public class UserAdminService {
   public UserListItem update(long id, UserUpdateRequest req) {
     UserEntity u = Optional.ofNullable(userMapper.selectById(id)).orElseThrow(() -> new IllegalArgumentException("用户不存在"));
     ensureManageableTarget(u, true);
+    List<String> originalRoles = req.getRoles() != null ? authDao.findRoleNamesByUserId(id) : List.of();
     if (req.getName() != null) u.setName(req.getName());
     if (req.getMobile() != null && !SensitiveMaskUtil.isMasked(req.getMobile())) u.setMobile(req.getMobile());
     if (req.getPhone() != null && !SensitiveMaskUtil.isMasked(req.getPhone())) u.setPhone(req.getPhone());
@@ -177,6 +181,12 @@ public class UserAdminService {
       }
       ensureRolesExist(roles);
       authDao.replaceUserRoles(id, roles);
+      if (hasRoleChanged(originalRoles, roles)) {
+        long currentUserId = authContext.getUserIdOrDefault(-1L);
+        if (currentUserId != id) {
+          authTokenService.removeUserTokens(id);
+        }
+      }
     }
     if (req.getOrgUnitIds() != null) {
       replaceOrgUnits(id, req.getOrgUnitIds());
@@ -220,6 +230,13 @@ public class UserAdminService {
       if (!value.isEmpty()) normalized.add(value);
     }
     return normalized;
+  }
+
+  private boolean hasRoleChanged(List<String> before, List<String> after) {
+    if (before == null && after == null) return false;
+    if (before == null) return !after.isEmpty();
+    if (after == null) return !before.isEmpty();
+    return !new java.util.HashSet<>(before).equals(new java.util.HashSet<>(after));
   }
 
   private void ensureRolesExist(List<String> roles) {
