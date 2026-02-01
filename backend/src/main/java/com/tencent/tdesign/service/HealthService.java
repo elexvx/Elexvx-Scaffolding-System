@@ -1,6 +1,7 @@
 package com.tencent.tdesign.service;
 
 import com.tencent.tdesign.config.RedisProperties;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -16,6 +17,15 @@ public class HealthService {
 
   public HealthService(RedisProperties redisProperties) {
     this.redisProperties = redisProperties;
+  }
+
+  @PostConstruct
+  public void checkRedisOnStartup() {
+    if (!redisProperties.isEnabled()) return;
+    if (!isRedisAvailable()) {
+      String message = lastRedisError == null || lastRedisError.isBlank() ? "请启动 Redis 服务" : lastRedisError;
+      throw new IllegalStateException(message);
+    }
   }
 
   public boolean isRedisEnabled() {
@@ -36,11 +46,13 @@ public class HealthService {
         lastRedisError = "Redis 连接工厂未初始化";
         return false;
       }
-      factory.getConnection().ping();
+      try (var connection = factory.getConnection()) {
+        connection.ping();
+      }
       lastRedisError = "";
       return true;
     } catch (Exception e) {
-      lastRedisError = e.getMessage();
+      lastRedisError = "请启动 Redis 服务";
       return false;
     }
   }
