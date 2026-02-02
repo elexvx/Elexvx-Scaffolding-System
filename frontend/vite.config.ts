@@ -1,12 +1,62 @@
+import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 
 import vue from '@vitejs/plugin-vue';
 import vueJsx from '@vitejs/plugin-vue-jsx';
-import type { ConfigEnv, UserConfig } from 'vite';
-import { loadEnv } from 'vite';
+import { loadEnv, type ConfigEnv, type Plugin, type UserConfig } from 'vite';
 import svgLoader from 'vite-svg-loader';
 
 const CWD = process.cwd();
+const BANNER_TEMPLATE_PATH = path.resolve(__dirname, 'scripts', 'templates', 'frontend-startup-banner.txt');
+
+const loadBannerTemplate = () => {
+  try {
+    return fs.readFileSync(BANNER_TEMPLATE_PATH, 'utf-8');
+  } catch {
+    return '';
+  }
+};
+
+const getAccessUrls = (port: number) => {
+  const lines: string[] = [];
+  lines.push(`  ➜  Local:   http://localhost:${port}/`);
+  const nets = os.networkInterfaces();
+  const addresses = Object.values(nets)
+    .flatMap((items) => items || [])
+    .filter((item) => item.family === 'IPv4' && !item.internal)
+    .map((item) => item.address)
+    .filter((address) => address && !address.startsWith('169.254.'))
+    .sort();
+  for (const address of Array.from(new Set(addresses))) {
+    lines.push(`  ➜  Network: http://${address}:${port}/`);
+  }
+  return lines.join(os.EOL);
+};
+
+const renderBanner = (port: number) => {
+  const template = loadBannerTemplate();
+  if (!template) return '';
+  return template.replaceAll('{{accessUrls}}', getAccessUrls(port));
+};
+
+const startupBannerPlugin = (): Plugin => {
+  let printed = false;
+  return {
+    name: 'startup-banner',
+    configureServer(server) {
+      server.httpServer?.once('listening', () => {
+        if (printed) return;
+        printed = true;
+        const address = server.httpServer?.address();
+        const port = typeof address === 'object' && address?.port ? address.port : 0;
+        if (!port) return;
+        const banner = renderBanner(port);
+        if (banner) console.log(banner);
+      });
+    },
+  };
+};
 
 // https://vitejs.dev/config/
 export default ({ mode }: ConfigEnv): UserConfig => {
@@ -31,7 +81,7 @@ export default ({ mode }: ConfigEnv): UserConfig => {
       },
     },
 
-    plugins: [vue(), vueJsx(), svgLoader()],
+    plugins: [startupBannerPlugin(), vue(), vueJsx(), svgLoader()],
 
     server: {
       port: 3002,

@@ -541,13 +541,6 @@ const rules = computed<Record<string, FormRule[]>>(() => {
         type: 'error',
       },
     ],
-    orgUnitIds: [
-      {
-        validator: (val: number[]) => Array.isArray(val) && val.length > 0,
-        message: '请选择所属部门',
-        type: 'error',
-      },
-    ],
   };
 });
 

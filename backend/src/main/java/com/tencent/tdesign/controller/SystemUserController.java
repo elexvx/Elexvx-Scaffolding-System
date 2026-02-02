@@ -10,6 +10,7 @@ import com.tencent.tdesign.vo.ApiResponse;
 import com.tencent.tdesign.vo.PageResult;
 import com.tencent.tdesign.vo.UserListItem;
 import jakarta.validation.Valid;
+import java.util.Map;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -80,9 +81,18 @@ public class SystemUserController {
 
   @PostMapping("/{id}/reset-password")
   @RepeatSubmit
-  public ApiResponse<Boolean> resetPassword(@PathVariable long id, @RequestParam(required = false) String password) {
+  public ApiResponse<Boolean> resetPassword(
+    @PathVariable long id,
+    @RequestBody(required = false) Map<String, Object> body,
+    @RequestParam(required = false) String password
+  ) {
     PermissionUtil.check("system:SystemUser:update");
-    return ApiResponse.success(userAdminService.resetPassword(id, password));
+    String newPassword = password;
+    if (newPassword == null && body != null) {
+      Object value = body.get("password");
+      if (value != null) newPassword = String.valueOf(value);
+    }
+    return ApiResponse.success(userAdminService.resetPassword(id, newPassword));
   }
 
   private java.time.LocalDateTime parseDateTime(String value) {
