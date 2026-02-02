@@ -3,14 +3,20 @@
     <t-card title="字典管理" :bordered="false">
       <div class="table-action-bar">
         <div class="action-left">
-          <t-input v-model="filters.keyword" clearable placeholder="关键字" style="width: 200px" />
+          <t-input v-model="filters.keyword" clearable placeholder="关键词" style="width: 200px" />
           <t-input v-model="filters.name" clearable placeholder="字典名称" style="width: 200px" />
-          <t-select v-model="filters.status" clearable placeholder="状态" style="width: 160px" :options="statusOptions" />
+          <t-select
+            v-model="filters.status"
+            clearable
+            placeholder="状态"
+            style="width: 160px"
+            :options="statusOptions"
+          />
           <t-button theme="primary" @click="loadDicts">查询</t-button>
           <t-button variant="outline" @click="resetFilters">重置</t-button>
         </div>
         <div class="action-right">
-          <t-button theme="primary" @click="openCreate">添加</t-button>
+          <t-button theme="primary" @click="openCreate">新增</t-button>
         </div>
       </div>
 
@@ -35,31 +41,36 @@
       </t-table>
     </t-card>
 
-    <t-dialog v-model:visible="dictDialogVisible" :header="dictDialogTitle" width="520px" :close-on-overlay-click="false">
+    <t-dialog
+      v-model:visible="dictDialogVisible"
+      :header="dictDialogTitle"
+      width="520px"
+      :close-on-overlay-click="false"
+    >
       <t-form ref="dictFormRef" :data="dictForm" :rules="dictRules" label-width="90px" layout="vertical">
         <t-form-item label="字典名称" name="name">
-          <t-input v-model="dictForm.name" placeholder="如：性别" />
+          <t-input v-model="dictForm.name" placeholder="例如：性别" />
         </t-form-item>
         <t-form-item label="字典编码" name="code">
-          <t-input v-model="dictForm.code" placeholder="如：gender" />
+          <t-input v-model="dictForm.code" placeholder="例如：gender" />
         </t-form-item>
         <t-form-item label="状态" name="status">
           <t-radio-group v-model="dictForm.status">
-            <t-radio :value="1">启用</t-radio>
-            <t-radio :value="0">禁用</t-radio>
+            <t-radio :value="1">正常</t-radio>
+            <t-radio :value="0">停用</t-radio>
           </t-radio-group>
         </t-form-item>
         <t-form-item label="排序" name="sort">
           <t-input-number v-model="dictForm.sort" :min="0" style="width: 160px" />
         </t-form-item>
         <t-form-item label="备注" name="remark">
-          <t-textarea v-model="dictForm.remark" placeholder="补充说明" :autosize="{ minRows: 2, maxRows: 4 }" />
+          <t-textarea v-model="dictForm.remark" placeholder="请输入说明" :autosize="{ minRows: 2, maxRows: 4 }" />
         </t-form-item>
       </t-form>
       <template #footer>
         <t-space>
           <t-button variant="outline" @click="dictDialogVisible = false">取消</t-button>
-          <t-button theme="primary" :loading="dictSaving" @click="submitDict">保存</t-button>
+          <t-button theme="primary" :loading="dictSaving" @click="submitDict">确定</t-button>
         </t-space>
       </template>
     </t-dialog>
@@ -69,17 +80,24 @@
       :header="configDialogTitle"
       width="1000px"
       :close-on-overlay-click="false"
+      :footer="false"
     >
       <div class="config-toolbar">
         <div class="config-toolbar__left">
           <t-input v-model="itemFilters.keyword" clearable placeholder="名称/数据值" style="width: 200px" />
-          <t-select v-model="itemFilters.status" clearable placeholder="状态" style="width: 160px" :options="statusOptions" />
+          <t-select
+            v-model="itemFilters.status"
+            clearable
+            placeholder="状态"
+            style="width: 160px"
+            :options="statusOptions"
+          />
           <t-button theme="primary" @click="loadItems">查询</t-button>
           <t-button variant="outline" @click="resetItemFilters">重置</t-button>
         </div>
         <div class="config-toolbar__right">
           <t-space>
-            <t-button theme="primary" @click="openItemCreate">添加</t-button>
+            <t-button theme="primary" @click="openItemCreate">新增</t-button>
             <t-button variant="outline" @click="downloadTemplate">
               <template #icon><t-icon name="download" /></template>
               下载模板
@@ -99,12 +117,12 @@
             >
               <t-button variant="outline">
                 <template #icon><t-icon name="upload" /></template>
-                批量导入
+                导入数据
               </t-button>
             </t-upload>
             <t-button variant="outline" @click="exportItems">
               <template #icon><t-icon name="download" /></template>
-              批量导出
+              导出数据
             </t-button>
           </t-space>
         </div>
@@ -122,7 +140,7 @@
           <t-tag variant="light">{{ valueTypeLabelMap[row.valueType] || row.valueType || 'string' }}</t-tag>
         </template>
         <template #status="{ row }">
-          <t-tag :theme="row.status === 1 ? 'success' : 'default'">{{ row.status === 1 ? '启用' : '禁用' }}</t-tag>
+          <t-tag :theme="row.status === 1 ? 'success' : 'default'">{{ row.status === 1 ? '正常' : '停用' }}</t-tag>
         </template>
         <template #tagColor="{ row }">
           <t-tag v-if="row.tagColor" :theme="row.tagColor" variant="light">{{ row.tagColor }}</t-tag>
@@ -137,21 +155,26 @@
       </t-table>
     </t-dialog>
 
-    <t-dialog v-model:visible="itemDialogVisible" :header="itemDialogTitle" width="520px" :close-on-overlay-click="false">
+    <t-dialog
+      v-model:visible="itemDialogVisible"
+      :header="itemDialogTitle"
+      width="520px"
+      :close-on-overlay-click="false"
+    >
       <t-form ref="itemFormRef" :data="itemForm" :rules="itemRules" label-width="90px" layout="vertical">
         <t-form-item label="名称" name="label">
-          <t-input v-model="itemForm.label" placeholder="如：男" />
+          <t-input v-model="itemForm.label" placeholder="例如：男" />
         </t-form-item>
         <t-form-item label="数据值" name="value">
-          <t-input v-model="itemForm.value" placeholder="如：male" />
+          <t-input v-model="itemForm.value" placeholder="例如：male" />
         </t-form-item>
         <t-form-item label="数据值类型" name="valueType">
-          <t-select v-model="itemForm.valueType" :options="valueTypeOptions" placeholder="选择数据值类型" />
+          <t-select v-model="itemForm.valueType" :options="valueTypeOptions" placeholder="请选择数据值类型" />
         </t-form-item>
         <t-form-item label="状态" name="status">
           <t-radio-group v-model="itemForm.status">
-            <t-radio :value="1">启用</t-radio>
-            <t-radio :value="0">禁用</t-radio>
+            <t-radio :value="1">正常</t-radio>
+            <t-radio :value="0">停用</t-radio>
           </t-radio-group>
         </t-form-item>
         <t-form-item label="排序" name="sort">
@@ -164,13 +187,12 @@
       <template #footer>
         <t-space>
           <t-button variant="outline" @click="itemDialogVisible = false">取消</t-button>
-          <t-button theme="primary" :loading="itemSaving" @click="submitItem">保存</t-button>
+          <t-button theme="primary" :loading="itemSaving" @click="submitItem">确定</t-button>
         </t-space>
       </template>
     </t-dialog>
   </div>
 </template>
-
 <script setup lang="ts">
 import type { FormInstanceFunctions, FormRule, PageInfo, PrimaryTableCol, UploadFile } from 'tdesign-vue-next';
 import { DialogPlugin, MessagePlugin } from 'tdesign-vue-next';
@@ -228,8 +250,8 @@ const dictRules: Record<string, FormRule[]> = {
 };
 
 const statusOptions = [
-  { label: '启用', value: 1 },
-  { label: '禁用', value: 0 },
+  { label: '正常', value: 1 },
+  { label: '停用', value: 0 },
 ];
 
 const dictColumns: PrimaryTableCol[] = [
@@ -309,7 +331,7 @@ const itemColumns: PrimaryTableCol[] = [
 ];
 
 const configDialogTitle = computed(() => (selectedDict.value ? `${selectedDict.value.name} - 字典配置` : '字典配置'));
-const itemDialogTitle = computed(() => (itemDialogMode.value === 'create' ? '新增字段' : '编辑字段'));
+const itemDialogTitle = computed(() => (itemDialogMode.value === 'create' ? '新增字典项' : '编辑字典项'));
 
 const uploadHeaders = computed(() => ({ Authorization: userStore.token }));
 const uploadAction = computed(() =>
@@ -386,7 +408,7 @@ const submitDict = async () => {
       MessagePlugin.success('新增成功');
     } else if (editingDictId.value) {
       await updateDict(editingDictId.value, payload);
-      MessagePlugin.success('保存成功');
+      MessagePlugin.success('更新成功');
     }
     dictDialogVisible.value = false;
     loadDicts();
@@ -403,7 +425,7 @@ const removeDict = (row: SysDict) => {
     confirmBtn: '删除',
     onConfirm: async () => {
       await deleteDict(row.id);
-      MessagePlugin.success('已删除');
+      MessagePlugin.success('删除成功');
       dialog.hide();
       loadDicts();
     },
@@ -497,7 +519,7 @@ const submitItem = async () => {
       MessagePlugin.success('新增成功');
     } else if (editingItemId.value) {
       await updateDictItem(editingItemId.value, payload);
-      MessagePlugin.success('保存成功');
+      MessagePlugin.success('更新成功');
     }
     dictStore.clearDictCache(selectedDict.value.code);
     itemDialogVisible.value = false;
@@ -509,13 +531,13 @@ const submitItem = async () => {
 
 const removeItem = (row: SysDictItem) => {
   const dialog = DialogPlugin.confirm({
-    header: '删除字段',
-    body: `确认删除字段「${row.label}」？`,
+    header: '删除字典项',
+    body: `确认删除字典项「${row.label}」？`,
     theme: 'danger',
     confirmBtn: '删除',
     onConfirm: async () => {
       await deleteDictItem(row.id);
-      MessagePlugin.success('已删除');
+      MessagePlugin.success('删除成功');
       dialog.hide();
       if (selectedDict.value) dictStore.clearDictCache(selectedDict.value.code);
       loadItems();
@@ -523,7 +545,7 @@ const removeItem = (row: SysDictItem) => {
   });
 };
 
-const handleImportSuccess = (context: { response: any }) => {
+const handleImportSuccess = (context: any) => {
   const response = context?.response || {};
   const result: DictionaryImportResult | undefined = response?.data || response?.result || response?.data?.data;
   if (response?.code !== undefined && response.code !== 0) {
@@ -581,7 +603,6 @@ onMounted(() => {
   loadDicts();
 });
 </script>
-
 <style scoped lang="less">
 .dict-page {
   .table-action-bar {

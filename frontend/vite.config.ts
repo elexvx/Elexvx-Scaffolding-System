@@ -4,7 +4,8 @@ import path from 'node:path';
 
 import vue from '@vitejs/plugin-vue';
 import vueJsx from '@vitejs/plugin-vue-jsx';
-import { loadEnv, type ConfigEnv, type Plugin, type UserConfig } from 'vite';
+import type { ConfigEnv, Plugin, UserConfig } from 'vite';
+import { loadEnv } from 'vite';
 import svgLoader from 'vite-svg-loader';
 
 const CWD = process.cwd();
@@ -20,7 +21,7 @@ const loadBannerTemplate = () => {
 
 const getAccessUrls = (port: number) => {
   const lines: string[] = [];
-  lines.push(`  ➜  Local:   http://localhost:${port}/`);
+  lines.push(`  ➜ Local:   http://localhost:${port}/`);
   const nets = os.networkInterfaces();
   const addresses = Object.values(nets)
     .flatMap((items) => items || [])
@@ -29,7 +30,7 @@ const getAccessUrls = (port: number) => {
     .filter((address) => address && !address.startsWith('169.254.'))
     .sort();
   for (const address of Array.from(new Set(addresses))) {
-    lines.push(`  ➜  Network: http://${address}:${port}/`);
+    lines.push(`  ➜ Network: http://${address}:${port}/`);
   }
   return lines.join(os.EOL);
 };

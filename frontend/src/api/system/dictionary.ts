@@ -77,11 +77,13 @@ export const importDictItems = (dictId: number, file: File) => {
 };
 
 export const exportDictItems = async (dictId: number) =>
-  request.get({
-    url: `/system/dict/${dictId}/items/export`,
-    responseType: 'blob',
-  } as any,
-  { isReturnNativeResponse: true });
+  request.get(
+    {
+      url: `/system/dict/${dictId}/items/export`,
+      responseType: 'blob',
+    } as any,
+    { isReturnNativeResponse: true },
+  );
 
 export const downloadDictTemplate = async () =>
   request.get({ url: '/system/dict/items/template', responseType: 'blob' } as any, { isReturnNativeResponse: true });
