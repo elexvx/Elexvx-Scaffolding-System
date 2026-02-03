@@ -218,6 +218,8 @@ import { DialogPlugin, MessagePlugin } from 'tdesign-vue-next';
 import { computed, h, nextTick, onMounted, reactive, ref } from 'vue';
 
 import ConfirmDrawer from '@/components/ConfirmDrawer.vue';
+import { useDictionary } from '@/hooks/useDictionary';
+import { buildDictOptions } from '@/utils/dict';
 import { request } from '@/utils/request';
 
 interface OrgUnitNode {
@@ -280,18 +282,26 @@ const form = reactive({
   email: '',
 });
 
-const statusOptions = [
+const statusDict = useDictionary('org_status');
+const typeDict = useDictionary('org_type');
+
+const fallbackStatusOptions = [
   { label: '正常', value: 1 },
   { label: '停用', value: 0 },
 ];
 
-const typeOptions = [
+const fallbackTypeOptions = [
   { label: '单位', value: 'UNIT' },
   { label: '部门', value: 'DEPARTMENT' },
   { label: '科室', value: 'SECTION' },
   { label: '班组', value: 'TEAM' },
   { label: '用户', value: 'USER' },
 ];
+
+const ORG_TYPE_VALUES = ['UNIT', 'DEPARTMENT', 'SECTION', 'TEAM', 'USER'];
+
+const statusOptions = computed(() => buildDictOptions(statusDict.items.value, fallbackStatusOptions, [1, 0]));
+const typeOptions = computed(() => buildDictOptions(typeDict.items.value, fallbackTypeOptions, ORG_TYPE_VALUES));
 
 const ORG_UNIT_TYPES = new Set(['UNIT']);
 const DEPARTMENT_TYPES = new Set(['DEPARTMENT', 'SECTION', 'TEAM']);
@@ -652,6 +662,8 @@ const formatTime = (value?: string) => {
 };
 
 onMounted(async () => {
+  void statusDict.load();
+  void typeDict.load();
   await reload();
 });
 </script>

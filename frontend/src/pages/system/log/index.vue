@@ -41,8 +41,10 @@
 <script setup lang="ts">
 import type { PageInfo, PrimaryTableCol, SelectOption } from 'tdesign-vue-next';
 import { MessagePlugin } from 'tdesign-vue-next';
-import { onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
 
+import { useDictionary } from '@/hooks/useDictionary';
+import { buildDictOptions, resolveLabel, resolveTagTheme } from '@/utils/dict';
 import { request } from '@/utils/request';
 
 interface LogRow {
@@ -77,12 +79,30 @@ const pagination = reactive({
   total: 0,
 });
 
-const actionOptions: SelectOption[] = [
+const actionDict = useDictionary('log_action');
+const fallbackActionOptions: SelectOption[] = [
   { label: '登录', value: 'LOGIN' },
   { label: '新增', value: 'CREATE' },
   { label: '修改', value: 'UPDATE' },
   { label: '删除', value: 'DELETE' },
 ];
+
+const actionLabelMap: Record<string, string> = {
+  LOGIN: '登录',
+  CREATE: '新增',
+  UPDATE: '修改',
+  DELETE: '删除',
+};
+const actionThemeMap: Record<string, TagTheme> = {
+  LOGIN: 'primary',
+  CREATE: 'success',
+  UPDATE: 'warning',
+  DELETE: 'danger',
+};
+
+const actionOptions = computed<SelectOption[]>(() =>
+  buildDictOptions(actionDict.items.value, fallbackActionOptions),
+);
 
 const columns: PrimaryTableCol[] = [
   {
@@ -102,24 +122,11 @@ const columns: PrimaryTableCol[] = [
 ];
 
 const actionLabel = (value?: string) => {
-  if (!value) return '-';
-  const map: Record<string, string> = {
-    LOGIN: '登录',
-    CREATE: '新增',
-    UPDATE: '修改',
-    DELETE: '删除',
-  };
-  return map[value] || value;
+  return resolveLabel(value, actionDict.items.value, actionLabelMap);
 };
 
 const actionTheme = (value?: string): TagTheme => {
-  const map: Record<string, TagTheme> = {
-    LOGIN: 'primary',
-    CREATE: 'success',
-    UPDATE: 'warning',
-    DELETE: 'danger',
-  };
-  return (value && map[value]) || 'default';
+  return resolveTagTheme(value, actionDict.items.value, actionThemeMap) as TagTheme;
 };
 
 const resolveDateParams = () => {
@@ -214,6 +221,7 @@ const exportCsv = async () => {
 };
 
 onMounted(() => {
+  void actionDict.load();
   reload();
 });
 </script>

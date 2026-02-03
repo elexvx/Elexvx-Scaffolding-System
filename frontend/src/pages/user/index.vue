@@ -109,11 +109,7 @@
               </t-col>
               <t-col :xs="24" :sm="12">
                 <t-form-item label="性别" name="gender">
-                  <t-select v-model="profileForm.gender" placeholder="请选择性别">
-                    <t-option label="男" value="male" />
-                    <t-option label="女" value="female" />
-                    <t-option label="保密" value="secret" />
-                  </t-select>
+                  <t-select v-model="profileForm.gender" :options="genderOptions" placeholder="请选择性别" />
                 </t-form-item>
               </t-col>
               <t-col :xs="24" :sm="12">
@@ -142,13 +138,29 @@
                 </t-form-item>
               </t-col>
               <t-col :xs="24" :sm="12">
-                <t-form-item label="省/市/区" name="region">
-                  <t-cascader
-                    v-model="profileForm.region"
-                    :options="regionOptions"
-                    placeholder="请选择省/市/区"
-                    @change="handleRegionChange"
-                  />
+                <t-form-item label="省/市/区" name="province">
+                  <t-space size="8" style="width: 100%">
+                    <t-select
+                      v-model="profileForm.province"
+                      :options="provinceOptions"
+                      placeholder="省"
+                      style="flex: 1"
+                      @change="handleProvinceChange"
+                    />
+                    <t-select
+                      v-model="profileForm.city"
+                      :options="cityOptions"
+                      placeholder="市"
+                      style="flex: 1"
+                      @change="handleCityChange"
+                    />
+                    <t-select
+                      v-model="profileForm.district"
+                      :options="districtOptions"
+                      placeholder="区"
+                      style="flex: 1"
+                    />
+                  </t-space>
                 </t-form-item>
               </t-col>
               <t-col :xs="24" :sm="12">
@@ -244,7 +256,9 @@ import { computed, onMounted, onUnmounted, reactive, ref } from 'vue';
 
 import type { ChangePasswordRequest, UserProfile } from '@/api/user';
 import { changePassword, getMyProfile, updateMyProfile } from '@/api/user';
+import { useDictionary } from '@/hooks/useDictionary';
 import { useUserStore } from '@/store';
+import { buildDictOptions } from '@/utils/dict';
 import { request } from '@/utils/request';
 
 // 基础状态
@@ -307,7 +321,7 @@ const profileFormRef = ref<FormInstanceFunctions>();
 const profileForm = reactive({
   name: '',
   nickname: '',
-  gender: 'secret',
+  gender: '',
   mobile: '',
   email: '',
   idCard: '',
@@ -315,11 +329,40 @@ const profileForm = reactive({
   province: '',
   city: '',
   district: '',
-  region: [] as string[],
   address: '',
   introduction: '',
   tags: '',
 });
+
+const genderDict = useDictionary('gender');
+const provinceDict = useDictionary('address_province');
+const cityDict = useDictionary('address_city');
+const districtDict = useDictionary('address_district');
+
+const fallbackGenderOptions = [
+  { label: '男', value: 'male' },
+  { label: '女', value: 'female' },
+  { label: '保密', value: 'secret' },
+];
+
+const buildRegionFallback = (options: Array<any>) => {
+  const provinces: Array<{ label: string; value: string }> = [];
+  const cities: Array<{ label: string; value: string }> = [];
+  const districts: Array<{ label: string; value: string }> = [];
+  const pushUnique = (list: Array<{ label: string; value: string }>, item: { label: string; value: string }) => {
+    if (!list.some((existing) => existing.value === item.value)) list.push(item);
+  };
+  (options || []).forEach((province) => {
+    if (province?.label && province?.value) pushUnique(provinces, { label: province.label, value: province.value });
+    (province?.children || []).forEach((city: any) => {
+      if (city?.label && city?.value) pushUnique(cities, { label: city.label, value: city.value });
+      (city?.children || []).forEach((district: any) => {
+        if (district?.label && district?.value) pushUnique(districts, { label: district.label, value: district.value });
+      });
+    });
+  });
+  return { provinces, cities, districts };
+};
 
 // 模拟省市区数据，实际项目中建议使用公共库
 const regionOptions = [
@@ -402,12 +445,20 @@ const regionOptions = [
   },
 ];
 
-const handleRegionChange = (value: any) => {
-  if (Array.isArray(value)) {
-    profileForm.province = value[0] || '';
-    profileForm.city = value[1] || '';
-    profileForm.district = value[2] || '';
-  }
+const fallbackRegionOptions = buildRegionFallback(regionOptions);
+
+const genderOptions = computed(() => buildDictOptions(genderDict.items.value, fallbackGenderOptions));
+const provinceOptions = computed(() => buildDictOptions(provinceDict.items.value, fallbackRegionOptions.provinces));
+const cityOptions = computed(() => buildDictOptions(cityDict.items.value, fallbackRegionOptions.cities));
+const districtOptions = computed(() => buildDictOptions(districtDict.items.value, fallbackRegionOptions.districts));
+
+const handleProvinceChange = () => {
+  profileForm.city = '';
+  profileForm.district = '';
+};
+
+const handleCityChange = () => {
+  profileForm.district = '';
 };
 
 const profileRules: Record<string, FormRule[]> = {
@@ -464,10 +515,29 @@ const loginLogColumns: PrimaryTableCol[] = [
   { colKey: 'detail', title: '备注', minWidth: 200, ellipsis: true },
 ];
 
+const loadDictionaries = async (force = false) => {
+  await Promise.all([
+    genderDict.load(force),
+    provinceDict.load(force),
+    cityDict.load(force),
+    districtDict.load(force),
+  ]);
+};
+
+const normalizeGender = (value?: string) => {
+  if (!value) return '';
+  if (value === 'secret') {
+    const hasUnknown = genderDict.items.value.some((item) => item.value === 'unknown');
+    return hasUnknown ? 'unknown' : value;
+  }
+  return value;
+};
+
 // 获取数据
 const fetchProfile = async () => {
   profileLoading.value = true;
   try {
+    await loadDictionaries();
     const res = await getMyProfile();
     profile.value = res;
     // 同步更新 store 中的用户信息，确保 Header 等组件实时更新
@@ -480,7 +550,7 @@ const fetchProfile = async () => {
     Object.assign(profileForm, {
       name: res.name || '',
       nickname: res.nickname || '',
-      gender: res.gender || 'secret',
+      gender: normalizeGender(res.gender),
       mobile: res.mobile || '',
       email: res.email || '',
       idCard: res.idCard || '',
@@ -489,7 +559,6 @@ const fetchProfile = async () => {
       province: res.province || '',
       city: res.city || '',
       district: res.district || '',
-      region: [res.province, res.city, res.district].filter(Boolean),
       address: res.address || '',
       introduction: res.introduction || '',
       tags: res.tags || '',
@@ -532,6 +601,7 @@ const updateIsMobile = () => {
 };
 
 const openEditDrawer = () => {
+  void loadDictionaries(true);
   editProfileVisible.value = true;
 };
 
@@ -541,9 +611,7 @@ const handleUpdateProfile = async (context: SubmitContext) => {
 
   updatingProfile.value = true;
   try {
-    // 提交时不包含 region 数组，后端只接受 province/city/district
-    const { region: _region, ...updateData } = profileForm;
-    await updateMyProfile(updateData);
+    await updateMyProfile({ ...profileForm });
     MessagePlugin.success('个人资料更新成功');
     fetchProfile();
   } catch (error) {

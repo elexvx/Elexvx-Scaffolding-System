@@ -260,8 +260,10 @@ import { MessagePlugin } from 'tdesign-vue-next';
 import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
+import { useDictionary } from '@/hooks/useDictionary';
 import { useSettingStore } from '@/store';
 import { hasPerm } from '@/utils/permission';
+import { buildDictOptions } from '@/utils/dict';
 import { request } from '@/utils/request';
 
 const route = useRoute();
@@ -329,10 +331,15 @@ const settingStore = useSettingStore();
 const canUpdate = computed(
   () => hasPerm('system:SystemVerification:update') || hasPerm('system:SystemPersonalize:update'),
 );
-const smsProviderOptions = [
+const smsProviderDict = useDictionary('sms_provider');
+const fallbackSmsProviderOptions = [
   { label: '阿里云短信服务', value: 'aliyun' },
   { label: '腾讯云短信服务', value: 'tencent' },
 ];
+const SMS_PROVIDER_VALUES = ['aliyun', 'tencent'];
+const smsProviderOptions = computed(() =>
+  buildDictOptions(smsProviderDict.items.value, fallbackSmsProviderOptions, SMS_PROVIDER_VALUES),
+);
 const smsReadonly = computed(() => !smsForm.smsEnabled);
 const emailReadonly = computed(() => !emailForm.emailEnabled);
 const showAliyun = computed(() => smsForm.smsProvider === 'aliyun');
@@ -430,6 +437,7 @@ const onSubmitEmail = async (ctx: any) => {
 };
 
 onMounted(() => {
+  void smsProviderDict.load();
   load();
 });
 </script>

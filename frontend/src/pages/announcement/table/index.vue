@@ -164,7 +164,9 @@ import {
 import ConfirmDrawer from '@/components/ConfirmDrawer.vue';
 
 const RichTextEditor = defineAsyncComponent(() => import('@/components/RichTextEditor.vue'));
+import { useDictionary } from '@/hooks/useDictionary';
 import { useUserStore } from '@/store';
+import { buildDictOptions, resolveLabel } from '@/utils/dict';
 
 const list = ref<AnnouncementItem[]>([]);
 const total = ref(0);
@@ -220,6 +222,10 @@ const form = reactive<AnnouncementPayload>({
 
 const files = ref<UploadFile[]>([]);
 const attachmentFiles = ref<UploadFile[]>([]);
+
+const typeDict = useDictionary('announcement_type');
+const priorityDict = useDictionary('announcement_priority');
+const statusDict = useDictionary('announcement_status');
 
 const handleUploadSuccess = (context: SuccessContext) => {
   const response = (context?.response || {}) as any;
@@ -297,17 +303,31 @@ const handleAttachmentRemove = () => {
   attachmentFiles.value = [];
 };
 
-const priorityOptions = [
+const fallbackPriorityOptions = [
   { label: '高', value: 'high' },
   { label: '中', value: 'middle' },
   { label: '低', value: 'low' },
 ];
-const statusOptions = [
+const fallbackStatusOptions = [
   { label: '草稿', value: 'draft' },
   { label: '已发布', value: 'published' },
   { label: '已撤回', value: 'withdrawn' },
 ];
-const typeOptions = [{ label: '公告', value: 'announcement' }];
+const fallbackTypeOptions = [{ label: '公告', value: 'announcement' }];
+
+const priorityLabelMap: Record<string, string> = {
+  high: '高',
+  middle: '中',
+  low: '低',
+};
+const statusLabelMap: Record<string, string> = {
+  draft: '草稿',
+  published: '已发布',
+  withdrawn: '已撤回',
+};
+const priorityOptions = computed(() => buildDictOptions(priorityDict.items.value, fallbackPriorityOptions));
+const statusOptions = computed(() => buildDictOptions(statusDict.items.value, fallbackStatusOptions));
+const typeOptions = computed(() => buildDictOptions(typeDict.items.value, fallbackTypeOptions));
 
 const rules: Record<string, FormRule[]> = {
   title: [{ required: true, message: '请输入标题', type: 'error' }],
@@ -347,16 +367,7 @@ const priorityTheme = (value?: string) => {
 };
 
 const priorityLabel = (value?: string) => {
-  switch ((value || '').toLowerCase()) {
-    case 'high':
-      return '高';
-    case 'middle':
-      return '中';
-    case 'low':
-      return '低';
-    default:
-      return '普通';
-  }
+  return resolveLabel(value, priorityDict.items.value, priorityLabelMap);
 };
 
 const statusTheme = (value?: string) => {
@@ -371,14 +382,11 @@ const statusTheme = (value?: string) => {
 };
 
 const statusLabel = (value?: string) => {
-  switch (value) {
-    case 'published':
-      return '已发布';
-    case 'withdrawn':
-      return '已撤回';
-    default:
-      return '草稿';
-  }
+  return resolveLabel(value, statusDict.items.value, statusLabelMap);
+};
+
+const loadDictionaries = async () => {
+  await Promise.all([typeDict.load(), priorityDict.load(), statusDict.load()]);
 };
 
 const load = async () => {
@@ -518,7 +526,10 @@ const handleDelete = async (id: number) => {
   load();
 };
 
-onMounted(load);
+onMounted(() => {
+  void loadDictionaries();
+  load();
+});
 </script>
 <style scoped lang="less">
 .announcement-table {

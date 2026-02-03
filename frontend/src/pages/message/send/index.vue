@@ -60,7 +60,9 @@ import { MessagePlugin } from 'tdesign-vue-next';
 import { computed, reactive, ref } from 'vue';
 
 import { broadcastMessage, sendMessage } from '@/api/message';
+import { useDictionary } from '@/hooks/useDictionary';
 import { useNotificationStore } from '@/store';
+import { buildDictOptions } from '@/utils/dict';
 
 type ScopeType = 'single' | 'broadcast';
 
@@ -74,11 +76,14 @@ const form = reactive({
   content: '',
 });
 
-const qualityOptions = [
+const qualityDict = useDictionary('message_quality');
+const fallbackQualityOptions = [
   { label: '高', value: 'high' },
   { label: '中', value: 'middle' },
   { label: '低', value: 'low' },
 ];
+const qualityOptions = computed(() => buildDictOptions(qualityDict.items.value, fallbackQualityOptions));
+void qualityDict.load();
 
 const rules = computed<Record<string, FormRule[]>>(() => {
   const result: Record<string, FormRule[]> = {

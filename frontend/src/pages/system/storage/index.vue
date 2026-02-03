@@ -111,7 +111,9 @@ import { computed, onMounted, reactive, ref } from 'vue';
 
 import type { StorageSetting } from '@/api/system/storage';
 import { fetchStorageSetting, saveStorageSetting, testStorageSetting } from '@/api/system/storage';
+import { useDictionary } from '@/hooks/useDictionary';
 import { useUserStore } from '@/store';
+import { buildDictOptions } from '@/utils/dict';
 
 const formRef = ref<FormInstanceFunctions>();
 const loading = ref(false);
@@ -133,11 +135,16 @@ const form = reactive<StorageSetting>({
   reuseSecret: true,
 });
 
-const providerOptions: SelectOption[] = [
+const providerDict = useDictionary('storage_provider');
+const fallbackProviderOptions: SelectOption[] = [
   { label: '本地存储', value: 'LOCAL' },
   { label: '阿里云 OSS', value: 'ALIYUN' },
   { label: '腾讯云 COS', value: 'TENCENT' },
 ];
+const PROVIDER_VALUES = ['LOCAL', 'ALIYUN', 'TENCENT'];
+const providerOptions = computed(() =>
+  buildDictOptions(providerDict.items.value, fallbackProviderOptions, PROVIDER_VALUES),
+);
 
 const userStore = useUserStore();
 const canEdit = computed(() => (userStore.userInfo?.roles || []).includes('admin'));
@@ -236,6 +243,7 @@ const handleTest = async () => {
 };
 
 onMounted(() => {
+  void providerDict.load();
   loadSetting();
 });
 </script>

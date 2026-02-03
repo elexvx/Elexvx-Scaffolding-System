@@ -31,7 +31,7 @@
                       <span class="read-time">{{ getReadTime(item.content) }}分钟 阅读</span>
                     </div>
                     <div class="card-content">
-                      <t-tag size="small" variant="light" class="card-tag">{{ item.type }}</t-tag>
+                      <t-tag size="small" variant="light" class="card-tag">{{ typeLabel(item.type) }}</t-tag>
                       <div class="card-header" :title="item.title">{{ item.title }}</div>
                       <div class="card-footer">
                         <div class="card-footer-item">
@@ -82,7 +82,7 @@
           <t-tag :theme="priorityTheme(current?.priority)" variant="light-outline">
             {{ priorityLabel(current?.priority) }}
           </t-tag>
-          <t-tag size="small" variant="light-outline">{{ current?.type }}</t-tag>
+          <t-tag size="small" variant="light-outline">{{ typeLabel(current?.type) }}</t-tag>
           <span class="time">发布时间：{{ current?.publishAt || '未发布' }}</span>
         </t-space>
       </div>
@@ -98,13 +98,15 @@
 <script setup lang="ts">
 import { BrowseIcon, ChatIcon } from 'tdesign-icons-vue-next';
 import { MessagePlugin } from 'tdesign-vue-next';
-import { onMounted, reactive, ref, watch } from 'vue';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 import type { AnnouncementItem } from '@/api/announcement';
 import { fetchAnnouncementDetail, fetchAnnouncements } from '@/api/announcement';
 import placeholderImage from '@/assets/assets-empty.svg?url';
+import { useDictionary } from '@/hooks/useDictionary';
 import { t } from '@/locales';
+import { buildDictOptions, resolveLabel } from '@/utils/dict';
 
 import MessageTable from '../components/MessageTable.vue';
 
@@ -134,12 +136,31 @@ const pagination = reactive({
   total: 0,
 });
 
-const priorityOptions = [
+const typeDict = useDictionary('announcement_type');
+const priorityDict = useDictionary('announcement_priority');
+
+const fallbackPriorityOptions = [
   { label: '全部', value: '' },
   { label: '高', value: 'high' },
   { label: '中', value: 'middle' },
   { label: '低', value: 'low' },
 ];
+
+const priorityLabelMap: Record<string, string> = {
+  high: '高',
+  middle: '中',
+  low: '低',
+};
+
+const typeLabelMap: Record<string, string> = {
+  announcement: '公告',
+};
+
+const priorityOptions = computed(() => {
+  const dictOptions = buildDictOptions(priorityDict.items.value, []);
+  if (dictOptions.length === 0) return fallbackPriorityOptions;
+  return [{ label: '全部', value: '' }, ...dictOptions];
+});
 
 const priorityTheme = (value?: string) => {
   switch ((value || '').toLowerCase()) {
@@ -153,16 +174,11 @@ const priorityTheme = (value?: string) => {
 };
 
 const priorityLabel = (value?: string) => {
-  switch ((value || '').toLowerCase()) {
-    case 'high':
-      return '高';
-    case 'middle':
-      return '中';
-    case 'low':
-      return '低';
-    default:
-      return '普通';
-  }
+  return resolveLabel(value, priorityDict.items.value, priorityLabelMap);
+};
+
+const typeLabel = (value?: string) => {
+  return resolveLabel(value, typeDict.items.value, typeLabelMap);
 };
 
 const getReadTime = (content?: string) => {
@@ -240,7 +256,12 @@ const handleRouteDetail = async () => {
   await openDetail(id);
 };
 
+const loadDictionaries = async () => {
+  await Promise.all([typeDict.load(), priorityDict.load()]);
+};
+
 onMounted(async () => {
+  await loadDictionaries();
   await load();
   await handleRouteDetail();
 });

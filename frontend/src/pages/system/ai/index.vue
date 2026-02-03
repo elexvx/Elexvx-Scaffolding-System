@@ -186,10 +186,12 @@
 <script setup lang="ts">
 import type { FormRule, PrimaryTableCol, SubmitContext } from 'tdesign-vue-next';
 import { MessagePlugin } from 'tdesign-vue-next';
-import { onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
 
 import type { AiProvider, AiProviderPayload } from '@/api/system/ai';
 import { deleteAiProvider, fetchAiProviders, saveAiProvider, testAiProvider, testSavedProvider } from '@/api/system/ai';
+import { useDictionary } from '@/hooks/useDictionary';
+import { buildDictOptions, resolveLabel } from '@/utils/dict';
 import { request } from '@/utils/request';
 
 const providers = ref<AiProvider[]>([]);
@@ -216,7 +218,8 @@ const form = reactive<AiProviderPayload>({
   reuseApiKey: false,
 });
 
-const vendorOptions = [
+const vendorDict = useDictionary('ai_vendor');
+const fallbackVendorOptions = [
   { label: 'OpenAI / 兼容', value: 'OPENAI' },
   { label: 'Azure OpenAI', value: 'AZURE_OPENAI' },
   { label: 'DeepSeek', value: 'DEEPSEEK' },
@@ -224,6 +227,19 @@ const vendorOptions = [
   { label: '通义千问 (兼容模式)', value: 'QWEN' },
   { label: 'Ollama 本地部署', value: 'OLLAMA' },
 ];
+const VENDOR_VALUES = ['OPENAI', 'AZURE_OPENAI', 'DEEPSEEK', 'MOONSHOT', 'QWEN', 'OLLAMA'];
+const vendorOptions = computed(() =>
+  buildDictOptions(vendorDict.items.value, fallbackVendorOptions, VENDOR_VALUES),
+);
+
+const vendorLabelMap: Record<string, string> = {
+  OPENAI: 'OpenAI / 兼容',
+  AZURE_OPENAI: 'Azure OpenAI',
+  DEEPSEEK: 'DeepSeek',
+  MOONSHOT: '月之暗面 / Moonshot',
+  QWEN: '通义千问 (兼容模式)',
+  OLLAMA: 'Ollama 本地部署',
+};
 
 const rules: Record<string, FormRule[]> = {
   name: [{ required: true, message: '请输入名称', type: 'error' }],
@@ -247,7 +263,7 @@ const debugMessage = ref('你好，我在做接口连通性测试，请回复一
 const debugOutput = ref('');
 const debugLoading = ref(false);
 
-const vendorLabel = (value: string) => vendorOptions.find((v) => v.value === value)?.label || value;
+const vendorLabel = (value: string) => resolveLabel(value, vendorDict.items.value, vendorLabelMap);
 
 const loadProviders = async () => {
   loading.value = true;
@@ -387,6 +403,7 @@ const runDebug = async () => {
 };
 
 onMounted(() => {
+  void vendorDict.load();
   loadProviders();
 });
 </script>

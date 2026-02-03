@@ -44,9 +44,9 @@
 
         <t-form-item label="菜单类型" name="nodeType">
           <t-radio-group v-model="form.nodeType">
-            <t-radio value="DIR">目录</t-radio>
-            <t-radio value="PAGE">菜单</t-radio>
-            <t-radio value="BTN">按钮</t-radio>
+            <t-radio v-for="opt in nodeTypeOptions" :key="String(opt.value)" :value="opt.value">
+              {{ opt.label }}
+            </t-radio>
           </t-radio-group>
         </t-form-item>
 
@@ -126,7 +126,9 @@ import { DialogPlugin, MessagePlugin } from 'tdesign-vue-next';
 import { computed, onMounted, reactive, ref, watch } from 'vue';
 
 import ConfirmDrawer from '@/components/ConfirmDrawer.vue';
+import { useDictionary } from '@/hooks/useDictionary';
 import { getPermissionStore, useUserStore } from '@/store';
+import { buildDictOptions, resolveLabel } from '@/utils/dict';
 import { request } from '@/utils/request';
 
 type NodeType = 'DIR' | 'PAGE' | 'BTN';
@@ -175,6 +177,33 @@ const loading = ref(false);
 const savingOrder = ref(false);
 const savingNode = ref(false);
 const dirty = ref(false);
+
+const nodeTypeDict = useDictionary('menu_node_type');
+const actionDict = useDictionary('menu_action');
+
+const fallbackNodeTypeOptions = [
+  { label: '目录', value: 'DIR' },
+  { label: '页面', value: 'PAGE' },
+  { label: '按钮', value: 'BTN' },
+];
+const nodeTypeLabelMap: Record<string, string> = {
+  DIR: '目录',
+  PAGE: '页面',
+  BTN: '按钮',
+};
+const NODE_TYPE_VALUES = ['DIR', 'PAGE', 'BTN'];
+const nodeTypeOptions = computed(() =>
+  buildDictOptions(nodeTypeDict.items.value, fallbackNodeTypeOptions, NODE_TYPE_VALUES),
+);
+
+const fallbackActionOptions = [
+  { label: '查询 (Query)', value: 'query' },
+  { label: '新增 (Create)', value: 'create' },
+  { label: '修改 (Update)', value: 'update' },
+  { label: '删除 (Delete)', value: 'delete' },
+];
+const ACTION_VALUES = ['query', 'create', 'update', 'delete'];
+const _actionOptions = computed(() => buildDictOptions(actionDict.items.value, fallbackActionOptions, ACTION_VALUES));
 
 const permissionStore = getPermissionStore();
 const userStore = useUserStore();
@@ -643,7 +672,7 @@ const columns = computed(() => {
               theme={r.nodeType === 'DIR' ? 'default' : r.nodeType === 'BTN' ? 'warning' : 'primary'}
               variant="light"
             >
-              {r.nodeType === 'DIR' ? '目录' : r.nodeType === 'BTN' ? '按钮' : '页面'}
+              {resolveLabel(r.nodeType, nodeTypeDict.items.value, nodeTypeLabelMap)}
             </t-tag>
             {r.hidden ? (
               <t-tag theme="warning" variant="light">
@@ -765,12 +794,6 @@ const form = reactive({
   actions: [] as string[],
 });
 
-const _actionOptions = [
-  { label: '查询 (Query)', value: 'query' },
-  { label: '新增 (Create)', value: 'create' },
-  { label: '修改 (Update)', value: 'update' },
-  { label: '删除 (Delete)', value: 'delete' },
-];
 
 const isExternalLink = computed({
   get: () => form.openType === 'external' || !!form.frameSrc,
@@ -1074,6 +1097,8 @@ watch(
 );
 
 onMounted(async () => {
+  void nodeTypeDict.load();
+  void actionDict.load();
   roles.value = await request.get<RoleRow[]>({ url: '/system/role/list' });
   await reload();
 });

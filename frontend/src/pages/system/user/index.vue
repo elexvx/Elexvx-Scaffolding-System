@@ -167,8 +167,9 @@
           <t-col :xs="24" :sm="12">
             <t-form-item label="状态" name="status">
               <t-radio-group v-model="form.status">
-                <t-radio :value="1">正常</t-radio>
-                <t-radio :value="0">停用</t-radio>
+                <t-radio v-for="opt in statusOptions" :key="String(opt.value)" :value="opt.value">
+                  {{ opt.label }}
+                </t-radio>
               </t-radio-group>
             </t-form-item>
           </t-col>
@@ -242,8 +243,10 @@ import { DialogPlugin, MessagePlugin } from 'tdesign-vue-next';
 import { computed, onMounted, reactive, ref, watch } from 'vue';
 
 import ConfirmDrawer from '@/components/ConfirmDrawer.vue';
+import { useDictionary } from '@/hooks/useDictionary';
 import { useUserStore } from '@/store';
 import { hasPerm } from '@/utils/permission';
+import { buildDictOptions } from '@/utils/dict';
 import { request } from '@/utils/request';
 
 type Mode = 'create' | 'edit';
@@ -309,10 +312,12 @@ const filters = reactive({
   createdRange: [] as string[],
 });
 
-const statusOptions = [
+const statusDict = useDictionary('user_status');
+const fallbackStatusOptions = [
   { label: '正常', value: 1 },
   { label: '停用', value: 0 },
 ];
+const statusOptions = computed(() => buildDictOptions(statusDict.items.value, fallbackStatusOptions, [1, 0]));
 
 const passwordPolicy = reactive({
   minLength: 6,
@@ -930,6 +935,7 @@ const flattenOrgIds = (nodes: OrgUnitNode[]): number[] => {
 };
 
 onMounted(async () => {
+  void statusDict.load();
   await loadRoles();
   await loadOrgTree();
   await loadPasswordPolicy();
