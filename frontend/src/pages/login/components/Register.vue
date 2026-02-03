@@ -32,6 +32,14 @@
       </t-input>
     </t-form-item>
 
+    <t-form-item name="idCard">
+      <t-input v-model="formData.idCard" type="text" size="large" placeholder="请输入身份证号码">
+        <template #prefix-icon>
+          <t-icon name="user" />
+        </template>
+      </t-input>
+    </t-form-item>
+
     <t-form-item name="password">
       <t-input
         v-model="formData.password"
@@ -125,6 +133,7 @@ const INITIAL_DATA = {
   name: '',
   phone: '',
   email: '',
+  idCard: '',
   password: '',
   confirmPassword: '',
   captcha: '',
@@ -144,7 +153,11 @@ const FORM_RULES: Record<string, FormRule[]> = {
     { required: true, message: '请输入邮箱', type: 'error' as const },
     { email: true, message: '邮箱格式不正确', type: 'warning' as const },
   ],
-  password: [{ required: true, message: '请输入密码', type: 'error' as const }],
+  idCard: [{ required: true, message: '请输入身份证号码', type: 'error' as const }],
+  password: [
+    { required: true, message: '请输入密码', type: 'error' as const },
+    { min: 6, max: 64, message: '密码长度应为6-64位', type: 'error' as const },
+  ],
   confirmPassword: [
     { required: true, message: '请确认密码', type: 'error' as const },
     { validator: (val) => val === formData.value.password, message: '两次密码输入不一致', type: 'error' as const },
@@ -283,10 +296,26 @@ const buildRegisterPayload = () => {
     confirmPassword: formData.value.confirmPassword,
     name: formData.value.name?.trim() || '',
     email: formData.value.email?.trim() || '',
+    idCard: formData.value.idCard?.trim() || '',
     mobile: formData.value.phone?.trim() || '',
     captchaId: captchaId.value,
     captchaCode: formData.value.captcha,
   };
+};
+
+const normalizeRegisterErrorMessage = (message: string) => {
+  const cleaned = String(message || '').replace(/\s*\[\d{3}\]\s*$/, '').trim();
+  if (!cleaned) return '';
+  if (!/^参数校验失败[:：]/.test(cleaned)) return cleaned;
+  const raw = cleaned.replace(/^参数校验失败[:：]\s*/, '');
+  const parts = raw.split(/[;；]/).map((item) => item.trim()).filter(Boolean);
+  const mapped = parts.map((item) => {
+    const lower = item.toLowerCase();
+    if (lower.includes('id card') && lower.includes('required')) return '身份证号码不能为空';
+    if (lower.includes('password') && lower.includes('6-64')) return '密码长度应为6-64位';
+    return item;
+  });
+  return mapped.join('；');
 };
 
 const onSubmit = async (ctx: SubmitContext) => {
@@ -318,7 +347,8 @@ const onSubmit = async (ctx: SubmitContext) => {
     form.value.reset();
     loadCaptcha();
   } catch (err: any) {
-    MessagePlugin.error(String(err?.message || '注册失败'));
+    const normalized = normalizeRegisterErrorMessage(err?.message);
+    MessagePlugin.error(normalized || '注册失败');
     loadCaptcha();
   } finally {
     submitting.value = false;

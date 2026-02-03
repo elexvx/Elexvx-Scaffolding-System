@@ -28,6 +28,8 @@ const state: Record<string, any> = {
   loginBgUrl: OFFLINE_UI_CONFIG.loginBgUrl,
   qrCodeUrl: '',
   aiAssistantEnabled: true,
+  headerGithubUrl: '',
+  headerHelpUrl: '',
   maintenanceEnabled: false,
   maintenanceMessage: '',
   smsEnabled: false,
@@ -132,6 +134,8 @@ export const useSettingStore = defineStore('setting', {
           s.appVersion,
           s.defaultHome,
           s.qrCodeUrl,
+          s.headerGithubUrl,
+          s.headerHelpUrl,
         ].some(hasValue);
         if (isEmptySetting) {
           this.applyMockUiSetting();
@@ -166,6 +170,10 @@ export const useSettingStore = defineStore('setting', {
         if (s.qrCodeUrl !== null && s.qrCodeUrl !== undefined) payload.qrCodeUrl = s.qrCodeUrl;
         if (s.aiAssistantEnabled !== null && s.aiAssistantEnabled !== undefined)
           payload.aiAssistantEnabled = !!s.aiAssistantEnabled;
+        if (s.headerGithubUrl !== null && s.headerGithubUrl !== undefined)
+          payload.headerGithubUrl = String(s.headerGithubUrl || '');
+        if (s.headerHelpUrl !== null && s.headerHelpUrl !== undefined)
+          payload.headerHelpUrl = String(s.headerHelpUrl || '');
         if (s.maintenanceEnabled !== null && s.maintenanceEnabled !== undefined)
           payload.maintenanceEnabled = !!s.maintenanceEnabled;
         if (s.maintenanceMessage !== null && s.maintenanceMessage !== undefined)
@@ -257,6 +265,8 @@ export const useSettingStore = defineStore('setting', {
         'loginBgUrl',
         'qrCodeUrl',
         'aiAssistantEnabled',
+        'headerGithubUrl',
+        'headerHelpUrl',
         'maintenanceEnabled',
         'maintenanceMessage',
         'userAgreement',

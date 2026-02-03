@@ -18,9 +18,17 @@ public class UserProfileResponse {
   private String team;
   private String gender;
   private String nickname;
+  private Integer provinceId;
   private String province;
+  private Integer cityId;
   private String city;
+  private Integer districtId;
   private String district;
+  private Integer townId;
+  private String town;
+  private Integer streetId;
+  private String street;
+  private String zipCode;
   private String address;
   private String introduction;
   private String avatar;
@@ -148,12 +156,28 @@ public class UserProfileResponse {
     this.nickname = nickname;
   }
 
+  public Integer getProvinceId() {
+    return provinceId;
+  }
+
+  public void setProvinceId(Integer provinceId) {
+    this.provinceId = provinceId;
+  }
+
   public String getProvince() {
     return province;
   }
 
   public void setProvince(String province) {
     this.province = province;
+  }
+
+  public Integer getCityId() {
+    return cityId;
+  }
+
+  public void setCityId(Integer cityId) {
+    this.cityId = cityId;
   }
 
   public String getCity() {
@@ -164,12 +188,60 @@ public class UserProfileResponse {
     this.city = city;
   }
 
+  public Integer getDistrictId() {
+    return districtId;
+  }
+
+  public void setDistrictId(Integer districtId) {
+    this.districtId = districtId;
+  }
+
   public String getDistrict() {
     return district;
   }
 
   public void setDistrict(String district) {
     this.district = district;
+  }
+
+  public Integer getTownId() {
+    return townId;
+  }
+
+  public void setTownId(Integer townId) {
+    this.townId = townId;
+  }
+
+  public String getTown() {
+    return town;
+  }
+
+  public void setTown(String town) {
+    this.town = town;
+  }
+
+  public Integer getStreetId() {
+    return streetId;
+  }
+
+  public void setStreetId(Integer streetId) {
+    this.streetId = streetId;
+  }
+
+  public String getStreet() {
+    return street;
+  }
+
+  public void setStreet(String street) {
+    this.street = street;
+  }
+
+  public String getZipCode() {
+    return zipCode;
+  }
+
+  public void setZipCode(String zipCode) {
+    this.zipCode = zipCode;
   }
 
   public String getAddress() {

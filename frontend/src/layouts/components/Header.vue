@@ -22,6 +22,16 @@
           <t-tag v-if="user.userInfo.roleSimulated" theme="warning" size="small" style="margin-right: 12px">
             角色模拟
           </t-tag>
+          <t-tooltip placement="bottom" content="GitHub">
+            <t-button theme="default" shape="square" variant="text" @click="openHeaderLink(headerGithubUrl, 'GitHub')">
+              <t-icon name="logo-github" />
+            </t-button>
+          </t-tooltip>
+          <t-tooltip placement="bottom" content="帮助文档">
+            <t-button theme="default" shape="square" variant="text" @click="openHeaderLink(headerHelpUrl, '帮助')">
+              <t-icon name="help-circle" />
+            </t-button>
+          </t-tooltip>
           <t-tooltip placement="bottom" :content="t('layout.setting.theme.mode')">
             <t-button theme="default" shape="square" variant="text" @click="toggleThemeMode">
               <t-icon :name="themeIcon" />
@@ -134,6 +144,8 @@ const active = computed(() => getActive());
 
 const logoUrl = computed(() => settingStore.logoExpandedUrl);
 const logoText = computed(() => settingStore.websiteName?.trim() || '管理后台');
+const headerGithubUrl = computed(() => String(settingStore.headerGithubUrl || '').trim());
+const headerHelpUrl = computed(() => String(settingStore.headerHelpUrl || '').trim());
 
 const layoutCls = computed(() => [`${prefix}-header-layout`]);
 
@@ -163,6 +175,16 @@ const handleNav = (url: string) => {
 const handleLogout = async () => {
   await user.logout();
   window.location.href = `/login?redirect=${encodeURIComponent(router.currentRoute.value.fullPath)}`;
+};
+
+const openHeaderLink = (url: string, label: string) => {
+  const target = String(url || '').trim();
+  if (!target) {
+    MessagePlugin.warning(`请在个性化设置中配置${label}链接`);
+    return;
+  }
+  if (typeof window === 'undefined') return;
+  window.open(target, '_blank', 'noreferrer');
 };
 
 const roleDialogVisible = ref(false);

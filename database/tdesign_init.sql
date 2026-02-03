@@ -955,9 +955,17 @@ CREATE TABLE `users`  (
   `team` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
   `gender` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
   `nickname` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
+  `province_id` int NULL DEFAULT NULL,
   `province` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
+  `city_id` int NULL DEFAULT NULL,
   `city` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
+  `district_id` int NULL DEFAULT NULL,
   `district` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
+  `town_id` int NULL DEFAULT NULL,
+  `town` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
+  `street_id` int NULL DEFAULT NULL,
+  `street` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
+  `zip_code` varchar(12) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
   `address` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
   `introduction` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL,
   `avatar` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
@@ -974,8 +982,23 @@ CREATE TABLE `users`  (
 -- ----------------------------
 -- Records of users
 -- ----------------------------
-INSERT INTO `users` VALUES (1, 'admin', '张三', '$2a$10$BbVSQCIChdR.4gfwiG1OduJiKE/KpUTbhBXd.7Sr.uwi8eggDpYeu', '+86 13800000000', '0000', 'admin@qq.com', 'T32F 001', '腾讯集团', 'CEO', '系统管理员', '2018-01-01', '腾讯/腾讯公司/管理层/系统管理组', 'male', '张三的昵称', '', '', '', '', '张三的简介', '/api/uploads/business/b27eeb829cd64ccaab15123e70678c24.jpg', '', '', 'e59c3cd1-3b52-47c7-bf88-fad5b2281827', 1, NOW(), NOW());
-INSERT INTO `users` VALUES (3, 'bob', 'Bob', '$2a$10$BbVSQCIChdR.4gfwiG1OduJiKE/KpUTbhBXd.7Sr.uwi8eggDpYeu', '+86 13923456789', '8889', 'bob@tencent.com', 'T32F 012', '腾讯集团', 'Sarah Li', '后端开发工程师', '2020-07-01', '腾讯/腾讯公司/CSIG事业群/云计算部/后端架构组', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '700e0805-c571-4e6a-873b-00899a32ede2', 1, NOW(), NOW());
+INSERT INTO `users` VALUES (1, 'admin', '张三', '$2a$10$BbVSQCIChdR.4gfwiG1OduJiKE/KpUTbhBXd.7Sr.uwi8eggDpYeu', '+86 13800000000', '0000', 'admin@qq.com', 'T32F 001', '腾讯集团', 'CEO', '系统管理员', '2018-01-01', '腾讯/腾讯公司/管理层/系统管理组', 'male', '张三的昵称', NULL, '', NULL, '', NULL, '', NULL, NULL, NULL, NULL, NULL, '', '张三的简介', '/api/uploads/business/b27eeb829cd64ccaab15123e70678c24.jpg', '', '', 'e59c3cd1-3b52-47c7-bf88-fad5b2281827', 1, NOW(), NOW());
+INSERT INTO `users` VALUES (3, 'bob', 'Bob', '$2a$10$BbVSQCIChdR.4gfwiG1OduJiKE/KpUTbhBXd.7Sr.uwi8eggDpYeu', '+86 13923456789', '8889', 'bob@tencent.com', 'T32F 012', '腾讯集团', 'Sarah Li', '后端开发工程师', '2020-07-01', '腾讯/腾讯公司/CSIG事业群/云计算部/后端架构组', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '700e0805-c571-4e6a-873b-00899a32ede2', 1, NOW(), NOW());
+
+-- ----------------------------
+-- Table structure for areas
+-- ----------------------------
+DROP TABLE IF EXISTS `areas`;
+CREATE TABLE `areas`  (
+  `id` int NOT NULL,
+  `parent_id` int NOT NULL DEFAULT 0,
+  `name` varchar(120) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT '',
+  `zip_code` varchar(12) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
+  `level` tinyint NOT NULL DEFAULT 1,
+  PRIMARY KEY (`id`) USING BTREE,
+  KEY `idx_parent` (`parent_id`) USING BTREE,
+  KEY `idx_level` (`level`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Table structure for org_units

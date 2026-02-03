@@ -32,6 +32,34 @@
       </t-col>
 
       <t-col :xs="24" :sm="12">
+        <t-form-item
+          label="顶部 GitHub 链接"
+          name="headerGithubUrl"
+          help="顶部导航栏 GitHub 图标跳转链接，留空则点击不跳转"
+        >
+          <t-input
+            v-model="form.headerGithubUrl"
+            placeholder="https://github.com/your-org/your-repo"
+            style="max-width: 500px; width: 100%"
+          />
+        </t-form-item>
+      </t-col>
+
+      <t-col :xs="24" :sm="12">
+        <t-form-item
+          label="顶部帮助链接"
+          name="headerHelpUrl"
+          help="顶部导航栏问号图标跳转链接，留空则点击不跳转"
+        >
+          <t-input
+            v-model="form.headerHelpUrl"
+            placeholder="https://docs.example.com"
+            style="max-width: 500px; width: 100%"
+          />
+        </t-form-item>
+      </t-col>
+
+      <t-col :xs="24" :sm="12">
         <t-form-item label="维护模式" name="maintenanceEnabled" help="开启后登录页将提示维护信息">
           <t-switch v-model="form.maintenanceEnabled" />
         </t-form-item>
@@ -90,6 +118,8 @@ const form = reactive({
   defaultHome: '/user/index',
   autoTheme: false,
   aiAssistantEnabled: true,
+  headerGithubUrl: '',
+  headerHelpUrl: '',
   maintenanceEnabled: false,
   maintenanceMessage: '',
   lightStartTime: '06:00',
@@ -145,6 +175,8 @@ const load = async () => {
   form.defaultHome = homePathMap.value[rawHome] || normalizePath('', rawHome);
   form.autoTheme = !!s.autoTheme;
   form.aiAssistantEnabled = s.aiAssistantEnabled !== undefined ? !!s.aiAssistantEnabled : true;
+  form.headerGithubUrl = s.headerGithubUrl || '';
+  form.headerHelpUrl = s.headerHelpUrl || '';
   form.maintenanceEnabled = s.maintenanceEnabled !== undefined ? !!s.maintenanceEnabled : false;
   form.maintenanceMessage = s.maintenanceMessage || '';
   form.lightStartTime = s.lightStartTime || '06:00';
@@ -174,6 +206,8 @@ const onSubmit = async (ctx: any) => {
         defaultHome: normalizedDefaultHome,
         autoTheme: form.autoTheme,
         aiAssistantEnabled: form.aiAssistantEnabled,
+        headerGithubUrl: form.headerGithubUrl,
+        headerHelpUrl: form.headerHelpUrl,
         maintenanceEnabled: form.maintenanceEnabled,
         maintenanceMessage: form.maintenanceMessage,
         lightStartTime: form.lightStartTime,

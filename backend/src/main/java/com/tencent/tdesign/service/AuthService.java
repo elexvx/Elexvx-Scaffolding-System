@@ -578,12 +578,28 @@ public class AuthService {
       u.setGender(req.getGender());
     if (req.getNickname() != null)
       u.setNickname(req.getNickname());
+    if (req.getProvinceId() != null)
+      u.setProvinceId(req.getProvinceId());
     if (req.getProvince() != null)
       u.setProvince(req.getProvince());
+    if (req.getCityId() != null)
+      u.setCityId(req.getCityId());
     if (req.getCity() != null)
       u.setCity(req.getCity());
+    if (req.getDistrictId() != null)
+      u.setDistrictId(req.getDistrictId());
     if (req.getDistrict() != null)
       u.setDistrict(req.getDistrict());
+    if (req.getTownId() != null)
+      u.setTownId(req.getTownId());
+    if (req.getTown() != null)
+      u.setTown(req.getTown());
+    if (req.getStreetId() != null)
+      u.setStreetId(req.getStreetId());
+    if (req.getStreet() != null)
+      u.setStreet(req.getStreet());
+    if (req.getZipCode() != null)
+      u.setZipCode(req.getZipCode());
     if (req.getAddress() != null)
       u.setAddress(req.getAddress());
     if (req.getIntroduction() != null)
@@ -627,9 +643,17 @@ public class AuthService {
     r.setTeam(u.getTeam());
     r.setGender(u.getGender());
     r.setNickname(u.getNickname());
+    r.setProvinceId(u.getProvinceId());
     r.setProvince(u.getProvince());
+    r.setCityId(u.getCityId());
     r.setCity(u.getCity());
+    r.setDistrictId(u.getDistrictId());
     r.setDistrict(u.getDistrict());
+    r.setTownId(u.getTownId());
+    r.setTown(u.getTown());
+    r.setStreetId(u.getStreetId());
+    r.setStreet(u.getStreet());
+    r.setZipCode(u.getZipCode());
     r.setAddress(u.getAddress());
     r.setIntroduction(u.getIntroduction());
     r.setAvatar(normalizeAvatar(u.getAvatar()));

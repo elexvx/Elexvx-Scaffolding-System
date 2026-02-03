@@ -40,7 +40,7 @@
             <div class="detail-item">
               <t-icon name="location" />
               <span>{{
-                (profile.province || '') + (profile.city || '') + (profile.district || '') + (profile.address || '') ||
+                (profile.province || '') + (profile.city || '') + (profile.district || '') + (profile.town || '') + (profile.street || '') + (profile.address || '') ||
                 '广东省深圳市'
               }}</span>
             </div>
@@ -138,29 +138,24 @@
                 </t-form-item>
               </t-col>
               <t-col :xs="24" :sm="12">
-                <t-form-item label="省/市/区" name="province">
-                  <t-space size="8" style="width: 100%">
-                    <t-select
-                      v-model="profileForm.province"
-                      :options="provinceOptions"
-                      placeholder="省"
-                      style="flex: 1"
-                      @change="handleProvinceChange"
-                    />
-                    <t-select
-                      v-model="profileForm.city"
-                      :options="cityOptions"
-                      placeholder="市"
-                      style="flex: 1"
-                      @change="handleCityChange"
-                    />
-                    <t-select
-                      v-model="profileForm.district"
-                      :options="districtOptions"
-                      placeholder="区"
-                      style="flex: 1"
-                    />
-                  </t-space>
+                <t-form-item label="省/市/区县/乡镇/街道" name="provinceId">
+                  <t-cascader
+                    v-model="areaValue"
+                    :options="areaOptions"
+                    :lazy="true"
+                    :load="loadAreaChildren"
+                    :loading="areaLoading"
+                    value-type="full"
+                    :show-all-levels="true"
+                    clearable
+                    placeholder="请选择省/市/区县/乡镇/街道"
+                    @change="handleAreaChange"
+                  />
+                </t-form-item>
+              </t-col>
+              <t-col :xs="24" :sm="12">
+                <t-form-item label="邮编" name="zipCode">
+                  <t-input v-model="profileForm.zipCode" placeholder="请输入邮编" />
                 </t-form-item>
               </t-col>
               <t-col :xs="24" :sm="12">
@@ -198,33 +193,30 @@
             @submit="handleSubmitPassword"
           >
             <t-row :gutter="[24, 24]">
-              <t-col :xs="24" :sm="24" :md="16" :lg="12">
+              <t-col :span="24">
                 <t-form-item label="当前密码" name="oldPassword">
                   <t-input
                     v-model="passwordForm.oldPassword"
                     type="password"
                     placeholder="请输入当前密码"
-                    style="max-width: 600px; width: 100%"
                   />
                 </t-form-item>
               </t-col>
-              <t-col :xs="24" :sm="24" :md="16" :lg="12">
+              <t-col :span="24">
                 <t-form-item label="新密码" name="newPassword">
                   <t-input
                     v-model="passwordForm.newPassword"
                     type="password"
                     placeholder="请输入新密码"
-                    style="max-width: 600px; width: 100%"
                   />
                 </t-form-item>
               </t-col>
-              <t-col :xs="24" :sm="24" :md="16" :lg="12">
+              <t-col :span="24">
                 <t-form-item label="确认新密码" name="confirmPassword">
                   <t-input
                     v-model="passwordForm.confirmPassword"
                     type="password"
                     placeholder="请再次输入新密码"
-                    style="max-width: 600px; width: 100%"
                   />
                 </t-form-item>
               </t-col>
@@ -256,6 +248,8 @@ import { computed, onMounted, onUnmounted, reactive, ref } from 'vue';
 
 import type { ChangePasswordRequest, UserProfile } from '@/api/user';
 import { changePassword, getMyProfile, updateMyProfile } from '@/api/user';
+import type { AreaNodeResponse, AreaPathNode } from '@/api/system/area';
+import { fetchAreaChildren, fetchAreaPath, resolveAreaPath } from '@/api/system/area';
 import { useDictionary } from '@/hooks/useDictionary';
 import { useUserStore } from '@/store';
 import { buildDictOptions } from '@/utils/dict';
@@ -282,7 +276,7 @@ const handleAvatarSuccess = async (context: any) => {
       userStore.userInfo.avatar = url;
       MessagePlugin.success('头像更新成功');
     } catch {
-      MessagePlugin.error('头像更新失败');
+      MessagePlugin.error('加载地区失败');
     }
   }
 };
@@ -329,136 +323,206 @@ const profileForm = reactive({
   province: '',
   city: '',
   district: '',
+  town: '',
+  street: '',
+  provinceId: null as number | null,
+  cityId: null as number | null,
+  districtId: null as number | null,
+  townId: null as number | null,
+  streetId: null as number | null,
+  zipCode: '',
   address: '',
   introduction: '',
   tags: '',
 });
 
 const genderDict = useDictionary('gender');
-const provinceDict = useDictionary('address_province');
-const cityDict = useDictionary('address_city');
-const districtDict = useDictionary('address_district');
 
 const fallbackGenderOptions = [
-  { label: '男', value: 'male' },
-  { label: '女', value: 'female' },
+  { label: '?', value: 'male' },
+  { label: '?', value: 'female' },
   { label: '保密', value: 'secret' },
 ];
 
-const buildRegionFallback = (options: Array<any>) => {
-  const provinces: Array<{ label: string; value: string }> = [];
-  const cities: Array<{ label: string; value: string }> = [];
-  const districts: Array<{ label: string; value: string }> = [];
-  const pushUnique = (list: Array<{ label: string; value: string }>, item: { label: string; value: string }) => {
-    if (!list.some((existing) => existing.value === item.value)) list.push(item);
-  };
-  (options || []).forEach((province) => {
-    if (province?.label && province?.value) pushUnique(provinces, { label: province.label, value: province.value });
-    (province?.children || []).forEach((city: any) => {
-      if (city?.label && city?.value) pushUnique(cities, { label: city.label, value: city.value });
-      (city?.children || []).forEach((district: any) => {
-        if (district?.label && district?.value) pushUnique(districts, { label: district.label, value: district.value });
-      });
-    });
-  });
-  return { provinces, cities, districts };
+const genderOptions = computed(() => buildDictOptions(genderDict.items.value, fallbackGenderOptions));
+
+type AreaOption = {
+  label: string;
+  value: number;
+  level?: number;
+  zipCode?: string | null;
+  children?: AreaOption[] | boolean;
 };
 
-// 模拟省市区数据，实际项目中建议使用公共库
-const regionOptions = [
-  {
-    label: '广东省',
-    value: '广东省',
-    children: [
-      {
-        label: '深圳市',
-        value: '深圳市',
-        children: [
-          { label: '南山区', value: '南山区' },
-          { label: '福田区', value: '福田区' },
-          { label: '宝安区', value: '宝安区' },
-          { label: '龙岗区', value: '龙岗区' },
-          { label: '龙华区', value: '龙华区' },
-        ],
-      },
-      {
-        label: '广州市',
-        value: '广州市',
-        children: [
-          { label: '天河区', value: '天河区' },
-          { label: '越秀区', value: '越秀区' },
-          { label: '番禺区', value: '番禺区' },
-          { label: '海珠区', value: '海珠区' },
-          { label: '白云区', value: '白云区' },
-        ],
-      },
-    ],
-  },
-  {
-    label: '上海市',
-    value: '上海市',
-    children: [
-      {
-        label: '上海市',
-        value: '上海市',
-        children: [
-          { label: '黄浦区', value: '黄浦区' },
-          { label: '徐汇区', value: '徐汇区' },
-          { label: '长宁区', value: '长宁区' },
-          { label: '静安区', value: '静安区' },
-          { label: '浦东新区', value: '浦东新区' },
-        ],
-      },
-    ],
-  },
-  {
-    label: '北京市',
-    value: '北京市',
-    children: [
-      {
-        label: '北京市',
-        value: '北京市',
-        children: [
-          { label: '东城区', value: '东城区' },
-          { label: '西城区', value: '西城区' },
-          { label: '朝阳区', value: '朝阳区' },
-          { label: '海淀区', value: '海淀区' },
-        ],
-      },
-    ],
-  },
-  {
-    label: '浙江省',
-    value: '浙江省',
-    children: [
-      {
-        label: '杭州市',
-        value: '杭州市',
-        children: [
-          { label: '西湖区', value: '西湖区' },
-          { label: '上城区', value: '上城区' },
-          { label: '下城区', value: '下城区' },
-          { label: '江干区', value: '江干区' },
-        ],
-      },
-    ],
-  },
-];
+const areaOptions = ref<AreaOption[]>([]);
+const areaValue = ref<number[]>([]);
+const areaLoading = ref(false);
 
-const fallbackRegionOptions = buildRegionFallback(regionOptions);
+const showAreaError = (error: any) => {
+  const raw =
+    error?.response?.data?.message ||
+    error?.message ||
+    error?.response?.statusText ||
+    '';
+  const msg = String(raw).replace(/\s*\[\d{3}\]\s*$/, '').trim();
+  MessagePlugin.error(msg || '加载地区失败');
+};
 
-const genderOptions = computed(() => buildDictOptions(genderDict.items.value, fallbackGenderOptions));
-const provinceOptions = computed(() => buildDictOptions(provinceDict.items.value, fallbackRegionOptions.provinces));
-const cityOptions = computed(() => buildDictOptions(cityDict.items.value, fallbackRegionOptions.cities));
-const districtOptions = computed(() => buildDictOptions(districtDict.items.value, fallbackRegionOptions.districts));
+const toAreaOption = (row: AreaNodeResponse): AreaOption => ({
+  label: row.name,
+  value: row.id,
+  level: row.level,
+  zipCode: row.zipCode ?? null,
+  children: row.hasChildren ? true : [],
+});
 
-const handleProvinceChange = () => {
+const loadRootAreas = async () => {
+  if (areaOptions.value.length > 0) return;
+  areaLoading.value = true;
+  try {
+    const rows = await fetchAreaChildren(0);
+    areaOptions.value = rows.map(toAreaOption);
+  } catch (error) {
+    console.error('Load area root failed:', error);
+    showAreaError(error);
+  } finally {
+    areaLoading.value = false;
+  }
+};
+
+const loadAreaChildren = async (node: any) => {
+  const parentId = Number(node?.value || 0);
+  try {
+    const rows = await fetchAreaChildren(parentId);
+    return rows.map(toAreaOption);
+  } catch (error) {
+    console.error('Load area children failed:', error);
+    showAreaError(error);
+    return [];
+  }
+};
+
+const resetAreaFields = () => {
+  areaValue.value = [];
+  profileForm.provinceId = null;
+  profileForm.cityId = null;
+  profileForm.districtId = null;
+  profileForm.townId = null;
+  profileForm.streetId = null;
+  profileForm.province = '';
   profileForm.city = '';
   profileForm.district = '';
+  profileForm.town = '';
+  profileForm.street = '';
+  profileForm.zipCode = '';
 };
 
-const handleCityChange = () => {
-  profileForm.district = '';
+const applyAreaPath = (path: AreaPathNode[]) => {
+  if (!path || path.length === 0) {
+    resetAreaFields();
+    return;
+  }
+  const ids = path.map((node) => node.id);
+  const names = path.map((node) => node.name || '');
+  areaValue.value = ids;
+  profileForm.provinceId = ids[0] ?? null;
+  profileForm.cityId = ids[1] ?? null;
+  profileForm.districtId = ids[2] ?? null;
+  profileForm.townId = ids[3] ?? null;
+  profileForm.streetId = ids[4] ?? null;
+  profileForm.province = names[0] ?? '';
+  profileForm.city = names[1] ?? '';
+  profileForm.district = names[2] ?? '';
+  profileForm.town = names[3] ?? '';
+  profileForm.street = names[4] ?? '';
+  profileForm.zipCode = path[path.length - 1]?.zipCode || '';
+};
+
+const ensureAreaPathOptions = async (path: AreaPathNode[]) => {
+  if (!path || path.length === 0) return;
+  await loadRootAreas();
+  let cursor = areaOptions.value;
+  for (let i = 0; i < path.length; i += 1) {
+    const node = path[i];
+    let option = cursor.find((item) => item.value === node.id);
+    if (!option) {
+      option = {
+        label: node.name,
+        value: node.id,
+        level: node.level,
+        zipCode: node.zipCode ?? null,
+        children: i < path.length - 1 ? true : [],
+      };
+      cursor.push(option);
+    } else {
+      option.label = node.name || option.label;
+      option.level = node.level ?? option.level;
+      if (node.zipCode !== undefined) {
+        option.zipCode = node.zipCode ?? null;
+      }
+    }
+    if (i === path.length - 1) break;
+    if (!Array.isArray(option.children)) {
+      const rows = await fetchAreaChildren(node.id);
+      option.children = rows.map(toAreaOption);
+    }
+    cursor = Array.isArray(option.children) ? option.children : [];
+  }
+};
+
+const syncAreaFromProfile = async (data: UserProfile) => {
+  const areaId = data.streetId || data.townId || data.districtId || data.cityId || data.provinceId;
+  const hasName = !!(data.province || data.city || data.district || data.town || data.street);
+  let path: AreaPathNode[] = [];
+  try {
+    if (areaId) {
+      path = await fetchAreaPath(areaId);
+    } else if (hasName) {
+      path = await resolveAreaPath({
+        province: data.province,
+        city: data.city,
+        district: data.district,
+        town: data.town,
+        street: data.street,
+      });
+    }
+  } catch (error) {
+    console.error('Resolve area path failed:', error);
+  }
+  if (path.length > 0) {
+    await ensureAreaPathOptions(path);
+    applyAreaPath(path);
+  } else if (!areaId && !hasName) {
+    resetAreaFields();
+  }
+};
+
+const handleAreaChange = (_value: any, context: any) => {
+  const node = context?.node;
+  if (!node) {
+    resetAreaFields();
+    return;
+  }
+  const pathNodes = node.getPath?.() || [];
+  if (!pathNodes.length) {
+    resetAreaFields();
+    return;
+  }
+  const ids = pathNodes.map((item: any) => Number(item.value));
+  const names = pathNodes.map((item: any) => String(item.label || item.data?.label || item.data?.name || ''));
+  const zipCode = pathNodes[pathNodes.length - 1]?.data?.zipCode || '';
+  areaValue.value = ids;
+  profileForm.provinceId = ids[0] ?? null;
+  profileForm.cityId = ids[1] ?? null;
+  profileForm.districtId = ids[2] ?? null;
+  profileForm.townId = ids[3] ?? null;
+  profileForm.streetId = ids[4] ?? null;
+  profileForm.province = names[0] ?? '';
+  profileForm.city = names[1] ?? '';
+  profileForm.district = names[2] ?? '';
+  profileForm.town = names[3] ?? '';
+  profileForm.street = names[4] ?? '';
+  profileForm.zipCode = zipCode;
 };
 
 const profileRules: Record<string, FormRule[]> = {
@@ -516,12 +580,7 @@ const loginLogColumns: PrimaryTableCol[] = [
 ];
 
 const loadDictionaries = async (force = false) => {
-  await Promise.all([
-    genderDict.load(force),
-    provinceDict.load(force),
-    cityDict.load(force),
-    districtDict.load(force),
-  ]);
+  await Promise.all([genderDict.load(force)]);
 };
 
 const normalizeGender = (value?: string) => {
@@ -556,15 +615,24 @@ const fetchProfile = async () => {
       idCard: res.idCard || '',
       phone: res.phone || '',
       seat: res.seat || '',
+      provinceId: res.provinceId ?? null,
       province: res.province || '',
+      cityId: res.cityId ?? null,
       city: res.city || '',
+      districtId: res.districtId ?? null,
       district: res.district || '',
+      townId: res.townId ?? null,
+      town: res.town || '',
+      streetId: res.streetId ?? null,
+      street: res.street || '',
+      zipCode: res.zipCode || '',
       address: res.address || '',
       introduction: res.introduction || '',
       tags: res.tags || '',
     });
+    await syncAreaFromProfile(res);
   } catch {
-    MessagePlugin.error('获取个人信息失败');
+    MessagePlugin.error('加载地区失败');
   } finally {
     fetchLoginLogs(profile.value.account || profile.value.email);
     profileLoading.value = false;
@@ -585,7 +653,7 @@ const fetchLoginLogs = async (account?: string) => {
     });
     loginLogs.value = res.list || [];
   } catch {
-    MessagePlugin.error('获取登录日志失败');
+    MessagePlugin.error('加载地区失败');
   } finally {
     loginLogLoading.value = false;
   }
@@ -602,6 +670,7 @@ const updateIsMobile = () => {
 
 const openEditDrawer = () => {
   void loadDictionaries(true);
+  void loadRootAreas();
   editProfileVisible.value = true;
 };
 
@@ -616,7 +685,7 @@ const handleUpdateProfile = async (context: SubmitContext) => {
     fetchProfile();
   } catch (error) {
     console.error('Update profile failed:', error);
-    MessagePlugin.error('个人资料更新失败');
+    MessagePlugin.error('加载地区失败');
   } finally {
     updatingProfile.value = false;
   }

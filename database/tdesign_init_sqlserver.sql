@@ -18,10 +18,41 @@ CREATE TABLE users (
   position NVARCHAR(64),
   join_day DATE,
   team NVARCHAR(255),
+  gender NVARCHAR(10),
+  nickname NVARCHAR(64),
+  province_id INT,
+  province NVARCHAR(100),
+  city_id INT,
+  city NVARCHAR(100),
+  district_id INT,
+  district NVARCHAR(100),
+  town_id INT,
+  town NVARCHAR(100),
+  street_id INT,
+  street NVARCHAR(100),
+  zip_code NVARCHAR(12),
+  address NVARCHAR(255),
+  introduction NVARCHAR(MAX),
+  avatar NVARCHAR(255),
+  tags NVARCHAR(255),
   status TINYINT NOT NULL DEFAULT 1,
   created_at DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
   updated_at DATETIME2 NOT NULL DEFAULT SYSDATETIME()
 );
+GO
+
+CREATE TABLE areas (
+  id INT NOT NULL PRIMARY KEY,
+  parent_id INT NOT NULL DEFAULT 0,
+  name NVARCHAR(120) NOT NULL DEFAULT '',
+  zip_code NVARCHAR(12),
+  level TINYINT NOT NULL DEFAULT 1
+);
+GO
+
+CREATE INDEX idx_areas_parent ON areas (parent_id);
+GO
+CREATE INDEX idx_areas_level ON areas (level);
 GO
 
 CREATE TABLE org_units (

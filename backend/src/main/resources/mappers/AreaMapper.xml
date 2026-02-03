@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tencent.tdesign.mapper.AreaMapper">
+  <sql id="BaseSelect">
+    SELECT id,
+      parent_id,
+      name,
+      zip_code,
+      level
+    FROM areas
+  </sql>
+
+  <select id="selectById" resultType="com.tencent.tdesign.entity.AreaEntity">
+    <include refid="BaseSelect" />
+    WHERE id = #{id}
+  </select>
+
+  <select id="selectByParentAndName" resultType="com.tencent.tdesign.entity.AreaEntity">
+    <include refid="BaseSelect" />
+    WHERE parent_id = #{parentId}
+      AND name = #{name}
+    ORDER BY id ASC
+  </select>
+
+  <select id="selectChildren" resultType="com.tencent.tdesign.vo.AreaNodeRow">
+    SELECT a.id,
+      a.parent_id AS parentId,
+      a.name,
+      a.zip_code AS zipCode,
+      a.level,
+      (
+        SELECT COUNT(1)
+        FROM areas c
+        WHERE c.parent_id = a.id
+      ) AS childrenCount
+    FROM areas a
+    WHERE a.parent_id = #{parentId}
+    ORDER BY a.level ASC, a.id ASC
+  </select>
+</mapper>
