@@ -4,10 +4,6 @@ export interface RegisterPayload {
   account: string;
   password: string;
   confirmPassword: string;
-  name?: string;
-  email?: string;
-  idCard?: string;
-  mobile?: string;
   captchaId: string;
   captchaCode: string;
 }

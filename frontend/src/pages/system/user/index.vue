@@ -1,100 +1,101 @@
 <template>
   <div class="user-management">
-    <div class="user-management__left">
-      <t-card title="组织机构" :bordered="false" class="org-panel">
-        <t-input v-model="orgKeyword" type="search" clearable placeholder="请输入部门名称" @change="filterOrgTree" />
-        <t-tree
-          class="org-tree"
-          :data="filteredOrgTree"
-          :keys="orgTreeKeys"
-          hover
-          activable
-          :expanded="expandedOrgIds"
-          @click="handleOrgSelect"
-        />
-      </t-card>
-    </div>
-
-    <div class="user-management__right">
-      <t-card title="用户管理" :bordered="false" class="user-panel">
-        <div class="user-panel__filters">
-          <div class="user-filter">
-            <t-input v-model="filters.keyword" clearable placeholder="用户名称" />
-            <t-input v-model="filters.mobile" clearable placeholder="手机号" />
-            <t-select v-model="filters.status" :options="statusOptions" clearable placeholder="用户状态" />
-            <t-date-range-picker
-              v-model="filters.createdRange"
-              allow-input
-              clearable
-              format="YYYY-MM-DD"
-              value-type="YYYY-MM-DD"
-              placeholder="开始日期 - 结束日期"
-            />
-            <div class="user-filter__buttons">
-              <t-space size="small">
-                <t-button theme="primary" @click="reload">搜索</t-button>
-                <t-button variant="outline" @click="resetFilters">重置</t-button>
-              </t-space>
-            </div>
-          </div>
-          <div class="user-filter__actions">
-            <t-button v-if="canCreate" theme="primary" @click="openCreate">新增</t-button>
-          </div>
+    <t-card title="用户管理" :bordered="false" class="user-panel">
+      <div class="user-panel__content">
+        <div class="user-panel__tree">
+          <t-input v-model="orgKeyword" type="search" clearable placeholder="请输入部门名称" @change="filterOrgTree" />
+          <t-tree
+            class="org-tree"
+            :data="filteredOrgTree"
+            :keys="orgTreeKeys"
+            hover
+            activable
+            :expanded="expandedOrgIds"
+            @click="handleOrgSelect"
+          />
         </div>
 
-        <t-table
-          class="user-table"
-          row-key="id"
-          :data="rows"
-          :columns="columns"
-          :pagination="pagination"
-          :loading="loading"
-          @page-change="onPageChange"
-        >
-          <template #orgUnitNames="{ row }">
-            <span>{{ formatOrgUnits(row.orgUnitNames) }}</span>
-          </template>
-          <template #departmentNames="{ row }">
-            <span>{{ formatDepartments(row.departmentNames) }}</span>
-          </template>
-          <template #status="{ row }">
-            <t-switch
-              :value="row.status === 1"
-              :disabled="!canUpdate"
-              @change="(val) => toggleStatus(row, Boolean(val))"
-            />
-          </template>
-          <template #roles="{ row }">
-            <t-space>
-              <t-tag v-for="r in row.roles || []" :key="r" theme="primary" variant="light">{{ r }}</t-tag>
-            </t-space>
-          </template>
-          <template #op="{ row }">
-            <t-space class="user-table-actions">
-              <t-link v-if="canUpdate" :disabled="isEditDisabled(row)" theme="primary" @click="openEdit(row)"
-                >编辑</t-link
-              >
-              <t-link v-if="canReset" :disabled="isResetDisabled(row)" theme="primary" @click="resetPwd(row)"
-                >重置密码</t-link
-              >
-              <t-link v-if="canDelete" :disabled="isDeleteDisabled(row)" theme="danger" @click="removeRow(row)"
-                >删除</t-link
-              >
-              <span v-if="!canUpdate && !canReset && !canDelete">--</span>
-            </t-space>
-          </template>
-        </t-table>
-      </t-card>
-    </div>
+        <div class="user-panel__table">
+          <div class="user-panel__filters">
+            <div class="user-filter">
+              <t-input v-model="filters.keyword" clearable placeholder="用户名称" />
+              <t-input v-model="filters.mobile" clearable placeholder="手机号" />
+              <t-select v-model="filters.status" :options="statusOptions" clearable placeholder="用户状态" />
+              <t-date-range-picker
+                v-model="filters.createdRange"
+                allow-input
+                clearable
+                format="YYYY-MM-DD"
+                value-type="YYYY-MM-DD"
+                placeholder="开始日期 - 结束日期"
+              />
+              <div class="user-filter__buttons">
+                <t-space size="small">
+                  <t-button theme="primary" @click="reload">搜索</t-button>
+                  <t-button variant="outline" @click="resetFilters">重置</t-button>
+                </t-space>
+              </div>
+            </div>
+            <div class="user-filter__actions">
+              <t-button v-if="canCreate" theme="primary" @click="openCreate">新增</t-button>
+            </div>
+          </div>
+
+          <t-table
+            class="user-table"
+            row-key="id"
+            :data="rows"
+            :columns="columns"
+            :pagination="pagination"
+            :loading="loading"
+            @page-change="onPageChange"
+          >
+            <template #orgUnitNames="{ row }">
+              <span>{{ formatOrgUnits(row.orgUnitNames) }}</span>
+            </template>
+            <template #departmentNames="{ row }">
+              <span>{{ formatDepartments(row.departmentNames) }}</span>
+            </template>
+            <template #status="{ row }">
+              <t-switch
+                :value="row.status === 1"
+                :disabled="!canUpdate"
+                @change="(val) => toggleStatus(row, Boolean(val))"
+              />
+            </template>
+            <template #roles="{ row }">
+              <t-space>
+                <t-tag v-for="r in row.roles || []" :key="r" theme="primary" variant="light">{{ r }}</t-tag>
+              </t-space>
+            </template>
+            <template #op="{ row }">
+              <t-space class="user-table-actions">
+                <t-link v-if="canUpdate" :disabled="isEditDisabled(row)" theme="primary" @click="openEdit(row)"
+                  >编辑</t-link
+                >
+                <t-link v-if="canReset" :disabled="isResetDisabled(row)" theme="primary" @click="resetPwd(row)"
+                  >重置密码</t-link
+                >
+                <t-link v-if="canDelete" :disabled="isDeleteDisabled(row)" theme="danger" @click="removeRow(row)"
+                  >删除</t-link
+                >
+                <span v-if="!canUpdate && !canReset && !canDelete">--</span>
+              </t-space>
+            </template>
+          </t-table>
+        </div>
+      </div>
+    </t-card>
 
     <confirm-drawer v-model:visible="drawerVisible" :header="drawerTitle" size="720px">
       <t-form
         ref="formRef"
+        class="drawer-form--single"
         :data="form"
         :rules="rules"
-        label-width="100px"
-        layout="vertical"
+        label-width="120px"
         label-align="right"
+        layout="horizontal"
         @submit="onSubmit"
       >
         <t-row :gutter="[24, 24]">
@@ -944,28 +945,31 @@ onMounted(async () => {
 </script>
 <style scoped lang="less">
 .user-management {
-  display: flex;
-  gap: 16px;
   min-height: calc(100vh - 200px);
 }
 
-.user-management__left {
-  width: 240px;
-  flex-shrink: 0;
+.user-panel__content {
+  display: flex;
+  gap: 16px;
 }
 
-.user-management__right {
+.user-panel__tree {
+  width: 240px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--td-component-border);
+  padding-right: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.user-panel__table {
   flex: 1;
   min-width: 0;
 }
 
-.org-panel {
-  height: 100%;
-}
-
 .org-tree {
-  margin-top: 16px;
-  max-height: calc(100vh - 320px);
+  flex: 1;
   overflow: auto;
 }
 
@@ -1004,12 +1008,16 @@ onMounted(async () => {
 }
 
 @media (max-width: 1200px) {
-  .user-management {
+  .user-panel__content {
     flex-direction: column;
   }
 
-  .user-management__left {
+  .user-panel__tree {
     width: 100%;
+    border-right: none;
+    padding-right: 0;
+    border-bottom: 1px solid var(--td-component-border);
+    padding-bottom: 16px;
   }
 
   .user-filter {

@@ -60,7 +60,16 @@
       :confirm-btn="{ content: '保存', loading: saving }"
       @confirm="onConfirm"
     >
-      <t-form ref="formRef" layout="vertical" :data="form" :rules="rules" @submit="save">
+      <t-form
+        ref="formRef"
+        class="drawer-form--single"
+        layout="horizontal"
+        label-width="120px"
+        label-align="right"
+        :data="form"
+        :rules="rules"
+        @submit="save"
+      >
         <t-row :gutter="[16, 12]">
           <t-col :xs="24" :sm="12">
             <t-form-item label="标题" name="title">

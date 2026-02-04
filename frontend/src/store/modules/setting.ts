@@ -38,6 +38,11 @@ const state: Record<string, any> = {
   lightStartTime: '06:00',
   darkStartTime: '18:00',
   autoThemeTimer: null as any,
+  passwordMinLength: 6,
+  passwordRequireUppercase: false,
+  passwordRequireLowercase: false,
+  passwordRequireSpecial: false,
+  passwordAllowSequential: true,
   watermark: {
     enabled: false,
     type: 'text',
@@ -189,6 +194,16 @@ export const useSettingStore = defineStore('setting', {
         if (s.userAgreement !== null && s.userAgreement !== undefined) payload.userAgreement = s.userAgreement;
         if (s.privacyAgreement !== null && s.privacyAgreement !== undefined)
           payload.privacyAgreement = s.privacyAgreement;
+        if (s.passwordMinLength !== null && s.passwordMinLength !== undefined)
+          payload.passwordMinLength = s.passwordMinLength;
+        if (s.passwordRequireUppercase !== null && s.passwordRequireUppercase !== undefined)
+          payload.passwordRequireUppercase = !!s.passwordRequireUppercase;
+        if (s.passwordRequireLowercase !== null && s.passwordRequireLowercase !== undefined)
+          payload.passwordRequireLowercase = !!s.passwordRequireLowercase;
+        if (s.passwordRequireSpecial !== null && s.passwordRequireSpecial !== undefined)
+          payload.passwordRequireSpecial = !!s.passwordRequireSpecial;
+        if (s.passwordAllowSequential !== null && s.passwordAllowSequential !== undefined)
+          payload.passwordAllowSequential = !!s.passwordAllowSequential;
 
         if (s.showFooter !== null && s.showFooter !== undefined) payload.showFooter = !!s.showFooter;
         if (s.isSidebarCompact !== null && s.isSidebarCompact !== undefined)

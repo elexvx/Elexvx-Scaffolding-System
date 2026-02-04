@@ -7,7 +7,17 @@
     size="large"
     :footer="false"
   >
-    <t-form ref="formRef" :data="formData" :rules="rules" :colon="true" label-width="100px" @submit="handleConfirm">
+    <t-form
+      ref="formRef"
+      class="drawer-form--single"
+      :data="formData"
+      :rules="rules"
+      :colon="true"
+      label-width="120px"
+      label-align="right"
+      layout="horizontal"
+      @submit="handleConfirm"
+    >
       <t-form-item label="姓名" name="name">
         <t-input v-model="formData.name" placeholder="请输入姓名" />
       </t-form-item>

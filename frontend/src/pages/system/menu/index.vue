@@ -27,7 +27,14 @@
     </t-space>
 
     <confirm-drawer v-model:visible="drawerVisible" :header="drawerTitle" size="600px">
-      <t-form ref="formRef" :data="form" label-align="top" class="menu-drawer-form">
+      <t-form
+        ref="formRef"
+        :data="form"
+        label-align="right"
+        label-width="120px"
+        layout="horizontal"
+        class="menu-drawer-form drawer-form--single"
+      >
         <t-form-item label="上级菜单" name="parentId">
           <t-tree-select
             v-model="form.parentId"
@@ -1205,10 +1212,6 @@ onMounted(async () => {
 
 .menu-drawer-form :deep(.t-form__item) {
   margin-bottom: 16px;
-}
-
-.menu-drawer-form :deep(.t-form__label) {
-  padding-bottom: 8px;
 }
 
 .menu-drawer-form :deep(.t-form__item-label) {

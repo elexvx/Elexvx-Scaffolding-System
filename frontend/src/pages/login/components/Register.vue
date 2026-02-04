@@ -8,39 +8,15 @@
     label-width="0"
     @submit="onSubmit"
   >
-    <t-form-item name="name">
-      <t-input v-model="formData.name" size="large" placeholder="请输入姓名">
+    <t-form-item name="account">
+      <t-input v-model="formData.account" size="large" placeholder="请输入用户名">
         <template #prefix-icon>
           <t-icon name="user" />
         </template>
       </t-input>
     </t-form-item>
 
-    <t-form-item name="phone">
-      <t-input v-model="formData.phone" :maxlength="11" size="large" placeholder="请输入手机号">
-        <template #prefix-icon>
-          <t-icon name="call" />
-        </template>
-      </t-input>
-    </t-form-item>
-
-    <t-form-item name="email">
-      <t-input v-model="formData.email" type="text" size="large" placeholder="请输入邮箱">
-        <template #prefix-icon>
-          <t-icon name="mail" />
-        </template>
-      </t-input>
-    </t-form-item>
-
-    <t-form-item name="idCard">
-      <t-input v-model="formData.idCard" type="text" size="large" placeholder="请输入身份证号码">
-        <template #prefix-icon>
-          <t-icon name="user" />
-        </template>
-      </t-input>
-    </t-form-item>
-
-    <t-form-item name="password">
+    <t-form-item name="password" :help="passwordHelp">
       <t-input
         v-model="formData.password"
         size="large"
@@ -122,6 +98,7 @@ import { MessagePlugin } from 'tdesign-vue-next';
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
 
 import { register } from '@/api/auth';
+import { useSettingStore } from '@/store';
 import DragCaptcha from '@/components/DragCaptcha.vue';
 import { request } from '@/utils/request';
 
@@ -130,10 +107,7 @@ import AgreementCheck from './AgreementCheck.vue';
 const emit = defineEmits(['register-success', 'back']);
 
 const INITIAL_DATA = {
-  name: '',
-  phone: '',
-  email: '',
-  idCard: '',
+  account: '',
   password: '',
   confirmPassword: '',
   captcha: '',
@@ -143,20 +117,70 @@ const INITIAL_DATA = {
 const form = ref();
 const formData = ref({ ...INITIAL_DATA });
 
+const settingStore = useSettingStore();
+
+const hasSequentialChars = (value: string) => {
+  if (!value || value.length < 3) return false;
+  let streak = 1;
+  let prev = -1;
+  for (const raw of value) {
+    if (!/[a-z0-9]/i.test(raw)) {
+      streak = 1;
+      prev = -1;
+      continue;
+    }
+    const current = raw.toLowerCase().charCodeAt(0);
+    if (prev !== -1 && Math.abs(current - prev) === 1) {
+      streak += 1;
+      if (streak >= 3) return true;
+    } else {
+      streak = 1;
+    }
+    prev = current;
+  }
+  return false;
+};
+
+const passwordRequirementMessage = computed(() => {
+  const parts: string[] = [];
+  const minLength = settingStore.passwordMinLength ?? 6;
+  parts.push(`至少 ${minLength} 位`);
+  if (settingStore.passwordRequireUppercase) parts.push('包含大写字母');
+  if (settingStore.passwordRequireLowercase) parts.push('包含小写字母');
+  if (settingStore.passwordRequireSpecial) parts.push('包含特殊字符');
+  if (settingStore.passwordAllowSequential === false) parts.push('禁止连续字符');
+  return parts.join('、');
+});
+
+const passwordHelp = computed(() =>
+  passwordRequirementMessage.value ? `需符合密码规范：${passwordRequirementMessage.value}` : '',
+);
+
+const validatePasswordPolicy = (val: string) => {
+  if (!val) return false;
+  const violations: string[] = [];
+  const minLength = settingStore.passwordMinLength ?? 6;
+  if (val.length < minLength) violations.push(`至少 ${minLength} 位`);
+  if (settingStore.passwordRequireUppercase && !/[A-Z]/.test(val)) violations.push('包含大写字母');
+  if (settingStore.passwordRequireLowercase && !/[a-z]/.test(val)) violations.push('包含小写字母');
+  if (settingStore.passwordRequireSpecial && !/[^a-z0-9]/i.test(val)) violations.push('包含特殊字符');
+  if (settingStore.passwordAllowSequential === false && hasSequentialChars(val)) violations.push('禁止连续字符');
+  return violations.length === 0;
+};
+
 const FORM_RULES: Record<string, FormRule[]> = {
-  name: [{ required: true, message: '请输入姓名', type: 'error' as const }],
-  phone: [
-    { required: true, message: '请输入手机号', type: 'error' as const },
-    { pattern: /^1\d{10}$/, message: '手机号格式不正确', type: 'error' as const },
+  account: [
+    { required: true, message: '请输入用户名', type: 'error' as const },
+    { max: 64, message: '用户名长度不能超过 64 位', type: 'error' as const },
+    { validator: (val) => /^[\w@.-]+$/.test(val), message: '用户名包含非法字符', type: 'error' as const },
   ],
-  email: [
-    { required: true, message: '请输入邮箱', type: 'error' as const },
-    { email: true, message: '邮箱格式不正确', type: 'warning' as const },
-  ],
-  idCard: [{ required: true, message: '请输入身份证号码', type: 'error' as const }],
   password: [
     { required: true, message: '请输入密码', type: 'error' as const },
-    { min: 6, max: 64, message: '密码长度应为6-64位', type: 'error' as const },
+    {
+      validator: (val) => validatePasswordPolicy(val || ''),
+      message: `密码需满足：${passwordRequirementMessage.value || '安全规则'}`,
+      type: 'error' as const,
+    },
   ],
   confirmPassword: [
     { required: true, message: '请确认密码', type: 'error' as const },
@@ -289,15 +313,11 @@ const formRules = computed(() => ({
 }));
 
 const buildRegisterPayload = () => {
-  const account = formData.value.phone;
+  const account = formData.value.account;
   return {
     account: account?.trim() || '',
     password: formData.value.password,
     confirmPassword: formData.value.confirmPassword,
-    name: formData.value.name?.trim() || '',
-    email: formData.value.email?.trim() || '',
-    idCard: formData.value.idCard?.trim() || '',
-    mobile: formData.value.phone?.trim() || '',
     captchaId: captchaId.value,
     captchaCode: formData.value.captcha,
   };
@@ -311,7 +331,7 @@ const normalizeRegisterErrorMessage = (message: string) => {
   const parts = raw.split(/[;；]/).map((item) => item.trim()).filter(Boolean);
   const mapped = parts.map((item) => {
     const lower = item.toLowerCase();
-    if (lower.includes('id card') && lower.includes('required')) return '身份证号码不能为空';
+    if (lower.includes('account') && lower.includes('required')) return '用户名不能为空';
     if (lower.includes('password') && lower.includes('6-64')) return '密码长度应为6-64位';
     return item;
   });
@@ -330,7 +350,7 @@ const onSubmit = async (ctx: SubmitContext) => {
 
   const payload = buildRegisterPayload();
   if (!payload.account) {
-    MessagePlugin.error('请输入手机号');
+    MessagePlugin.error('请输入用户名');
     return;
   }
   if (captchaEnabled.value && captchaType.value === 'drag' && !formData.value.captcha) {
