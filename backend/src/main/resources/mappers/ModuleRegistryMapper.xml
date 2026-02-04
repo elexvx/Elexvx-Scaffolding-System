@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tencent.tdesign.mapper.ModuleRegistryMapper">
+  <select id="selectAll" resultType="com.tencent.tdesign.entity.ModuleRegistry">
+    SELECT module_key, name, version, enabled, install_state, installed_at
+    FROM module_registry
+    ORDER BY module_key ASC
+  </select>
+
+  <select id="selectByKey" resultType="com.tencent.tdesign.entity.ModuleRegistry">
+    SELECT module_key, name, version, enabled, install_state, installed_at
+    FROM module_registry
+    WHERE module_key = #{moduleKey}
+  </select>
+
+  <insert id="insert" parameterType="com.tencent.tdesign.entity.ModuleRegistry">
+    INSERT INTO module_registry (
+      module_key, name, version, enabled, install_state, installed_at
+    ) VALUES (
+      #{moduleKey}, #{name}, #{version}, #{enabled}, #{installState}, #{installedAt}
+    )
+  </insert>
+
+  <update id="update" parameterType="com.tencent.tdesign.entity.ModuleRegistry">
+    UPDATE module_registry
+    SET
+      name = #{name},
+      version = #{version},
+      enabled = #{enabled},
+      install_state = #{installState},
+      installed_at = #{installedAt}
+    WHERE module_key = #{moduleKey}
+  </update>
+</mapper>

@@ -265,6 +265,16 @@ CREATE TABLE verification_email_settings (
 );
 GO
 
+CREATE TABLE module_registry (
+  module_key NVARCHAR(64) NOT NULL PRIMARY KEY,
+  name NVARCHAR(128),
+  version NVARCHAR(32),
+  enabled TINYINT DEFAULT 1,
+  install_state NVARCHAR(32),
+  installed_at DATETIME2
+);
+GO
+
 CREATE TABLE security_token_settings (
   id BIGINT IDENTITY(1,1) PRIMARY KEY,
   session_timeout_minutes INT,
@@ -542,4 +552,8 @@ INSERT INTO sys_dict_items (id, dict_id, label, value, value_type, status, sort,
   (3505, 2020, N'通义千问 (兼容模式)', N'QWEN', N'string', 1, 5, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
   (3506, 2020, N'Ollama 本地部署', N'OLLAMA', N'string', 1, 6, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
 SET IDENTITY_INSERT sys_dict_items OFF;
+GO
+
+INSERT INTO module_registry (module_key, name, version, enabled, install_state, installed_at) VALUES ('sms', N'短信验证', '1.0.0', 1, 'PENDING', NULL);
+INSERT INTO module_registry (module_key, name, version, enabled, install_state, installed_at) VALUES ('email', N'邮箱验证', '1.0.0', 1, 'PENDING', NULL);
 GO

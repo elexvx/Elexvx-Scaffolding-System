@@ -1098,9 +1098,29 @@ CREATE TABLE `verification_sms_settings`  (
 ) ENGINE = InnoDB AUTO_INCREMENT = 3 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
+-- Table structure for module_registry
+-- ----------------------------
+DROP TABLE IF EXISTS `module_registry`;
+CREATE TABLE `module_registry`  (
+  `module_key` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  `name` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
+  `version` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
+  `enabled` tinyint NULL DEFAULT 1,
+  `install_state` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
+  `installed_at` datetime NULL DEFAULT NULL,
+  PRIMARY KEY (`module_key`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
 -- Records of verification_sms_settings
 -- ----------------------------
 INSERT INTO `verification_sms_settings` VALUES (2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+
+-- ----------------------------
+-- Records of module_registry
+-- ----------------------------
+INSERT INTO `module_registry` VALUES ('sms', '短信验证', '1.0.0', 1, 'PENDING', NULL);
+INSERT INTO `module_registry` VALUES ('email', '邮箱验证', '1.0.0', 1, 'PENDING', NULL);
 
 -- ----------------------------
 -- Table structure for watermark_settings
@@ -1439,6 +1459,13 @@ ALTER TABLE `verification_sms_settings` MODIFY COLUMN `sms_tencent_template_id` 
 ALTER TABLE `verification_sms_settings` MODIFY COLUMN `sms_tencent_region` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'sms_tencent_region';
 ALTER TABLE `verification_sms_settings` MODIFY COLUMN `sms_tencent_endpoint` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'sms_tencent_endpoint';
 ALTER TABLE `verification_sms_settings` MODIFY COLUMN `sms_sdk_app_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'sms_sdk_app_id';
+ALTER TABLE `module_registry` COMMENT = '表: module_registry';
+ALTER TABLE `module_registry` MODIFY COLUMN `module_key` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT 'module_key';
+ALTER TABLE `module_registry` MODIFY COLUMN `name` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'name';
+ALTER TABLE `module_registry` MODIFY COLUMN `version` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'version';
+ALTER TABLE `module_registry` MODIFY COLUMN `enabled` tinyint NULL DEFAULT 1 COMMENT 'enabled';
+ALTER TABLE `module_registry` MODIFY COLUMN `install_state` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'install_state';
+ALTER TABLE `module_registry` MODIFY COLUMN `installed_at` datetime NULL DEFAULT NULL COMMENT 'installed_at';
 ALTER TABLE `sys_dict` COMMENT = '表: sys_dict';
 ALTER TABLE `sys_dict` MODIFY COLUMN `id` bigint NOT NULL AUTO_INCREMENT COMMENT 'id';
 ALTER TABLE `sys_dict` MODIFY COLUMN `name` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT 'name';
