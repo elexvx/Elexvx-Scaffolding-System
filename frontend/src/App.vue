@@ -148,7 +148,7 @@ onMounted(async () => {
   const probe = async () => {
     try {
       const { request } = await import('@/utils/request');
-      await request.get({ url: '/system/ui' }, { withToken: false, retry: { count: 0, delay: 0 } });
+      await request.get({ url: '/system/ui/public' }, { withToken: false, retry: { count: 0, delay: 0 } });
       appStore.setBackendReady(true);
       try {
         if (userStore.token || !isAuthPage(route.path)) {
