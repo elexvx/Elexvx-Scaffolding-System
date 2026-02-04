@@ -253,13 +253,33 @@
         </t-form>
       </div>
     </t-tab-panel>
+    <t-tab-panel value="module" label="模块管理" :destroy-on-hide="false">
+      <div class="verification-content">
+        <t-alert
+          theme="info"
+          message="模块来源、许可与版本信息来自后端模块注册表；禁用模块将不加载对应 SDK。"
+          :close="false"
+          style="margin-bottom: 16px"
+        />
+        <t-table :loading="moduleLoading" :data="modules" :columns="moduleColumns" row-key="key" bordered>
+          <template #enabled="{ row }">
+            <t-tag :theme="row.enabled ? 'success' : 'default'" variant="light-outline">
+              {{ row.enabled ? '已启用' : '未启用' }}
+            </t-tag>
+          </template>
+        </t-table>
+      </div>
+    </t-tab-panel>
   </t-tabs>
 </template>
 <script setup lang="ts">
+import type { PrimaryTableCol } from 'tdesign-vue-next';
 import { MessagePlugin } from 'tdesign-vue-next';
 import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
+import type { ModuleDescriptor } from '@/api/system/module';
+import { fetchModuleList } from '@/api/system/module';
 import { useDictionary } from '@/hooks/useDictionary';
 import { useSettingStore } from '@/store';
 import { hasPerm } from '@/utils/permission';
@@ -268,7 +288,7 @@ import { request } from '@/utils/request';
 
 const route = useRoute();
 const router = useRouter();
-const validTabs = new Set(['sms', 'email']);
+const validTabs = new Set(['sms', 'email', 'module']);
 
 const resolveTab = (value: unknown) => {
   const tab = typeof value === 'string' ? value : '';
@@ -326,6 +346,16 @@ const emailForm = reactive({
   emailSsl: true,
   emailTemplate: '',
 });
+
+const moduleLoading = ref(false);
+const modules = ref<ModuleDescriptor[]>([]);
+const moduleColumns: PrimaryTableCol<ModuleDescriptor>[] = [
+  { colKey: 'name', title: '模块', width: 220 },
+  { colKey: 'source', title: '来源/SDK', ellipsis: true },
+  { colKey: 'license', title: '许可', width: 140 },
+  { colKey: 'version', title: '版本', width: 120 },
+  { colKey: 'enabled', title: '启用状态', width: 120 },
+];
 
 const settingStore = useSettingStore();
 const canUpdate = computed(
@@ -436,9 +466,22 @@ const onSubmitEmail = async (ctx: any) => {
   MessagePlugin.success('保存成功');
 };
 
+const loadModules = async () => {
+  moduleLoading.value = true;
+  try {
+    modules.value = await fetchModuleList();
+  } catch (error) {
+    MessagePlugin.error('模块信息获取失败');
+    modules.value = [];
+  } finally {
+    moduleLoading.value = false;
+  }
+};
+
 onMounted(() => {
   void smsProviderDict.load();
   load();
+  void loadModules();
 });
 </script>
 <style lang="less" scoped>
