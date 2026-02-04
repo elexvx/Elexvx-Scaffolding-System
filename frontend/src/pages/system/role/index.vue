@@ -22,10 +22,11 @@
     <confirm-drawer v-model:visible="drawerVisible" :header="drawerTitle" size="760px">
       <t-form
         ref="formRef"
+        class="drawer-form--single"
         :data="form"
         :rules="rules"
-        label-width="100px"
-        layout="vertical"
+        label-width="120px"
+        layout="horizontal"
         label-align="right"
         @submit="onSubmit"
       >

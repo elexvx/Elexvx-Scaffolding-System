@@ -99,7 +99,15 @@
     </t-card>
 
     <t-drawer v-model:visible="formVisible" :footer="false" :close-btn="true" size="600px" header="配置提供商">
-      <t-form layout="vertical" label-align="top" :data="form" :rules="rules" @submit="submitForm">
+      <t-form
+        class="drawer-form--single"
+        layout="horizontal"
+        label-align="right"
+        label-width="120px"
+        :data="form"
+        :rules="rules"
+        @submit="submitForm"
+      >
         <t-row :gutter="[16, 24]">
           <t-col :xs="24" :sm="12">
             <t-form-item label="名称" name="name">

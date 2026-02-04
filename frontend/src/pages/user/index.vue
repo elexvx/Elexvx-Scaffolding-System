@@ -86,9 +86,12 @@
         >
           <t-form
             ref="profileFormRef"
+            class="drawer-form--single"
             :data="profileForm"
             :rules="profileRules"
-            label-align="top"
+            label-align="right"
+            label-width="120px"
+            layout="horizontal"
             @submit="handleUpdateProfile"
           >
             <t-row :gutter="[24, 24]">

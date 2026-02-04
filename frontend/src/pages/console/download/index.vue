@@ -81,9 +81,10 @@
         ref="formRef"
         :data="form"
         :rules="rules"
-        layout="vertical"
-        label-align="top"
-        class="download-drawer-form"
+        layout="horizontal"
+        label-align="right"
+        label-width="120px"
+        class="download-drawer-form drawer-form--single"
         @submit="save"
       >
         <t-row :gutter="[24, 24]">

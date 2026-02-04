@@ -805,6 +805,9 @@ public class AuthService {
   public boolean register(RegisterRequest req) {
     Boolean captchaEnabled = securitySettingService.getOrCreate().getCaptchaEnabled();
     if (Boolean.TRUE.equals(captchaEnabled)) {
+      if (req.getCaptchaId() == null || req.getCaptchaId().isBlank() || req.getCaptchaCode() == null || req.getCaptchaCode().isBlank()) {
+        throw new IllegalArgumentException("验证码不能为空");
+      }
       boolean ok = captchaService.verify(req.getCaptchaId(), req.getCaptchaCode());
       if (!ok)
         throw new IllegalArgumentException("验证码错误或已过期");
@@ -815,33 +818,15 @@ public class AuthService {
     // 根据系统设置校验注册密码规范
     passwordPolicyService.validate(req.getPassword());
     String account = req.getAccount().trim();
-    String mobile = normalizePhone(req.getMobile());
-    String email = req.getEmail() == null ? "" : req.getEmail().trim();
-    String idCard = normalizeIdCard(req.getIdCard());
-    if (!mobile.isBlank() && findUserByPhone(mobile) != null) {
-      throw new IllegalArgumentException("手机号已注册");
-    }
-    if (!email.isBlank() && userMapper.countByEmailIgnoreCase(email) > 0) {
-      throw new IllegalArgumentException("邮箱已注册");
-    }
-    if (!idCard.isBlank() && userMapper.countByIdCard(idCard) > 0) {
-      throw new IllegalArgumentException("身份证号已注册");
-    }
     if (userMapper.countByAccount(account) > 0) {
-      if (!mobile.isBlank() && account.equals(mobile)) {
-        throw new IllegalArgumentException("手机号已注册");
-      }
       throw new IllegalArgumentException("账号已存在");
     }
 
     UserEntity e = new UserEntity();
     e.setAccount(account);
     e.setGuid(UUID.randomUUID().toString());
-    e.setName((req.getName() == null || req.getName().isBlank()) ? account : req.getName().trim());
+    e.setName(account);
     e.setPasswordHash(BCrypt.hashpw(req.getPassword(), BCrypt.gensalt()));
-    e.setEmail(email.isBlank() ? null : email);
-    e.setMobile(mobile.isBlank() ? null : mobile);
-    e.setIdCard(idCard.isBlank() ? null : idCard);
 
     try {
       e = saveUser(e);
