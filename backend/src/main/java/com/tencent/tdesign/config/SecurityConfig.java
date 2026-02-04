@@ -45,7 +45,7 @@ public class SecurityConfig {
           "/captcha/**",
           "/auth/password/reset",
           "/auth/logout",
-          "/system/ui",
+          "/system/ui/public",
           "/system/watermark",
           "/uploads/**",
           "/files/**",
