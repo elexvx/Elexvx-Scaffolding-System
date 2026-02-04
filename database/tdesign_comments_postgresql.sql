@@ -123,6 +123,7 @@ COMMENT ON COLUMN security_token_settings.id IS 'id';
 COMMENT ON COLUMN security_token_settings.session_timeout_minutes IS 'session_timeout_minutes';
 COMMENT ON COLUMN security_token_settings.token_timeout_minutes IS 'token_timeout_minutes';
 COMMENT ON COLUMN security_token_settings.token_refresh_grace_minutes IS 'token_refresh_grace_minutes';
+COMMENT ON COLUMN security_token_settings.allow_url_token_param IS 'allow_url_token_param';
 COMMENT ON TABLE sensitive_page_settings IS '表: sensitive_page_settings';
 COMMENT ON COLUMN sensitive_page_settings.id IS 'id';
 COMMENT ON COLUMN sensitive_page_settings.page_key IS 'page_key';

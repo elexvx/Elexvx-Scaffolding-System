@@ -139,6 +139,7 @@ public class UiSettingController {
     response.setSessionTimeoutMinutes(securitySetting.getSessionTimeoutMinutes());
     response.setTokenTimeoutMinutes(securitySetting.getTokenTimeoutMinutes());
     response.setTokenRefreshGraceMinutes(securitySetting.getTokenRefreshGraceMinutes());
+    response.setAllowUrlTokenParam(securitySetting.getAllowUrlTokenParam());
     response.setCaptchaEnabled(securitySetting.getCaptchaEnabled());
     response.setCaptchaType(securitySetting.getCaptchaType());
     response.setDragCaptchaWidth(securitySetting.getDragCaptchaWidth());
