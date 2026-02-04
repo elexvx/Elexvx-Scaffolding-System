@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 
 public class EmailLoginRequest {
   @NotBlank(message = "Email is required")
-  @Email(message = "Email format is invalid")
+  @Email(message = "Email format is invalid (no spaces)")
   private String email;
 
   @NotBlank(message = "Verification code is required")
@@ -18,7 +18,7 @@ public class EmailLoginRequest {
   }
 
   public void setEmail(String email) {
-    this.email = email;
+    this.email = sanitizeNoSpace(email);
   }
 
   public String getCode() {
@@ -26,7 +26,7 @@ public class EmailLoginRequest {
   }
 
   public void setCode(String code) {
-    this.code = code;
+    this.code = sanitizeNoSpace(code);
   }
 
   public Boolean getForce() {
@@ -35,5 +35,9 @@ public class EmailLoginRequest {
 
   public void setForce(Boolean force) {
     this.force = force;
+  }
+
+  private String sanitizeNoSpace(String value) {
+    return value == null ? null : value.replaceAll("\\s+", "");
   }
 }
