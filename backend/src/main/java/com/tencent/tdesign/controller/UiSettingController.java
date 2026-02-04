@@ -19,6 +19,7 @@ import com.tencent.tdesign.vo.ApiResponse;
 import com.tencent.tdesign.vo.UiSettingResponse;
 import java.io.IOException;
 import java.util.Map;
+import java.util.Optional;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -29,7 +30,7 @@ public class UiSettingController {
   private final UiSettingService uiSettingService;
   private final OperationLogService operationLogService;
   private final ObjectStorageService storageService;
-  private final EmailSenderService emailSenderService;
+  private final Optional<EmailSenderService> emailSenderService;
   private final VerificationSettingService verificationSettingService;
   private final SecuritySettingService securitySettingService;
   private final AuthContext authContext;
@@ -39,7 +40,7 @@ public class UiSettingController {
     UiSettingService uiSettingService,
     OperationLogService operationLogService,
     ObjectStorageService storageService,
-    EmailSenderService emailSenderService,
+    Optional<EmailSenderService> emailSenderService,
     VerificationSettingService verificationSettingService,
     SecuritySettingService securitySettingService,
     AuthContext authContext,
@@ -215,7 +216,8 @@ public class UiSettingController {
     if (setting == null || !Boolean.TRUE.equals(setting.getEmailEnabled())) {
       throw new IllegalArgumentException("邮箱验证已禁用");
     }
-    emailSenderService.sendTest(setting, req.getEmail());
+    EmailSenderService sender = emailSenderService.orElseThrow(() -> new IllegalArgumentException("邮箱模块未启用或未安装"));
+    sender.sendTest(setting, req.getEmail());
     operationLogService.log("TEST", "系统设置", "发送测试邮件");
     return ApiResponse.success(true);
   }

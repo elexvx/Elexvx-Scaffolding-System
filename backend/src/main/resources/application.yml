@@ -70,6 +70,13 @@ tdesign:
   security:
     captcha:
       enabled: true # 是否启用验证码（登录流程）
+  modules:
+    sms:
+      enabled: true # 是否启用短信模块
+    email:
+      enabled: true # 是否启用邮箱模块
+    captcha:
+      enabled: true # 是否启用验证码模块
   # Redis 配置
   # 用于 Redis 监控与缓存（可选）
   redis:

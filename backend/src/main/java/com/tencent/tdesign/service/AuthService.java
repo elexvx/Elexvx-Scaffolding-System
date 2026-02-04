@@ -50,8 +50,8 @@ public class AuthService {
   private final PermissionFacade permissionFacade;
   private final PasswordPolicyService passwordPolicyService;
   private final ObjectStorageService storageService;
-  private final SmsSenderService smsSenderService;
-  private final EmailSenderService emailSenderService;
+  private final Optional<SmsSenderService> smsSenderService;
+  private final Optional<EmailSenderService> emailSenderService;
   private final EmailCodeService emailCodeService;
   private final VerificationSettingService verificationSettingService;
   private final SecuritySettingService securitySettingService;
@@ -72,8 +72,8 @@ public class AuthService {
       PermissionFacade permissionFacade,
       PasswordPolicyService passwordPolicyService,
       ObjectStorageService storageService,
-      SmsSenderService smsSenderService,
-      EmailSenderService emailSenderService,
+      Optional<SmsSenderService> smsSenderService,
+      Optional<EmailSenderService> emailSenderService,
       EmailCodeService emailCodeService,
       VerificationSettingService verificationSettingService,
       SecuritySettingService securitySettingService,
@@ -138,7 +138,7 @@ public class AuthService {
 
     String code = smsCodeService.generateCode(phone);
     try {
-      smsSenderService.sendCode(setting, phone, code, getClientIp(), req.getProvider());
+      requireSmsSender().sendCode(setting, phone, code, getClientIp(), req.getProvider());
     } catch (Exception e) {
       smsCodeService.invalidate(phone);
       throw new IllegalArgumentException("短信发送失败: " + e.getMessage());
@@ -175,7 +175,7 @@ public class AuthService {
 
     String code = emailCodeService.generateCode(email);
     try {
-      emailSenderService.sendLoginCode(setting, email, code, emailCodeService.getExpiresInSeconds());
+      requireEmailSender().sendLoginCode(setting, email, code, emailCodeService.getExpiresInSeconds());
     } catch (Exception e) {
       emailCodeService.invalidate(email);
       throw new IllegalArgumentException("邮件发送失败: " + e.getMessage());
@@ -246,15 +246,29 @@ public class AuthService {
   }
 
   private void ensureSmsEnabled(VerificationSetting setting) {
+    if (smsSenderService.isEmpty()) {
+      throw new IllegalArgumentException("短信模块未启用或未安装");
+    }
     if (setting == null || !Boolean.TRUE.equals(setting.getSmsEnabled())) {
       throw new IllegalArgumentException("短信验证已禁用");
     }
   }
 
   private void ensureEmailEnabled(VerificationSetting setting) {
+    if (emailSenderService.isEmpty()) {
+      throw new IllegalArgumentException("邮箱模块未启用或未安装");
+    }
     if (setting == null || !Boolean.TRUE.equals(setting.getEmailEnabled())) {
       throw new IllegalArgumentException("邮箱验证已禁用");
     }
+  }
+
+  private SmsSenderService requireSmsSender() {
+    return smsSenderService.orElseThrow(() -> new IllegalArgumentException("短信模块未启用或未安装"));
+  }
+
+  private EmailSenderService requireEmailSender() {
+    return emailSenderService.orElseThrow(() -> new IllegalArgumentException("邮箱模块未启用或未安装"));
   }
 
   private void ensureEmailConfig(VerificationSetting setting) {
@@ -271,8 +285,9 @@ public class AuthService {
   private void ensureSmsConfig(VerificationSetting setting) {
     if (setting == null)
       throw new IllegalArgumentException("短信配置缺失");
-    boolean aliyunEnabled = smsSenderService.isAliyunEnabled(setting);
-    boolean tencentEnabled = smsSenderService.isTencentEnabled(setting);
+    SmsSenderService sender = requireSmsSender();
+    boolean aliyunEnabled = sender.isAliyunEnabled(setting);
+    boolean tencentEnabled = sender.isTencentEnabled(setting);
     if (!aliyunEnabled && !tencentEnabled) {
       throw new IllegalArgumentException("短信配置不完整");
     }
