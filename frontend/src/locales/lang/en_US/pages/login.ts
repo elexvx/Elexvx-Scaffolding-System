@@ -13,7 +13,7 @@ export default {
   emailLogin: 'Login with Email',
   loginSuccess: 'Login successful',
   input: {
-    account: 'please enter account',
+    account: 'please enter account (no spaces)',
     password: 'please enter password',
     phone: 'please enter phone',
     email: 'please enter email',
@@ -27,8 +27,9 @@ export default {
     verification: 'verification code is required',
   },
   invalid: {
-    email: 'invalid email format',
-    phone: 'invalid phone format',
+    account: 'account only supports letters, numbers, and _@.- (no spaces)',
+    email: 'invalid email format (no spaces)',
+    phone: 'invalid phone format (no spaces)',
   },
   sendVerification: 'send',
   verificationSent: 'verification code sent',

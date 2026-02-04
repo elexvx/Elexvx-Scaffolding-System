@@ -23,7 +23,7 @@ public class ForgotPasswordRequest {
   }
 
   public void setAccount(String account) {
-    this.account = account;
+    this.account = sanitizeTrim(account);
   }
 
   public String getPhone() {
@@ -31,7 +31,7 @@ public class ForgotPasswordRequest {
   }
 
   public void setPhone(String phone) {
-    this.phone = phone;
+    this.phone = sanitizeNoSpace(phone);
   }
 
   public String getCode() {
@@ -39,7 +39,7 @@ public class ForgotPasswordRequest {
   }
 
   public void setCode(String code) {
-    this.code = code;
+    this.code = sanitizeNoSpace(code);
   }
 
   public String getNewPassword() {
@@ -47,7 +47,7 @@ public class ForgotPasswordRequest {
   }
 
   public void setNewPassword(String newPassword) {
-    this.newPassword = newPassword;
+    this.newPassword = sanitizeTrim(newPassword);
   }
 
   public String getConfirmPassword() {
@@ -55,6 +55,14 @@ public class ForgotPasswordRequest {
   }
 
   public void setConfirmPassword(String confirmPassword) {
-    this.confirmPassword = confirmPassword;
+    this.confirmPassword = sanitizeTrim(confirmPassword);
+  }
+
+  private String sanitizeTrim(String value) {
+    return value == null ? null : value.trim();
+  }
+
+  private String sanitizeNoSpace(String value) {
+    return value == null ? null : value.replaceAll("\\s+", "");
   }
 }

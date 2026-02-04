@@ -7,7 +7,7 @@ import jakarta.validation.constraints.Size;
 public class RegisterRequest {
   @NotBlank(message = "Account is required")
   @Size(max = 64, message = "Account length must be <= 64")
-  @Pattern(regexp = "^[a-zA-Z0-9_@.-]+$", message = "Account contains invalid characters")
+  @Pattern(regexp = "^[a-zA-Z0-9_@.-]+$", message = "Account only supports letters, numbers, and _@.- (no spaces)")
   private String account;
 
   @NotBlank(message = "Password is required")
@@ -26,7 +26,7 @@ public class RegisterRequest {
   }
 
   public void setAccount(String account) {
-    this.account = account;
+    this.account = sanitizeTrim(account);
   }
 
   public String getPassword() {
@@ -34,7 +34,7 @@ public class RegisterRequest {
   }
 
   public void setPassword(String password) {
-    this.password = password;
+    this.password = sanitizeTrim(password);
   }
 
   public String getConfirmPassword() {
@@ -42,7 +42,7 @@ public class RegisterRequest {
   }
 
   public void setConfirmPassword(String confirmPassword) {
-    this.confirmPassword = confirmPassword;
+    this.confirmPassword = sanitizeTrim(confirmPassword);
   }
 
   public String getCaptchaId() {
@@ -50,7 +50,7 @@ public class RegisterRequest {
   }
 
   public void setCaptchaId(String captchaId) {
-    this.captchaId = captchaId;
+    this.captchaId = sanitizeTrim(captchaId);
   }
 
   public String getCaptchaCode() {
@@ -58,6 +58,14 @@ public class RegisterRequest {
   }
 
   public void setCaptchaCode(String captchaCode) {
-    this.captchaCode = captchaCode;
+    this.captchaCode = sanitizeNoSpace(captchaCode);
+  }
+
+  private String sanitizeTrim(String value) {
+    return value == null ? null : value.trim();
+  }
+
+  private String sanitizeNoSpace(String value) {
+    return value == null ? null : value.replaceAll("\\s+", "");
   }
 }

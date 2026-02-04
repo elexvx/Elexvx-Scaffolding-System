@@ -9,7 +9,7 @@
     @submit="onSubmit"
   >
     <t-form-item name="account">
-      <t-input v-model="formData.account" size="large" placeholder="请输入用户名">
+      <t-input v-model="accountValue" size="large" placeholder="请输入用户名（不支持空格）">
         <template #prefix-icon>
           <t-icon name="user" />
         </template>
@@ -18,7 +18,7 @@
 
     <t-form-item name="password" :help="passwordHelp">
       <t-input
-        v-model="formData.password"
+        v-model="passwordValue"
         size="large"
         :type="showPsw ? 'text' : 'password'"
         clearable
@@ -35,7 +35,7 @@
 
     <t-form-item name="confirmPassword">
       <t-input
-        v-model="formData.confirmPassword"
+        v-model="confirmPasswordValue"
         size="large"
         :type="showConfirmPsw ? 'text' : 'password'"
         clearable
@@ -119,6 +119,26 @@ const formData = ref({ ...INITIAL_DATA });
 
 const settingStore = useSettingStore();
 
+const sanitizeTrim = (value: string) => String(value ?? '').trim();
+const accountValue = computed({
+  get: () => formData.value.account,
+  set: (value) => {
+    formData.value.account = sanitizeTrim(String(value ?? ''));
+  },
+});
+const passwordValue = computed({
+  get: () => formData.value.password,
+  set: (value) => {
+    formData.value.password = sanitizeTrim(String(value ?? ''));
+  },
+});
+const confirmPasswordValue = computed({
+  get: () => formData.value.confirmPassword,
+  set: (value) => {
+    formData.value.confirmPassword = sanitizeTrim(String(value ?? ''));
+  },
+});
+
 const hasSequentialChars = (value: string) => {
   if (!value || value.length < 3) return false;
   let streak = 1;
@@ -170,9 +190,9 @@ const validatePasswordPolicy = (val: string) => {
 
 const FORM_RULES: Record<string, FormRule[]> = {
   account: [
-    { required: true, message: '请输入用户名', type: 'error' as const },
+    { required: true, message: '请输入用户名（不支持空格）', type: 'error' as const },
     { max: 64, message: '用户名长度不能超过 64 位', type: 'error' as const },
-    { validator: (val) => /^[\w@.-]+$/.test(val), message: '用户名包含非法字符', type: 'error' as const },
+    { validator: (val) => /^[\w@.-]+$/.test(val), message: '用户名仅支持字母、数字及_@.-，不支持空格', type: 'error' as const },
   ],
   password: [
     { required: true, message: '请输入密码', type: 'error' as const },
