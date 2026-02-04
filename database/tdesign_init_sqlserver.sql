@@ -279,7 +279,8 @@ CREATE TABLE security_token_settings (
   id BIGINT IDENTITY(1,1) PRIMARY KEY,
   session_timeout_minutes INT,
   token_timeout_minutes INT,
-  token_refresh_grace_minutes INT
+  token_refresh_grace_minutes INT,
+  allow_url_token_param TINYINT NOT NULL DEFAULT 0
 );
 GO
 

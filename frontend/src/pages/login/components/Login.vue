@@ -26,7 +26,7 @@
     </t-tabs>
     <template v-if="type === 'password'">
       <t-form-item name="account">
-        <t-input v-model="formData.account" size="large" :placeholder="t('pages.login.input.account')">
+        <t-input v-model="accountValue" size="large" :placeholder="t('pages.login.input.account')">
           <template #prefix-icon>
             <t-icon name="user" />
           </template>
@@ -35,7 +35,7 @@
 
       <t-form-item name="password">
         <t-input
-          v-model="formData.password"
+          v-model="passwordValue"
           size="large"
           :type="showPsw ? 'text' : 'password'"
           clearable
@@ -70,7 +70,7 @@
     <!-- 手机号登录 -->
     <template v-if="type === 'phone'">
       <t-form-item name="phone">
-        <t-input v-model="formData.phone" size="large" :placeholder="t('pages.login.input.phone')">
+        <t-input v-model="phoneValue" size="large" :placeholder="t('pages.login.input.phone')">
           <template #prefix-icon>
             <t-icon name="mobile" />
           </template>
@@ -78,7 +78,7 @@
       </t-form-item>
 
       <t-form-item class="verification-code" name="verifyCode">
-        <t-input v-model="formData.verifyCode" size="large" :placeholder="t('pages.login.input.verification')" />
+        <t-input v-model="verifyCodeValue" size="large" :placeholder="t('pages.login.input.verification')" />
         <t-button size="large" variant="outline" :disabled="countDown > 0" @click="sendCode">
           {{ countDown === 0 ? t('pages.login.sendVerification') : `${countDown}秒后可重发` }}
         </t-button>
@@ -88,7 +88,7 @@
     <!-- 邮箱登录 -->
     <template v-if="type === 'email'">
       <t-form-item name="email">
-        <t-input v-model="formData.email" size="large" :placeholder="t('pages.login.input.email')">
+        <t-input v-model="emailValue" size="large" :placeholder="t('pages.login.input.email')">
           <template #prefix-icon>
             <t-icon name="mail" />
           </template>
@@ -96,7 +96,7 @@
       </t-form-item>
 
       <t-form-item class="verification-code" name="verifyCode">
-        <t-input v-model="formData.verifyCode" size="large" :placeholder="t('pages.login.input.verification')" />
+        <t-input v-model="verifyCodeValue" size="large" :placeholder="t('pages.login.input.verification')" />
         <t-button size="large" variant="outline" :disabled="countDown > 0" @click="sendCode">
           {{ countDown === 0 ? t('pages.login.sendVerification') : t('pages.login.resendAfter', [countDown]) }}
         </t-button>
@@ -177,7 +177,7 @@ const FORM_RULES: Record<string, FormRule[]> = {
   ],
   account: [
     { required: true, message: t('pages.login.required.account'), type: 'error' as const },
-    { validator: (val) => /^[\w@.-]+$/.test(val), message: t('pages.login.input.account'), type: 'error' as const },
+    { validator: (val) => /^[\w@.-]+$/.test(val), message: t('pages.login.invalid.account'), type: 'error' as const },
   ],
   password: [{ required: true, message: t('pages.login.required.password'), type: 'error' as const }],
   verifyCode: [{ required: true, message: t('pages.login.required.verification'), type: 'error' as const }],
@@ -192,7 +192,39 @@ const showPsw = ref(false);
 const showDragCaptchaDialog = ref(false);
 const pendingDragSubmit = ref(false);
 
+const sanitizeTrim = (value: string) => String(value ?? '').trim();
+const sanitizeNoSpace = (value: string) => String(value ?? '').replace(/\s+/g, '');
 const sanitizeCaptcha = (value: string) => value.replace(/[^a-z0-9]/gi, '');
+const accountValue = computed({
+  get: () => formData.value.account,
+  set: (value) => {
+    formData.value.account = sanitizeTrim(String(value ?? ''));
+  },
+});
+const phoneValue = computed({
+  get: () => formData.value.phone,
+  set: (value) => {
+    formData.value.phone = sanitizeNoSpace(String(value ?? ''));
+  },
+});
+const emailValue = computed({
+  get: () => formData.value.email,
+  set: (value) => {
+    formData.value.email = sanitizeNoSpace(String(value ?? ''));
+  },
+});
+const passwordValue = computed({
+  get: () => formData.value.password,
+  set: (value) => {
+    formData.value.password = sanitizeTrim(String(value ?? ''));
+  },
+});
+const verifyCodeValue = computed({
+  get: () => formData.value.verifyCode,
+  set: (value) => {
+    formData.value.verifyCode = sanitizeNoSpace(String(value ?? ''));
+  },
+});
 const captchaValue = computed({
   get: () => formData.value.captcha,
   set: (value) => {
@@ -386,7 +418,7 @@ onMounted(() => {
   loadCaptcha();
   const savedAccount = localStorage.getItem('remember_account');
   if (savedAccount && savedAccount !== 'admin') {
-    formData.value.account = savedAccount;
+    formData.value.account = sanitizeTrim(savedAccount);
     formData.value.checked = true;
   } else if (savedAccount === 'admin') {
     localStorage.removeItem('remember_account');

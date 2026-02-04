@@ -85,10 +85,7 @@
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-mail</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.springframework.security</groupId>
-      <artifactId>spring-security-crypto</artifactId>
+      <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>org.springdoc</groupId>
@@ -104,11 +101,13 @@
       <groupId>com.aliyun</groupId>
       <artifactId>aliyun-java-sdk-core</artifactId>
       <version>4.7.3</version>
+      <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>com.aliyun</groupId>
       <artifactId>aliyun-java-sdk-dysmsapi</artifactId>
       <version>2.2.1</version>
+      <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>com.qcloud</groupId>
@@ -119,6 +118,7 @@
       <groupId>com.tencentcloudapi</groupId>
       <artifactId>tencentcloud-sdk-java</artifactId>
       <version>3.1.1100</version>
+      <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>org.apache.poi</groupId>

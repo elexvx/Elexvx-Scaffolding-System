@@ -9,6 +9,8 @@ public class SecuritySetting {
 
   private Integer tokenRefreshGraceMinutes;
 
+  private Boolean allowUrlTokenParam;
+
   private Boolean captchaEnabled;
 
   private String captchaType;
@@ -63,6 +65,14 @@ public class SecuritySetting {
 
   public void setTokenRefreshGraceMinutes(Integer tokenRefreshGraceMinutes) {
     this.tokenRefreshGraceMinutes = tokenRefreshGraceMinutes;
+  }
+
+  public Boolean getAllowUrlTokenParam() {
+    return allowUrlTokenParam;
+  }
+
+  public void setAllowUrlTokenParam(Boolean allowUrlTokenParam) {
+    this.allowUrlTokenParam = allowUrlTokenParam;
   }
 
   public Boolean getCaptchaEnabled() {

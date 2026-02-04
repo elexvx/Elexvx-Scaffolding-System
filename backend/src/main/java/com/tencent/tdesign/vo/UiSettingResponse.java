@@ -63,6 +63,7 @@ public class UiSettingResponse {
   private Integer sessionTimeoutMinutes;
   private Integer tokenTimeoutMinutes;
   private Integer tokenRefreshGraceMinutes;
+  private Boolean allowUrlTokenParam;
   private Boolean captchaEnabled;
   private String captchaType;
   private Integer dragCaptchaWidth;
@@ -202,6 +203,8 @@ public class UiSettingResponse {
   public void setTokenTimeoutMinutes(Integer tokenTimeoutMinutes) { this.tokenTimeoutMinutes = tokenTimeoutMinutes; }
   public Integer getTokenRefreshGraceMinutes() { return tokenRefreshGraceMinutes; }
   public void setTokenRefreshGraceMinutes(Integer tokenRefreshGraceMinutes) { this.tokenRefreshGraceMinutes = tokenRefreshGraceMinutes; }
+  public Boolean getAllowUrlTokenParam() { return allowUrlTokenParam; }
+  public void setAllowUrlTokenParam(Boolean allowUrlTokenParam) { this.allowUrlTokenParam = allowUrlTokenParam; }
   public Boolean getCaptchaEnabled() { return captchaEnabled; }
   public void setCaptchaEnabled(Boolean captchaEnabled) { this.captchaEnabled = captchaEnabled; }
   public String getCaptchaType() { return captchaType; }

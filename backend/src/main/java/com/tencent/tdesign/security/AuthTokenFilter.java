@@ -16,9 +16,14 @@ import org.springframework.web.filter.OncePerRequestFilter;
 @Component
 public class AuthTokenFilter extends OncePerRequestFilter {
   private final AuthTokenService tokenService;
+  private final com.tencent.tdesign.service.SecuritySettingService securitySettingService;
 
-  public AuthTokenFilter(AuthTokenService tokenService) {
+  public AuthTokenFilter(
+    AuthTokenService tokenService,
+    com.tencent.tdesign.service.SecuritySettingService securitySettingService
+  ) {
     this.tokenService = tokenService;
+    this.securitySettingService = securitySettingService;
   }
 
   @Override
@@ -56,12 +61,11 @@ public class AuthTokenFilter extends OncePerRequestFilter {
     if (StringUtils.hasText(header)) {
       return header.startsWith("Bearer ") ? header.substring(7) : header;
     }
-    String authorization = request.getParameter(HttpHeaders.AUTHORIZATION);
-    if (!StringUtils.hasText(authorization)) {
-      authorization = request.getParameter(HttpHeaders.AUTHORIZATION.toLowerCase());
-    }
-    if (StringUtils.hasText(authorization)) {
-      return authorization.startsWith("Bearer ") ? authorization.substring(7) : authorization;
+    boolean allowUrlTokenParam = Boolean.TRUE.equals(
+      securitySettingService.getOrCreate().getAllowUrlTokenParam()
+    );
+    if (!allowUrlTokenParam) {
+      return null;
     }
     String token = request.getParameter("token");
     return StringUtils.hasText(token) ? token : null;

@@ -31,6 +31,7 @@ public class SecuritySettingService {
     out.setSessionTimeoutMinutes(token.getSessionTimeoutMinutes());
     out.setTokenTimeoutMinutes(token.getTokenTimeoutMinutes());
     out.setTokenRefreshGraceMinutes(token.getTokenRefreshGraceMinutes());
+    out.setAllowUrlTokenParam(token.getAllowUrlTokenParam());
 
     SecurityCaptchaSetting captcha = getOrCreateCaptcha();
     out.setCaptchaEnabled(captcha.getCaptchaEnabled());
@@ -67,6 +68,10 @@ public class SecuritySettingService {
     }
     if (req.getTokenRefreshGraceMinutes() != null) {
       token.setTokenRefreshGraceMinutes(req.getTokenRefreshGraceMinutes());
+      tokenChanged = true;
+    }
+    if (req.getAllowUrlTokenParam() != null) {
+      token.setAllowUrlTokenParam(req.getAllowUrlTokenParam());
       tokenChanged = true;
     }
     if (tokenChanged) {

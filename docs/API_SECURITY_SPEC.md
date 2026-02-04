@@ -3,6 +3,18 @@
 This document describes the repeat-submit guard and sensitive-data masking rules
 used by backend APIs.
 
+## Authentication Token Usage
+
+All authenticated API requests must include an `Authorization` header using the
+Bearer scheme:
+
+```
+Authorization: Bearer <token>
+```
+
+URL/query parameters are not accepted for tokens by default. If legacy clients
+must be supported, enable the `allowUrlTokenParam` security setting explicitly.
+
 ## Repeat Submit Guard
 
 Purpose:

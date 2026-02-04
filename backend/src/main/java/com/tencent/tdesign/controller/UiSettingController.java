@@ -19,7 +19,9 @@ import com.tencent.tdesign.vo.ApiResponse;
 import com.tencent.tdesign.vo.UiSettingResponse;
 import java.io.IOException;
 import java.util.Map;
+import java.util.Optional;
 import jakarta.validation.Valid;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -29,7 +31,7 @@ public class UiSettingController {
   private final UiSettingService uiSettingService;
   private final OperationLogService operationLogService;
   private final ObjectStorageService storageService;
-  private final EmailSenderService emailSenderService;
+  private final Optional<EmailSenderService> emailSenderService;
   private final VerificationSettingService verificationSettingService;
   private final SecuritySettingService securitySettingService;
   private final AuthContext authContext;
@@ -39,7 +41,7 @@ public class UiSettingController {
     UiSettingService uiSettingService,
     OperationLogService operationLogService,
     ObjectStorageService storageService,
-    EmailSenderService emailSenderService,
+    Optional<EmailSenderService> emailSenderService,
     VerificationSettingService verificationSettingService,
     SecuritySettingService securitySettingService,
     AuthContext authContext,
@@ -55,9 +57,56 @@ public class UiSettingController {
     this.accessControlService = accessControlService;
   }
 
+  @GetMapping("/public")
+  public ApiResponse<UiSettingResponse> getPublic() {
+    UiSetting setting = uiSettingService.getOrCreate();
+    VerificationSetting verificationSetting = verificationSettingService.getDecryptedCopy();
+    SecuritySetting securitySetting = securitySettingService.getOrCreate();
+    UiSettingResponse response = new UiSettingResponse();
+    response.setFooterCompany(setting.getFooterCompany());
+    response.setFooterIcp(setting.getFooterIcp());
+    response.setWebsiteName(setting.getWebsiteName());
+    response.setCopyrightStartYear(setting.getCopyrightStartYear());
+    response.setLogoExpandedUrl(setting.getLogoExpandedUrl());
+    response.setLogoCollapsedUrl(setting.getLogoCollapsedUrl());
+    response.setLoginBgUrl(setting.getLoginBgUrl());
+    response.setFaviconUrl(setting.getFaviconUrl());
+    response.setMaintenanceEnabled(setting.getMaintenanceEnabled());
+    response.setMaintenanceMessage(setting.getMaintenanceMessage());
+    response.setAutoTheme(setting.getAutoTheme());
+    response.setLightStartTime(setting.getLightStartTime());
+    response.setDarkStartTime(setting.getDarkStartTime());
+    response.setMode(setting.getMode());
+    response.setBrandTheme(setting.getBrandTheme());
+    response.setUserAgreement(setting.getUserAgreement());
+    response.setPrivacyAgreement(setting.getPrivacyAgreement());
+    response.setSmsEnabled(verificationSetting.getSmsEnabled());
+    response.setEmailEnabled(verificationSetting.getEmailEnabled());
+    response.setCaptchaEnabled(securitySetting.getCaptchaEnabled());
+    response.setCaptchaType(securitySetting.getCaptchaType());
+    response.setDragCaptchaWidth(securitySetting.getDragCaptchaWidth());
+    response.setDragCaptchaHeight(securitySetting.getDragCaptchaHeight());
+    response.setDragCaptchaThreshold(securitySetting.getDragCaptchaThreshold());
+    response.setImageCaptchaLength(securitySetting.getImageCaptchaLength());
+    response.setImageCaptchaNoiseLines(securitySetting.getImageCaptchaNoiseLines());
+    response.setPasswordMinLength(securitySetting.getPasswordMinLength());
+    response.setPasswordRequireUppercase(securitySetting.getPasswordRequireUppercase());
+    response.setPasswordRequireLowercase(securitySetting.getPasswordRequireLowercase());
+    response.setPasswordRequireSpecial(securitySetting.getPasswordRequireSpecial());
+    response.setPasswordAllowSequential(securitySetting.getPasswordAllowSequential());
+    return ApiResponse.success(response);
+  }
+
   @GetMapping
   public ApiResponse<UiSettingResponse> get() {
-    // 允许所有登录用户获取系统 UI 配置
+    authContext.requireUserId();
+    boolean hasQueryPermission = accessControlService.hasRole("admin")
+      || accessControlService.hasPermission("system:SystemPersonalize:query")
+      || accessControlService.hasPermission("system:SystemVerification:query")
+      || accessControlService.hasPermission("system:SystemSecurity:query");
+    if (!hasQueryPermission) {
+      throw new AccessDeniedException("权限不足，请联系管理员开通");
+    }
     UiSetting setting = uiSettingService.getOrCreate();
     VerificationSetting verificationSetting = verificationSettingService.getDecryptedCopy();
     SecuritySetting securitySetting = securitySettingService.getOrCreate();
@@ -139,6 +188,7 @@ public class UiSettingController {
     response.setSessionTimeoutMinutes(securitySetting.getSessionTimeoutMinutes());
     response.setTokenTimeoutMinutes(securitySetting.getTokenTimeoutMinutes());
     response.setTokenRefreshGraceMinutes(securitySetting.getTokenRefreshGraceMinutes());
+    response.setAllowUrlTokenParam(securitySetting.getAllowUrlTokenParam());
     response.setCaptchaEnabled(securitySetting.getCaptchaEnabled());
     response.setCaptchaType(securitySetting.getCaptchaType());
     response.setDragCaptchaWidth(securitySetting.getDragCaptchaWidth());
@@ -215,7 +265,8 @@ public class UiSettingController {
     if (setting == null || !Boolean.TRUE.equals(setting.getEmailEnabled())) {
       throw new IllegalArgumentException("邮箱验证已禁用");
     }
-    emailSenderService.sendTest(setting, req.getEmail());
+    EmailSenderService sender = emailSenderService.orElseThrow(() -> new IllegalArgumentException("邮箱模块未启用或未安装"));
+    sender.sendTest(setting, req.getEmail());
     operationLogService.log("TEST", "系统设置", "发送测试邮件");
     return ApiResponse.success(true);
   }

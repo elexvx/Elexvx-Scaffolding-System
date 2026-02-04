@@ -9,7 +9,7 @@
     @submit="onSubmit"
   >
     <t-form-item name="account">
-      <t-input v-model="formData.account" size="large" placeholder="请输入账号">
+      <t-input v-model="accountValue" size="large" placeholder="请输入账号（不支持空格）">
         <template #prefix-icon>
           <t-icon name="user" />
         </template>
@@ -17,7 +17,7 @@
     </t-form-item>
 
     <t-form-item name="phone">
-      <t-input v-model="formData.phone" size="large" placeholder="请输入手机号">
+      <t-input v-model="phoneValue" size="large" placeholder="请输入手机号（不支持空格）">
         <template #prefix-icon>
           <t-icon name="mobile" />
         </template>
@@ -25,14 +25,14 @@
     </t-form-item>
 
     <t-form-item class="verification-code" name="verifyCode">
-      <t-input v-model="formData.verifyCode" size="large" placeholder="请输入验证码" />
+      <t-input v-model="verifyCodeValue" size="large" placeholder="请输入验证码" />
       <t-button size="large" variant="outline" :disabled="countDown > 0" @click="sendCode">
         {{ countDown === 0 ? '发送验证码' : `${countDown}秒后可重发` }}
       </t-button>
     </t-form-item>
 
     <t-form-item name="newPassword">
-      <t-input v-model="formData.newPassword" size="large" type="password" clearable placeholder="请输入新密码">
+      <t-input v-model="newPasswordValue" size="large" type="password" clearable placeholder="请输入新密码">
         <template #prefix-icon>
           <t-icon name="lock-on" />
         </template>
@@ -40,7 +40,7 @@
     </t-form-item>
 
     <t-form-item name="confirmPassword">
-      <t-input v-model="formData.confirmPassword" size="large" type="password" clearable placeholder="请确认新密码">
+      <t-input v-model="confirmPasswordValue" size="large" type="password" clearable placeholder="请确认新密码">
         <template #prefix-icon>
           <t-icon name="lock-on" />
         </template>
@@ -60,7 +60,7 @@
 <script setup lang="ts">
 import type { FormInstanceFunctions, FormRule, SubmitContext } from 'tdesign-vue-next';
 import { MessagePlugin } from 'tdesign-vue-next';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 
 import { resetPassword, sendSmsCode } from '@/api/auth';
 import { useCounter } from '@/hooks';
@@ -80,11 +80,44 @@ const formData = ref({
   checked: false,
 });
 
+const sanitizeTrim = (value: string) => String(value ?? '').trim();
+const sanitizeNoSpace = (value: string) => String(value ?? '').replace(/\s+/g, '');
+const accountValue = computed({
+  get: () => formData.value.account,
+  set: (value) => {
+    formData.value.account = sanitizeTrim(String(value ?? ''));
+  },
+});
+const phoneValue = computed({
+  get: () => formData.value.phone,
+  set: (value) => {
+    formData.value.phone = sanitizeNoSpace(String(value ?? ''));
+  },
+});
+const verifyCodeValue = computed({
+  get: () => formData.value.verifyCode,
+  set: (value) => {
+    formData.value.verifyCode = sanitizeNoSpace(String(value ?? ''));
+  },
+});
+const newPasswordValue = computed({
+  get: () => formData.value.newPassword,
+  set: (value) => {
+    formData.value.newPassword = sanitizeTrim(String(value ?? ''));
+  },
+});
+const confirmPasswordValue = computed({
+  get: () => formData.value.confirmPassword,
+  set: (value) => {
+    formData.value.confirmPassword = sanitizeTrim(String(value ?? ''));
+  },
+});
+
 const FORM_RULES: Record<string, FormRule[]> = {
-  account: [{ required: true, message: '账号必填', type: 'error' }],
+  account: [{ required: true, message: '账号必填（不支持空格）', type: 'error' }],
   phone: [
-    { required: true, message: '请输入手机号', type: 'error' },
-    { pattern: /^1\d{10}$/, message: '手机号格式不正确', type: 'error' },
+    { required: true, message: '请输入手机号（不支持空格）', type: 'error' },
+    { pattern: /^1\d{10}$/, message: '手机号格式不正确（不支持空格）', type: 'error' },
   ],
   verifyCode: [{ required: true, message: '验证码必填', type: 'error' }],
   newPassword: [
