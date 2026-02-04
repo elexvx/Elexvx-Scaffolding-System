@@ -1058,6 +1058,26 @@ public class MenuItemService {
           "system",
           null,
           "PAGE",
+          "modules",
+          "SystemModules",
+          "/system/modules/index",
+          null,
+          "模块管理",
+          "Modules",
+          "grid-view",
+          false,
+          null,
+          false,
+          true,
+          6,
+          "update,query"
+        )
+      );
+      list.add(
+        new SeedNode(
+          "system",
+          null,
+          "PAGE",
           "security",
           "SystemSecurity",
           "/system/security/index",

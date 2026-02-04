@@ -43,7 +43,6 @@ public class AuthService {
   private final RoleMapper roleMapper;
   private final AuthQueryDao authDao;
   private final CaptchaService captchaService;
-  private final SmsCodeService smsCodeService;
   private final HttpServletRequest request;
   private final ConcurrentLoginService concurrentLoginService;
   private final OperationLogService operationLogService;
@@ -51,9 +50,9 @@ public class AuthService {
   private final PasswordPolicyService passwordPolicyService;
   private final ObjectStorageService storageService;
   private final SmsSenderService smsSenderService;
-  private final EmailSenderService emailSenderService;
-  private final EmailCodeService emailCodeService;
   private final VerificationSettingService verificationSettingService;
+  private final ModuleRegistryService moduleRegistryService;
+  private final com.tencent.tdesign.verification.VerificationProviderRegistry verificationProviderRegistry;
   private final SecuritySettingService securitySettingService;
   private final AuthTokenService authTokenService;
   private final AuthContext authContext;
@@ -65,7 +64,6 @@ public class AuthService {
       RoleMapper roleMapper,
       AuthQueryDao authDao,
       CaptchaService captchaService,
-      SmsCodeService smsCodeService,
       HttpServletRequest request,
       ConcurrentLoginService concurrentLoginService,
       OperationLogService operationLogService,
@@ -73,9 +71,9 @@ public class AuthService {
       PasswordPolicyService passwordPolicyService,
       ObjectStorageService storageService,
       SmsSenderService smsSenderService,
-      EmailSenderService emailSenderService,
-      EmailCodeService emailCodeService,
       VerificationSettingService verificationSettingService,
+      ModuleRegistryService moduleRegistryService,
+      com.tencent.tdesign.verification.VerificationProviderRegistry verificationProviderRegistry,
       SecuritySettingService securitySettingService,
       AuthTokenService authTokenService,
       AuthContext authContext) {
@@ -85,7 +83,6 @@ public class AuthService {
     this.roleMapper = roleMapper;
     this.authDao = authDao;
     this.captchaService = captchaService;
-    this.smsCodeService = smsCodeService;
     this.request = request;
     this.concurrentLoginService = concurrentLoginService;
     this.operationLogService = operationLogService;
@@ -93,9 +90,9 @@ public class AuthService {
     this.passwordPolicyService = passwordPolicyService;
     this.storageService = storageService;
     this.smsSenderService = smsSenderService;
-    this.emailSenderService = emailSenderService;
-    this.emailCodeService = emailCodeService;
     this.verificationSettingService = verificationSettingService;
+    this.moduleRegistryService = moduleRegistryService;
+    this.verificationProviderRegistry = verificationProviderRegistry;
     this.securitySettingService = securitySettingService;
     this.authTokenService = authTokenService;
     this.authContext = authContext;
@@ -126,6 +123,7 @@ public class AuthService {
   }
 
   public SmsSendResponse sendSmsCode(SmsSendRequest req) {
+    moduleRegistryService.assertModuleAvailable("sms");
     VerificationSetting setting = verificationSettingService.getDecryptedCopy();
     ensureSmsEnabled(setting);
     ensureSmsConfig(setting);
@@ -136,22 +134,22 @@ public class AuthService {
       throw new IllegalArgumentException("手机号未注册");
     }
 
-    String code = smsCodeService.generateCode(phone);
+    com.tencent.tdesign.verification.VerificationProvider provider = verificationProviderRegistry.require("sms");
     try {
-      smsSenderService.sendCode(setting, phone, code, getClientIp(), req.getProvider());
+      provider.sendCode(setting, phone, getClientIp(), req.getProvider());
     } catch (Exception e) {
-      smsCodeService.invalidate(phone);
       throw new IllegalArgumentException("短信发送失败: " + e.getMessage());
     }
-    return new SmsSendResponse(smsCodeService.getExpiresInSeconds());
+    return new SmsSendResponse(provider.getExpiresInSeconds());
   }
 
   public LoginResponse loginBySms(SmsLoginRequest req) {
+    moduleRegistryService.assertModuleAvailable("sms");
     VerificationSetting setting = verificationSettingService.getDecryptedCopy();
     ensureSmsEnabled(setting);
 
     String phone = normalizePhone(req.getPhone());
-    boolean ok = smsCodeService.verify(phone, req.getCode());
+    boolean ok = verificationProviderRegistry.require("sms").verify(phone, req.getCode());
     if (!ok)
       throw new IllegalArgumentException("验证码错误");
 
@@ -163,6 +161,7 @@ public class AuthService {
   }
 
   public SmsSendResponse sendEmailCode(EmailSendRequest req) {
+    moduleRegistryService.assertModuleAvailable("email");
     VerificationSetting setting = verificationSettingService.getDecryptedCopy();
     ensureEmailEnabled(setting);
     ensureEmailConfig(setting);
@@ -173,22 +172,22 @@ public class AuthService {
       throw new IllegalArgumentException("邮箱未注册");
     }
 
-    String code = emailCodeService.generateCode(email);
+    com.tencent.tdesign.verification.VerificationProvider provider = verificationProviderRegistry.require("email");
     try {
-      emailSenderService.sendLoginCode(setting, email, code, emailCodeService.getExpiresInSeconds());
+      provider.sendCode(setting, email, getClientIp(), null);
     } catch (Exception e) {
-      emailCodeService.invalidate(email);
       throw new IllegalArgumentException("邮件发送失败: " + e.getMessage());
     }
-    return new SmsSendResponse(emailCodeService.getExpiresInSeconds());
+    return new SmsSendResponse(provider.getExpiresInSeconds());
   }
 
   public LoginResponse loginByEmail(EmailLoginRequest req) {
+    moduleRegistryService.assertModuleAvailable("email");
     VerificationSetting setting = verificationSettingService.getDecryptedCopy();
     ensureEmailEnabled(setting);
 
     String email = req.getEmail();
-    boolean ok = emailCodeService.verify(email, req.getCode());
+    boolean ok = verificationProviderRegistry.require("email").verify(email, req.getCode());
     if (!ok)
       throw new IllegalArgumentException("验证码错误");
 
@@ -748,7 +747,7 @@ public class AuthService {
     ensureSmsEnabled(setting);
 
     String phone = normalizePhone(req.getPhone());
-    boolean verified = smsCodeService.verify(phone, req.getCode());
+    boolean verified = verificationProviderRegistry.require("sms").verify(phone, req.getCode());
     if (!verified) {
       throw new IllegalArgumentException("验证码错误或已过期");
     }
