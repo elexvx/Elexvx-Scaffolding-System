@@ -43,8 +43,6 @@
                 (profile.province || '') +
                   (profile.city || '') +
                   (profile.district || '') +
-                  (profile.town || '') +
-                  (profile.street || '') +
                   (profile.address || '') || '广东省深圳市'
               }}</span>
             </div>
@@ -318,13 +316,9 @@ const profileForm = reactive({
   province: '',
   city: '',
   district: '',
-  town: '',
-  street: '',
   provinceId: null as number | null,
   cityId: null as number | null,
   districtId: null as number | null,
-  townId: null as number | null,
-  streetId: null as number | null,
   zipCode: '',
   address: '',
   introduction: '',
@@ -366,7 +360,7 @@ const toAreaOption = (row: AreaNodeResponse): AreaOption => ({
   value: row.id,
   level: row.level,
   zipCode: row.zipCode ?? null,
-  children: row.hasChildren ? true : [],
+  children: row.level >= 3 ? [] : row.hasChildren ? true : [],
 });
 
 const loadRootAreas = async () => {
@@ -384,6 +378,7 @@ const loadRootAreas = async () => {
 };
 
 const loadAreaChildren = async (node: any) => {
+  if (node?.data?.level >= 3) return [];
   const parentId = Number(node?.value || 0);
   try {
     const rows = await fetchAreaChildren(parentId);
@@ -400,13 +395,9 @@ const resetAreaFields = () => {
   profileForm.provinceId = null;
   profileForm.cityId = null;
   profileForm.districtId = null;
-  profileForm.townId = null;
-  profileForm.streetId = null;
   profileForm.province = '';
   profileForm.city = '';
   profileForm.district = '';
-  profileForm.town = '';
-  profileForm.street = '';
   profileForm.zipCode = '';
 };
 
@@ -415,28 +406,26 @@ const applyAreaPath = (path: AreaPathNode[]) => {
     resetAreaFields();
     return;
   }
-  const ids = path.map((node) => node.id);
-  const names = path.map((node) => node.name || '');
+  const trimmedPath = path.slice(0, 3);
+  const ids = trimmedPath.map((node) => node.id);
+  const names = trimmedPath.map((node) => node.name || '');
   areaValue.value = ids;
   profileForm.provinceId = ids[0] ?? null;
   profileForm.cityId = ids[1] ?? null;
   profileForm.districtId = ids[2] ?? null;
-  profileForm.townId = ids[3] ?? null;
-  profileForm.streetId = ids[4] ?? null;
   profileForm.province = names[0] ?? '';
   profileForm.city = names[1] ?? '';
   profileForm.district = names[2] ?? '';
-  profileForm.town = names[3] ?? '';
-  profileForm.street = names[4] ?? '';
-  profileForm.zipCode = path[path.length - 1]?.zipCode || '';
+  profileForm.zipCode = trimmedPath[trimmedPath.length - 1]?.zipCode || '';
 };
 
 const ensureAreaPathOptions = async (path: AreaPathNode[]) => {
   if (!path || path.length === 0) return;
   await loadRootAreas();
   let cursor = areaOptions.value;
-  for (let i = 0; i < path.length; i += 1) {
-    const node = path[i];
+  const trimmedPath = path.slice(0, 3);
+  for (let i = 0; i < trimmedPath.length; i += 1) {
+    const node = trimmedPath[i];
     let option = cursor.find((item) => item.value === node.id);
     if (!option) {
       option = {
@@ -444,7 +433,7 @@ const ensureAreaPathOptions = async (path: AreaPathNode[]) => {
         value: node.id,
         level: node.level,
         zipCode: node.zipCode ?? null,
-        children: i < path.length - 1 ? true : [],
+        children: i < trimmedPath.length - 1 ? true : [],
       };
       cursor.push(option);
     } else {
@@ -454,7 +443,7 @@ const ensureAreaPathOptions = async (path: AreaPathNode[]) => {
         option.zipCode = node.zipCode ?? null;
       }
     }
-    if (i === path.length - 1) break;
+    if (i === trimmedPath.length - 1) break;
     if (!Array.isArray(option.children)) {
       const rows = await fetchAreaChildren(node.id);
       option.children = rows.map(toAreaOption);
@@ -464,8 +453,8 @@ const ensureAreaPathOptions = async (path: AreaPathNode[]) => {
 };
 
 const syncAreaFromProfile = async (data: UserProfile) => {
-  const areaId = data.streetId || data.townId || data.districtId || data.cityId || data.provinceId;
-  const hasName = !!(data.province || data.city || data.district || data.town || data.street);
+  const areaId = data.districtId || data.cityId || data.provinceId;
+  const hasName = !!(data.province || data.city || data.district);
   let path: AreaPathNode[] = [];
   try {
     if (areaId) {
@@ -475,8 +464,6 @@ const syncAreaFromProfile = async (data: UserProfile) => {
         province: data.province,
         city: data.city,
         district: data.district,
-        town: data.town,
-        street: data.street,
       });
     }
   } catch (error) {
@@ -508,13 +495,9 @@ const handleAreaChange = (_value: any, context: any) => {
   profileForm.provinceId = ids[0] ?? null;
   profileForm.cityId = ids[1] ?? null;
   profileForm.districtId = ids[2] ?? null;
-  profileForm.townId = ids[3] ?? null;
-  profileForm.streetId = ids[4] ?? null;
   profileForm.province = names[0] ?? '';
   profileForm.city = names[1] ?? '';
   profileForm.district = names[2] ?? '';
-  profileForm.town = names[3] ?? '';
-  profileForm.street = names[4] ?? '';
   profileForm.zipCode = zipCode;
 };
 
@@ -614,10 +597,6 @@ const fetchProfile = async () => {
       city: res.city || '',
       districtId: res.districtId ?? null,
       district: res.district || '',
-      townId: res.townId ?? null,
-      town: res.town || '',
-      streetId: res.streetId ?? null,
-      street: res.street || '',
       zipCode: res.zipCode || '',
       address: res.address || '',
       introduction: res.introduction || '',

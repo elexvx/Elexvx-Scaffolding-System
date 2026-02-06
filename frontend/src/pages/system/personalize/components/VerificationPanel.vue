@@ -1,6 +1,6 @@
 <template>
   <t-tabs v-model="activeTab">
-    <t-tab-panel value="sms" label="短信验证码设置" :destroy-on-hide="false">
+    <t-tab-panel v-if="smsInstalled" value="sms" label="短信验证码设置" :destroy-on-hide="false">
       <div class="verification-content">
         <t-form :data="smsForm" layout="vertical" label-align="right" label-width="140px" @submit="onSubmitSms">
           <t-row :gutter="[24, 16]">
@@ -181,7 +181,7 @@
         </t-form>
       </div>
     </t-tab-panel>
-    <t-tab-panel value="email" label="邮箱验证码设置" :destroy-on-hide="false">
+    <t-tab-panel v-if="emailInstalled" value="email" label="邮箱验证码设置" :destroy-on-hide="false">
       <div class="verification-content">
         <t-form :data="emailForm" layout="vertical" label-align="right" label-width="140px" @submit="onSubmitEmail">
           <t-row :gutter="[24, 16]">
@@ -278,8 +278,8 @@ import { MessagePlugin } from 'tdesign-vue-next';
 import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
-import type { ModuleDescriptor } from '@/api/system/module';
-import { fetchModuleList } from '@/api/system/module';
+import type { ModuleDescriptor, ModuleRegistryItem } from '@/api/system/module';
+import { fetchModuleList, fetchModules } from '@/api/system/module';
 import { useDictionary } from '@/hooks/useDictionary';
 import { useSettingStore } from '@/store';
 import { buildDictOptions } from '@/utils/dict';
@@ -288,33 +288,12 @@ import { request } from '@/utils/request';
 
 const route = useRoute();
 const router = useRouter();
-const validTabs = new Set(['sms', 'email', 'module']);
-
-const resolveTab = (value: unknown) => {
+const resolveTab = (value: unknown, tabs: string[]) => {
   const tab = typeof value === 'string' ? value : '';
-  return validTabs.has(tab) ? tab : 'sms';
+  return tabs.includes(tab) ? tab : tabs[0] || 'module';
 };
 
-const activeTab = ref(resolveTab(route.query.tab));
-
-watch(
-  () => route.query.tab,
-  (value) => {
-    const next = resolveTab(value);
-    if (next !== activeTab.value) {
-      activeTab.value = next;
-    }
-  },
-);
-
-watch(
-  activeTab,
-  (value) => {
-    if (route.query.tab === value) return;
-    router.replace({ query: { ...route.query, tab: value } }).catch(() => {});
-  },
-  { immediate: true },
-);
+const activeTab = ref('module');
 
 const smsForm = reactive({
   smsEnabled: false,
@@ -349,6 +328,7 @@ const emailForm = reactive({
 
 const moduleLoading = ref(false);
 const modules = ref<ModuleDescriptor[]>([]);
+const moduleRegistries = ref<ModuleRegistryItem[]>([]);
 const moduleColumns: PrimaryTableCol[] = [
   { colKey: 'name', title: '模块', width: 220 },
   { colKey: 'source', title: '来源/SDK', ellipsis: true },
@@ -358,6 +338,33 @@ const moduleColumns: PrimaryTableCol[] = [
 ];
 
 const settingStore = useSettingStore();
+const smsInstalled = computed(() =>
+  moduleRegistries.value.some(
+    (item) => item.moduleKey === 'sms' && String(item.installState || '').toUpperCase() === 'INSTALLED',
+  ),
+);
+const emailInstalled = computed(() =>
+  moduleRegistries.value.some(
+    (item) => item.moduleKey === 'email' && String(item.installState || '').toUpperCase() === 'INSTALLED',
+  ),
+);
+const availableTabs = computed(() => {
+  const tabs: string[] = [];
+  if (smsInstalled.value) tabs.push('sms');
+  if (emailInstalled.value) tabs.push('email');
+  tabs.push('module');
+  return tabs;
+});
+
+watch(
+  () => route.query.tab,
+  (value) => {
+    const next = resolveTab(value, availableTabs.value);
+    if (next !== activeTab.value) {
+      activeTab.value = next;
+    }
+  },
+);
 const canUpdate = computed(
   () => hasPerm('system:SystemVerification:update') || hasPerm('system:SystemPersonalize:update'),
 );
@@ -478,10 +485,40 @@ const loadModules = async () => {
   }
 };
 
+const loadModuleRegistries = async () => {
+  try {
+    moduleRegistries.value = await fetchModules();
+  } catch {
+    moduleRegistries.value = [];
+  } finally {
+  }
+};
+
+watch(
+  availableTabs,
+  (tabs) => {
+    const next = resolveTab(route.query.tab, tabs);
+    if (next !== activeTab.value) {
+      activeTab.value = next;
+    }
+  },
+  { immediate: true },
+);
+
+watch(
+  activeTab,
+  (value) => {
+    if (route.query.tab === value) return;
+    router.replace({ query: { ...route.query, tab: value } }).catch(() => {});
+  },
+  { immediate: true },
+);
+
 onMounted(() => {
   void smsProviderDict.load();
   load();
   void loadModules();
+  void loadModuleRegistries();
 });
 </script>
 <style lang="less" scoped>

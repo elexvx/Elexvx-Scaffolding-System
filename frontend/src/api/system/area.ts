@@ -31,8 +31,6 @@ export const resolveAreaPath = (params: {
   province?: string;
   city?: string;
   district?: string;
-  town?: string;
-  street?: string;
 }) =>
   request.get<AreaPathNode[]>({
     url: '/system/area/resolve',

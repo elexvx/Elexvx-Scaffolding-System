@@ -1,0 +1,14 @@
+CREATE TABLE IF NOT EXISTS verification_email_settings (
+  id BIGINT NOT NULL AUTO_INCREMENT,
+  email_enabled TINYINT NULL DEFAULT NULL,
+  email_host VARCHAR(255) NULL DEFAULT NULL,
+  email_port INT NULL DEFAULT NULL,
+  email_username VARCHAR(128) NULL DEFAULT NULL,
+  email_password VARCHAR(256) NULL DEFAULT NULL,
+  email_from VARCHAR(128) NULL DEFAULT NULL,
+  email_ssl TINYINT NULL DEFAULT NULL,
+  PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+INSERT INTO verification_email_settings (id) VALUES (1)
+  ON DUPLICATE KEY UPDATE id = id;
