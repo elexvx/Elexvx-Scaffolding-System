@@ -9,7 +9,7 @@
     @submit="onSubmit"
   >
     <t-form-item name="account">
-      <t-input v-model="accountValue" size="large" placeholder="请输入账号（不支持空格）">
+      <t-input v-model="accountValue" size="large" placeholder="请输入账号">
         <template #prefix-icon>
           <t-icon name="user" />
         </template>
@@ -114,7 +114,7 @@ const confirmPasswordValue = computed({
 });
 
 const FORM_RULES: Record<string, FormRule[]> = {
-  account: [{ required: true, message: '账号必填（不支持空格）', type: 'error' }],
+  account: [{ required: true, message: '账号必填', type: 'error' }],
   phone: [
     { required: true, message: '请输入手机号（不支持空格）', type: 'error' },
     { pattern: /^1\d{10}$/, message: '手机号格式不正确（不支持空格）', type: 'error' },
