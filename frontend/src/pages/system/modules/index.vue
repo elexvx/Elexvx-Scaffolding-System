@@ -16,7 +16,7 @@
             <t-switch
               v-model="row.enabled"
               :disabled="row.installState !== 'INSTALLED' || isActionLoading(row.moduleKey, 'toggle')"
-              @change="(value) => toggleModule(row, value)"
+              @change="(value) => toggleModule(row, Boolean(value))"
             />
           </template>
           <template #installedAt="{ row }">
@@ -51,21 +51,14 @@
     </t-card>
   </div>
 </template>
-
 <script setup lang="ts">
 import dayjs from 'dayjs';
 import type { PrimaryTableCol } from 'tdesign-vue-next';
 import { MessagePlugin } from 'tdesign-vue-next';
 import { onMounted, ref } from 'vue';
 
-import {
-  disableModule,
-  enableModule,
-  fetchModules,
-  installModule,
-  uninstallModule,
-  type ModuleRegistryItem,
-} from '@/api/system/module';
+import type { ModuleRegistryItem } from '@/api/system/module';
+import { disableModule, enableModule, fetchModules, installModule, uninstallModule } from '@/api/system/module';
 
 const loading = ref(false);
 const modules = ref<ModuleRegistryItem[]>([]);
@@ -174,7 +167,6 @@ onMounted(() => {
   loadModules();
 });
 </script>
-
 <style lang="less" scoped>
 .module-management {
   :deep(.t-card__body) {

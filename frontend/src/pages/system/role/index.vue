@@ -26,7 +26,7 @@
         :data="form"
         :rules="rules"
         label-width="120px"
-        layout="horizontal"
+        layout="vertical"
         label-align="right"
         @submit="onSubmit"
       >

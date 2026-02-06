@@ -282,8 +282,8 @@ import type { ModuleDescriptor } from '@/api/system/module';
 import { fetchModuleList } from '@/api/system/module';
 import { useDictionary } from '@/hooks/useDictionary';
 import { useSettingStore } from '@/store';
-import { hasPerm } from '@/utils/permission';
 import { buildDictOptions } from '@/utils/dict';
+import { hasPerm } from '@/utils/permission';
 import { request } from '@/utils/request';
 
 const route = useRoute();
@@ -349,7 +349,7 @@ const emailForm = reactive({
 
 const moduleLoading = ref(false);
 const modules = ref<ModuleDescriptor[]>([]);
-const moduleColumns: PrimaryTableCol<ModuleDescriptor>[] = [
+const moduleColumns: PrimaryTableCol[] = [
   { colKey: 'name', title: '模块', width: 220 },
   { colKey: 'source', title: '来源/SDK', ellipsis: true },
   { colKey: 'license', title: '许可', width: 140 },
@@ -470,7 +470,7 @@ const loadModules = async () => {
   moduleLoading.value = true;
   try {
     modules.value = await fetchModuleList();
-  } catch (error) {
+  } catch {
     MessagePlugin.error('模块信息获取失败');
     modules.value = [];
   } finally {

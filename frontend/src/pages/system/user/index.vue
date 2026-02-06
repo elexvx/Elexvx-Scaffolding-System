@@ -87,7 +87,7 @@
       </div>
     </t-card>
 
-    <confirm-drawer v-model:visible="drawerVisible" :header="drawerTitle" size="720px">
+    <confirm-drawer v-model:visible="drawerVisible" :header="drawerTitle" size="760px">
       <t-form
         ref="formRef"
         class="drawer-form--single"
@@ -95,7 +95,7 @@
         :rules="rules"
         label-width="120px"
         label-align="right"
-        layout="horizontal"
+        layout="vertical"
         @submit="onSubmit"
       >
         <t-row :gutter="[24, 24]">
@@ -168,7 +168,7 @@
           <t-col :xs="24" :sm="12">
             <t-form-item label="状态" name="status">
               <t-radio-group v-model="form.status">
-                <t-radio v-for="opt in statusOptions" :key="String(opt.value)" :value="opt.value">
+                <t-radio v-for="opt in statusRadioOptions" :key="String(opt.value)" :value="opt.value">
                   {{ opt.label }}
                 </t-radio>
               </t-radio-group>
@@ -246,8 +246,8 @@ import { computed, onMounted, reactive, ref, watch } from 'vue';
 import ConfirmDrawer from '@/components/ConfirmDrawer.vue';
 import { useDictionary } from '@/hooks/useDictionary';
 import { useUserStore } from '@/store';
-import { hasPerm } from '@/utils/permission';
 import { buildDictOptions } from '@/utils/dict';
+import { hasPerm } from '@/utils/permission';
 import { request } from '@/utils/request';
 
 type Mode = 'create' | 'edit';
@@ -319,6 +319,14 @@ const fallbackStatusOptions = [
   { label: '停用', value: 0 },
 ];
 const statusOptions = computed(() => buildDictOptions(statusDict.items.value, fallbackStatusOptions, [1, 0]));
+const statusRadioOptions = computed(
+  () =>
+    statusOptions.value.filter((opt) => opt && typeof opt === 'object' && 'value' in opt && 'label' in opt) as Array<{
+      label: string;
+      value: string | number | boolean;
+      disabled?: boolean;
+    }>,
+);
 
 const passwordPolicy = reactive({
   minLength: 6,

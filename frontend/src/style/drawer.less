@@ -11,8 +11,14 @@
     line-height: 1.4;
   }
 
+  .t-form__item-label,
   .t-form__controls {
-    width: 100%;
+    align-self: center;
+  }
+
+  .t-form__controls {
+    flex: 1 1 0;
+    min-width: 0;
   }
 
   .t-form__item-help,
@@ -25,5 +31,19 @@
     width: 100%;
     max-width: 100%;
     flex: 0 0 100%;
+    min-width: 0;
+  }
+
+  .t-form__item .t-input,
+  .t-form__item .t-input-number,
+  .t-form__item .t-select,
+  .t-form__item .t-cascader,
+  .t-form__item .t-tree-select,
+  .t-form__item .t-date-picker,
+  .t-form__item .t-date-range-picker,
+  .t-form__item .t-textarea {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
   }
 }

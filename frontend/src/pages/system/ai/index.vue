@@ -98,10 +98,10 @@
       </t-form>
     </t-card>
 
-    <t-drawer v-model:visible="formVisible" :footer="false" :close-btn="true" size="600px" header="配置提供商">
+    <t-drawer v-model:visible="formVisible" :footer="false" :close-btn="true" size="760px" header="配置提供商">
       <t-form
         class="drawer-form--single"
-        layout="horizontal"
+        layout="vertical"
         label-align="right"
         label-width="120px"
         :data="form"
@@ -236,9 +236,7 @@ const fallbackVendorOptions = [
   { label: 'Ollama 本地部署', value: 'OLLAMA' },
 ];
 const VENDOR_VALUES = ['OPENAI', 'AZURE_OPENAI', 'DEEPSEEK', 'MOONSHOT', 'QWEN', 'OLLAMA'];
-const vendorOptions = computed(() =>
-  buildDictOptions(vendorDict.items.value, fallbackVendorOptions, VENDOR_VALUES),
-);
+const vendorOptions = computed(() => buildDictOptions(vendorDict.items.value, fallbackVendorOptions, VENDOR_VALUES));
 
 const vendorLabelMap: Record<string, string> = {
   OPENAI: 'OpenAI / 兼容',

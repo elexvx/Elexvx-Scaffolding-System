@@ -116,7 +116,7 @@
         v-model:visible="confirmVisible"
         header="确认删除当前所选合同？"
         placement="right"
-        size="480px"
+        size="760px"
         @close="onCancel"
       >
         <div>{{ confirmBody }}</div>

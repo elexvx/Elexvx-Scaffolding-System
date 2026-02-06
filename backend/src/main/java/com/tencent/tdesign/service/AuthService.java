@@ -51,6 +51,7 @@ public class AuthService {
   private final ObjectStorageService storageService;
   private final Optional<SmsSenderService> smsSenderService;
   private final Optional<EmailSenderService> emailSenderService;
+  private final SmsCodeService smsCodeService;
   private final EmailCodeService emailCodeService;
   private final VerificationSettingService verificationSettingService;
   private final ModuleRegistryService moduleRegistryService;
@@ -74,6 +75,7 @@ public class AuthService {
       ObjectStorageService storageService,
       Optional<SmsSenderService> smsSenderService,
       Optional<EmailSenderService> emailSenderService,
+      SmsCodeService smsCodeService,
       EmailCodeService emailCodeService,
       VerificationSettingService verificationSettingService,
       ModuleRegistryService moduleRegistryService,
@@ -94,6 +96,9 @@ public class AuthService {
     this.passwordPolicyService = passwordPolicyService;
     this.storageService = storageService;
     this.smsSenderService = smsSenderService;
+    this.emailSenderService = emailSenderService;
+    this.smsCodeService = smsCodeService;
+    this.emailCodeService = emailCodeService;
     this.verificationSettingService = verificationSettingService;
     this.moduleRegistryService = moduleRegistryService;
     this.verificationProviderRegistry = verificationProviderRegistry;
@@ -142,7 +147,7 @@ public class AuthService {
 
     com.tencent.tdesign.verification.VerificationProvider provider = verificationProviderRegistry.require("sms");
     try {
-      requireSmsSender().sendCode(setting, phone, code, getClientIp(), req.getProvider());
+      provider.sendCode(setting, phone, getClientIp(), req.getProvider());
     } catch (Exception e) {
       throw new IllegalArgumentException("短信发送失败: " + e.getMessage());
     }
@@ -181,7 +186,7 @@ public class AuthService {
 
     com.tencent.tdesign.verification.VerificationProvider provider = verificationProviderRegistry.require("email");
     try {
-      requireEmailSender().sendLoginCode(setting, email, code, emailCodeService.getExpiresInSeconds());
+      provider.sendCode(setting, email, getClientIp(), null);
     } catch (Exception e) {
       throw new IllegalArgumentException("邮件发送失败: " + e.getMessage());
     }

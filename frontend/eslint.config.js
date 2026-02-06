@@ -94,6 +94,7 @@ export default antfu(
         // Disable unused-imports rules in other presets
         'unused-imports/no-unused-imports': 'off',
         'unused-imports/no-unused-vars': 'off',
+        'prettier/prettier': ['error', { endOfLine: 'lf' }],
       },
     },
     {

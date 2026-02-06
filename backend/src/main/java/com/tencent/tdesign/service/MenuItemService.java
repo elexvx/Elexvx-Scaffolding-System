@@ -1059,7 +1059,7 @@ public class MenuItemService {
           null,
           "PAGE",
           "modules",
-          "SystemModules",
+          "SystemModule",
           "/system/modules/index",
           null,
           "模块管理",

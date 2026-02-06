@@ -46,11 +46,7 @@
       </t-col>
 
       <t-col :xs="24" :sm="12">
-        <t-form-item
-          label="顶部帮助链接"
-          name="headerHelpUrl"
-          help="顶部导航栏问号图标跳转链接，留空则点击不跳转"
-        >
+        <t-form-item label="顶部帮助链接" name="headerHelpUrl" help="顶部导航栏问号图标跳转链接，留空则点击不跳转">
           <t-input
             v-model="form.headerHelpUrl"
             placeholder="https://docs.example.com"

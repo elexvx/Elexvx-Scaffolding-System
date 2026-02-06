@@ -26,13 +26,13 @@
       </div>
     </t-space>
 
-    <confirm-drawer v-model:visible="drawerVisible" :header="drawerTitle" size="600px">
+    <confirm-drawer v-model:visible="drawerVisible" :header="drawerTitle" size="760px">
       <t-form
         ref="formRef"
         :data="form"
         label-align="right"
         label-width="120px"
-        layout="horizontal"
+        layout="vertical"
         class="menu-drawer-form drawer-form--single"
       >
         <t-form-item label="上级菜单" name="parentId">
@@ -51,7 +51,7 @@
 
         <t-form-item label="菜单类型" name="nodeType">
           <t-radio-group v-model="form.nodeType">
-            <t-radio v-for="opt in nodeTypeOptions" :key="String(opt.value)" :value="opt.value">
+            <t-radio v-for="opt in nodeTypeRadioOptions" :key="String(opt.value)" :value="opt.value">
               {{ opt.label }}
             </t-radio>
           </t-radio-group>
@@ -201,6 +201,14 @@ const nodeTypeLabelMap: Record<string, string> = {
 const NODE_TYPE_VALUES = ['DIR', 'PAGE', 'BTN'];
 const nodeTypeOptions = computed(() =>
   buildDictOptions(nodeTypeDict.items.value, fallbackNodeTypeOptions, NODE_TYPE_VALUES),
+);
+const nodeTypeRadioOptions = computed(
+  () =>
+    nodeTypeOptions.value.filter((opt) => opt && typeof opt === 'object' && 'value' in opt && 'label' in opt) as Array<{
+      label: string;
+      value: string | number | boolean;
+      disabled?: boolean;
+    }>,
 );
 
 const fallbackActionOptions = [
@@ -800,7 +808,6 @@ const form = reactive({
   orderNo: 0,
   actions: [] as string[],
 });
-
 
 const isExternalLink = computed({
   get: () => form.openType === 'external' || !!form.frameSrc,

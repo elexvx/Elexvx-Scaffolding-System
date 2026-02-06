@@ -81,7 +81,7 @@
         ref="formRef"
         :data="form"
         :rules="rules"
-        layout="horizontal"
+        layout="vertical"
         label-align="right"
         label-width="120px"
         class="download-drawer-form drawer-form--single"

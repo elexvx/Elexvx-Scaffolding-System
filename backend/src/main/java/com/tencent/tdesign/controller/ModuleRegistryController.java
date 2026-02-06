@@ -26,7 +26,7 @@ public class ModuleRegistryController {
   @GetMapping
   public ApiResponse<List<ModuleRegistryResponse>> list() {
     PermissionUtil.check(PERM_QUERY);
-    return ApiResponse.success(moduleRegistryService.listModules());
+    return ApiResponse.success(moduleRegistryService.listRegistries());
   }
 
   @PostMapping("/{moduleKey}/enable")

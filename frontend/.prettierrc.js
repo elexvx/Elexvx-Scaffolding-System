@@ -34,5 +34,5 @@ export default {
   htmlWhitespaceSensitivity: 'css',
   // vue 文件中的 script 和 style 内不用缩进
   vueIndentScriptAndStyle: false,
-  endOfLine: 'auto',
+  endOfLine: 'lf',
 };

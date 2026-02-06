@@ -1,7 +1,7 @@
 <template>
   <confirm-drawer
     v-model:visible="showSettingPanel"
-    size="408px"
+    size="760px"
     :footer="false"
     :header="t('layout.setting.title')"
     :close-btn="true"

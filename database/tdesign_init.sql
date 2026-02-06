@@ -245,6 +245,7 @@ INSERT INTO `role_menus` VALUES (1, 1039);
 INSERT INTO `role_menus` VALUES (1, 1040);
 INSERT INTO `role_menus` VALUES (1, 1041);
 INSERT INTO `role_menus` VALUES (1, 1042);
+INSERT INTO `role_menus` VALUES (1, 1043);
 INSERT INTO `role_menus` VALUES (2, 911);
 INSERT INTO `role_menus` VALUES (2, 1031);
 INSERT INTO `role_menus` VALUES (2, 1032);
@@ -312,6 +313,8 @@ INSERT INTO `role_permissions` VALUES (1, 'system:SystemMenu:create');
 INSERT INTO `role_permissions` VALUES (1, 'system:SystemMenu:delete');
 INSERT INTO `role_permissions` VALUES (1, 'system:SystemMenu:query');
 INSERT INTO `role_permissions` VALUES (1, 'system:SystemMenu:update');
+INSERT INTO `role_permissions` VALUES (1, 'system:SystemModule:query');
+INSERT INTO `role_permissions` VALUES (1, 'system:SystemModule:update');
 INSERT INTO `role_permissions` VALUES (1, 'system:SystemMonitor:create');
 INSERT INTO `role_permissions` VALUES (1, 'system:SystemMonitor:delete');
 INSERT INTO `role_permissions` VALUES (1, 'system:SystemMonitor:query');
@@ -618,6 +621,7 @@ INSERT INTO `sys_menu_items` VALUES (1039, 1035, 'PAGE', 'send', 'MessageSend', 
 INSERT INTO `sys_menu_items` VALUES (1040, NULL, 'DIR', '/console', 'console', 'LAYOUT', '/console/download', '文件下载', 'Console', 'download', 0, 1, NULL, 0, 1, NULL, NULL, 1, 4, '2026-01-14 02:30:00', '2026-01-18 21:21:03', NULL);
 INSERT INTO `sys_menu_items` VALUES (1041, 1040, 'PAGE', 'download', 'ConsoleDownload', '/console/download/index', NULL, '文件下载', 'File Download', 'download', 0, 1, NULL, 0, 1, NULL, NULL, 0, 3, '2026-01-14 02:30:00', '2026-01-18 21:21:03', 'create,update,delete,query');
 INSERT INTO `sys_menu_items` VALUES (1042, 1000, 'PAGE', 'dict', 'SystemDict', '/system/dict/index', NULL, '字典管理', 'Dictionary', 'book', 0, 1, NULL, 0, 1, 'admin', NULL, 8, 4, '2026-01-18 21:21:03', '2026-01-18 21:21:03', 'create,update,delete,query');
+INSERT INTO `sys_menu_items` VALUES (1043, 1000, 'PAGE', 'modules', 'SystemModule', '/system/modules/index', NULL, '????', 'Modules', 'grid-view', 0, 1, NULL, 0, 1, NULL, NULL, 6, 4, '2026-01-18 21:21:03', '2026-01-18 21:21:03', 'update,query');
 
 -- ----------------------------
 -- Table structure for ui_brand_settings

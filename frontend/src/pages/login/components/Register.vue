@@ -9,7 +9,7 @@
     @submit="onSubmit"
   >
     <t-form-item name="account">
-      <t-input v-model="accountValue" size="large" placeholder="请输入用户名（不支持空格）">
+      <t-input v-model="accountValue" size="large" placeholder="请输入用户名">
         <template #prefix-icon>
           <t-icon name="user" />
         </template>
@@ -98,8 +98,8 @@ import { MessagePlugin } from 'tdesign-vue-next';
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
 
 import { register } from '@/api/auth';
-import { useSettingStore } from '@/store';
 import DragCaptcha from '@/components/DragCaptcha.vue';
+import { useSettingStore } from '@/store';
 import { request } from '@/utils/request';
 
 import AgreementCheck from './AgreementCheck.vue';
@@ -190,9 +190,13 @@ const validatePasswordPolicy = (val: string) => {
 
 const FORM_RULES: Record<string, FormRule[]> = {
   account: [
-    { required: true, message: '请输入用户名（不支持空格）', type: 'error' as const },
+    { required: true, message: '请输入用户名', type: 'error' as const },
     { max: 64, message: '用户名长度不能超过 64 位', type: 'error' as const },
-    { validator: (val) => /^[\w@.-]+$/.test(val), message: '用户名仅支持字母、数字及_@.-，不支持空格', type: 'error' as const },
+    {
+      validator: (val) => /^[\w@.-]+$/.test(val),
+      message: '用户名仅支持字母、数字及_@.-，不支持空格',
+      type: 'error' as const,
+    },
   ],
   password: [
     { required: true, message: '请输入密码', type: 'error' as const },
@@ -344,11 +348,16 @@ const buildRegisterPayload = () => {
 };
 
 const normalizeRegisterErrorMessage = (message: string) => {
-  const cleaned = String(message || '').replace(/\s*\[\d{3}\]\s*$/, '').trim();
+  const cleaned = String(message || '')
+    .replace(/\s*\[\d{3}\]\s*$/, '')
+    .trim();
   if (!cleaned) return '';
   if (!/^参数校验失败[:：]/.test(cleaned)) return cleaned;
   const raw = cleaned.replace(/^参数校验失败[:：]\s*/, '');
-  const parts = raw.split(/[;；]/).map((item) => item.trim()).filter(Boolean);
+  const parts = raw
+    .split(/[;；]/)
+    .map((item) => item.trim())
+    .filter(Boolean);
   const mapped = parts.map((item) => {
     const lower = item.toLowerCase();
     if (lower.includes('account') && lower.includes('required')) return '用户名不能为空';

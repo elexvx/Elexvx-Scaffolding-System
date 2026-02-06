@@ -40,8 +40,12 @@
             <div class="detail-item">
               <t-icon name="location" />
               <span>{{
-                (profile.province || '') + (profile.city || '') + (profile.district || '') + (profile.town || '') + (profile.street || '') + (profile.address || '') ||
-                '广东省深圳市'
+                (profile.province || '') +
+                  (profile.city || '') +
+                  (profile.district || '') +
+                  (profile.town || '') +
+                  (profile.street || '') +
+                  (profile.address || '') || '广东省深圳市'
               }}</span>
             </div>
             <div class="detail-item">
@@ -91,7 +95,7 @@
             :rules="profileRules"
             label-align="right"
             label-width="120px"
-            layout="horizontal"
+            layout="vertical"
             @submit="handleUpdateProfile"
           >
             <t-row :gutter="[24, 24]">
@@ -141,7 +145,7 @@
                 </t-form-item>
               </t-col>
               <t-col :xs="24" :sm="12">
-                <t-form-item label="省/市/区县/乡镇/街道" name="provinceId">
+                <t-form-item label="省/市/区县" name="provinceId">
                   <t-cascader
                     v-model="areaValue"
                     :options="areaOptions"
@@ -151,7 +155,7 @@
                     value-type="full"
                     :show-all-levels="true"
                     clearable
-                    placeholder="请选择省/市/区县/乡镇/街道"
+                    placeholder="请选择省/市/区县"
                     @change="handleAreaChange"
                   />
                 </t-form-item>
@@ -198,29 +202,17 @@
             <t-row :gutter="[24, 24]">
               <t-col :span="24">
                 <t-form-item label="当前密码" name="oldPassword">
-                  <t-input
-                    v-model="passwordForm.oldPassword"
-                    type="password"
-                    placeholder="请输入当前密码"
-                  />
+                  <t-input v-model="passwordForm.oldPassword" type="password" placeholder="请输入当前密码" />
                 </t-form-item>
               </t-col>
               <t-col :span="24">
                 <t-form-item label="新密码" name="newPassword">
-                  <t-input
-                    v-model="passwordForm.newPassword"
-                    type="password"
-                    placeholder="请输入新密码"
-                  />
+                  <t-input v-model="passwordForm.newPassword" type="password" placeholder="请输入新密码" />
                 </t-form-item>
               </t-col>
               <t-col :span="24">
                 <t-form-item label="确认新密码" name="confirmPassword">
-                  <t-input
-                    v-model="passwordForm.confirmPassword"
-                    type="password"
-                    placeholder="请再次输入新密码"
-                  />
+                  <t-input v-model="passwordForm.confirmPassword" type="password" placeholder="请再次输入新密码" />
                 </t-form-item>
               </t-col>
             </t-row>
@@ -249,10 +241,10 @@ import type { FormInstanceFunctions, FormRule, PrimaryTableCol, SubmitContext } 
 import { MessagePlugin } from 'tdesign-vue-next';
 import { computed, onMounted, onUnmounted, reactive, ref } from 'vue';
 
-import type { ChangePasswordRequest, UserProfile } from '@/api/user';
-import { changePassword, getMyProfile, updateMyProfile } from '@/api/user';
 import type { AreaNodeResponse, AreaPathNode } from '@/api/system/area';
 import { fetchAreaChildren, fetchAreaPath, resolveAreaPath } from '@/api/system/area';
+import type { ChangePasswordRequest, UserProfile } from '@/api/user';
+import { changePassword, getMyProfile, updateMyProfile } from '@/api/user';
 import { useDictionary } from '@/hooks/useDictionary';
 import { useUserStore } from '@/store';
 import { buildDictOptions } from '@/utils/dict';
@@ -349,25 +341,23 @@ const fallbackGenderOptions = [
 
 const genderOptions = computed(() => buildDictOptions(genderDict.items.value, fallbackGenderOptions));
 
-type AreaOption = {
+interface AreaOption {
   label: string;
   value: number;
   level?: number;
   zipCode?: string | null;
   children?: AreaOption[] | boolean;
-};
+}
 
 const areaOptions = ref<AreaOption[]>([]);
 const areaValue = ref<number[]>([]);
 const areaLoading = ref(false);
 
 const showAreaError = (error: any) => {
-  const raw =
-    error?.response?.data?.message ||
-    error?.message ||
-    error?.response?.statusText ||
-    '';
-  const msg = String(raw).replace(/\s*\[\d{3}\]\s*$/, '').trim();
+  const raw = error?.response?.data?.message || error?.message || error?.response?.statusText || '';
+  const msg = String(raw)
+    .replace(/\s*\[\d{3}\]\s*$/, '')
+    .trim();
   MessagePlugin.error(msg || '加载地区失败');
 };
 
@@ -664,7 +654,7 @@ const fetchLoginLogs = async (account?: string) => {
 
 const editProfileVisible = ref(false);
 const isMobile = ref(false);
-const drawerSize = computed(() => (isMobile.value ? '100%' : '720px'));
+const drawerSize = computed(() => (isMobile.value ? '100%' : '760px'));
 
 const updateIsMobile = () => {
   if (typeof window === 'undefined') return;

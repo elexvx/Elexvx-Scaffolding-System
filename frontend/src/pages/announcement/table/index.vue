@@ -56,14 +56,14 @@
     <confirm-drawer
       v-model:visible="formVisible"
       :header="drawerTitle"
-      size="720px"
+      size="760px"
       :confirm-btn="{ content: '保存', loading: saving }"
       @confirm="onConfirm"
     >
       <t-form
         ref="formRef"
         class="drawer-form--single"
-        layout="horizontal"
+        layout="vertical"
         label-width="120px"
         label-align="right"
         :data="form"

@@ -4,7 +4,7 @@
     :title="t('pages.user.personalInfo.editTitle')"
     :on-close="handleClose"
     placement="right"
-    size="large"
+    size="760px"
     :footer="false"
   >
     <t-form
@@ -15,7 +15,7 @@
       :colon="true"
       label-width="120px"
       label-align="right"
-      layout="horizontal"
+      layout="vertical"
       @submit="handleConfirm"
     >
       <t-form-item label="姓名" name="name">

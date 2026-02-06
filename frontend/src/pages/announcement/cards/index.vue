@@ -74,7 +74,7 @@
     <t-drawer
       v-model:visible="detailVisible"
       :close-on-overlay-click="true"
-      size="720px"
+      size="760px"
       :header="current?.title || '公告详情'"
     >
       <div class="detail-meta">

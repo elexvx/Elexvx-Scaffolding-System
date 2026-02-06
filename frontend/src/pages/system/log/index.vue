@@ -100,9 +100,7 @@ const actionThemeMap: Record<string, TagTheme> = {
   DELETE: 'danger',
 };
 
-const actionOptions = computed<SelectOption[]>(() =>
-  buildDictOptions(actionDict.items.value, fallbackActionOptions),
-);
+const actionOptions = computed<SelectOption[]>(() => buildDictOptions(actionDict.items.value, fallbackActionOptions));
 
 const columns: PrimaryTableCol[] = [
   {
