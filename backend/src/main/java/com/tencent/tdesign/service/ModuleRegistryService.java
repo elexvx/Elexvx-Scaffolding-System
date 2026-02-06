@@ -121,6 +121,13 @@ public class ModuleRegistryService {
     }
   }
 
+  public boolean isModuleAvailable(String moduleKey) {
+    ModuleRegistry registry = registryMapper.selectByKey(normalizeKey(moduleKey));
+    if (registry == null) return false;
+    if (!STATE_INSTALLED.equalsIgnoreCase(normalizeState(registry.getInstallState()))) return false;
+    return Boolean.TRUE.equals(registry.getEnabled());
+  }
+
   @Transactional
   public ModuleRegistryResponse enableModule(String moduleKey, boolean enabled) {
     ModuleRegistry registry = requireRegistry(moduleKey);

@@ -11,6 +11,7 @@ import { useRoute } from 'vue-router';
 
 import { useLocale } from '@/locales/useLocale';
 import { usePermissionStore } from '@/store';
+import { resolveRouteTitle } from '@/utils/routeTitle';
 
 const { locale } = useLocale();
 const route = useRoute();
@@ -31,11 +32,7 @@ const crumbs = computed(() => {
     }
     let title = path;
     if (meta?.title) {
-      if (typeof meta.title === 'string') {
-        title = meta.title;
-      } else {
-        title = meta.title[locale.value];
-      }
+      title = resolveRouteTitle(meta.title as string | Record<string, string>, locale.value, path);
     }
     breadcrumbArray.push({
       path,

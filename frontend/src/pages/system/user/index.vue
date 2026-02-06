@@ -952,10 +952,6 @@ onMounted(async () => {
 });
 </script>
 <style scoped lang="less">
-.user-management {
-  min-height: calc(100vh - 200px);
-}
-
 .user-panel__content {
   display: flex;
   gap: 16px;

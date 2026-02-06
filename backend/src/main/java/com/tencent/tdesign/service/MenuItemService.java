@@ -22,11 +22,16 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Pattern;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 @Service
 public class MenuItemService {
+  private static final Pattern PLACEHOLDER_TITLE_PATTERN = Pattern.compile("^[\\s?？._\\-*/\\\\|]+$");
+  private static final Map<String, String> DEFAULT_ZH_TITLE_BY_ROUTE = buildDefaultTitleMap(true);
+  private static final Map<String, String> DEFAULT_EN_TITLE_BY_ROUTE = buildDefaultTitleMap(false);
+
   private final MenuItemMapper menuItemMapper;
   private final OperationLogService operationLogService;
   private final AuthQueryDao authDao;
@@ -507,8 +512,10 @@ public class MenuItemService {
   private RouteItem toRoute(MenuItemTreeNode n) {
     RouteMeta meta = new RouteMeta();
     Map<String, String> title = new HashMap<>();
-    title.put("zh_CN", n.getTitleZhCn());
-    title.put("en_US", (n.getTitleEnUs() == null || n.getTitleEnUs().isBlank()) ? n.getTitleZhCn() : n.getTitleEnUs());
+    String zhTitle = resolveRouteTitle(n.getTitleZhCn(), n.getRouteName(), true);
+    String enTitle = resolveRouteTitle(n.getTitleEnUs(), n.getRouteName(), false);
+    title.put("zh_CN", zhTitle);
+    title.put("en_US", isPlaceholderTitle(enTitle) ? zhTitle : enTitle);
     meta.setTitle(title);
     meta.setIcon(n.getIcon());
     meta.setHidden(Boolean.TRUE.equals(n.getHidden()));
@@ -688,6 +695,42 @@ public class MenuItemService {
       return title + " (" + e.getRouteName() + ")";
     }
     return title;
+  }
+
+  private static Map<String, String> buildDefaultTitleMap(boolean zh) {
+    Map<String, String> map = new HashMap<>();
+    for (SeedNode seed : SeedNode.defaults()) {
+      if (seed == null || seed.routeName == null || seed.routeName.isBlank()) continue;
+      String title = zh ? seed.titleZhCn : seed.titleEnUs;
+      if (title == null || title.isBlank()) continue;
+      map.putIfAbsent(seed.routeName, title.trim());
+    }
+    return Map.copyOf(map);
+  }
+
+  private String resolveRouteTitle(String title, String routeName, boolean zh) {
+    if (!isPlaceholderTitle(title)) return title.trim();
+
+    String key = routeName == null ? "" : routeName.trim();
+    if (!key.isBlank()) {
+      String fallback = (zh ? DEFAULT_ZH_TITLE_BY_ROUTE : DEFAULT_EN_TITLE_BY_ROUTE).get(key);
+      if (!isPlaceholderTitle(fallback)) return fallback.trim();
+
+      if (!zh) {
+        String zhFallback = DEFAULT_ZH_TITLE_BY_ROUTE.get(key);
+        if (!isPlaceholderTitle(zhFallback)) return zhFallback.trim();
+      }
+    }
+
+    if (!isPlaceholderTitle(routeName)) return routeName.trim();
+    return "菜单";
+  }
+
+  private boolean isPlaceholderTitle(String title) {
+    if (title == null) return true;
+    String normalized = title.trim();
+    if (normalized.isEmpty()) return true;
+    return PLACEHOLDER_TITLE_PATTERN.matcher(normalized).matches();
   }
 
   private MenuItemEntity saveMenuItem(MenuItemEntity menuItem) {

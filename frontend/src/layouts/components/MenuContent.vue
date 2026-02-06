@@ -6,16 +6,16 @@
           <template #icon>
             <component :is="menuIcon(item)" class="t-icon"></component>
           </template>
-          {{ renderMenuTitle(item.title) }}
+          {{ renderMenuTitle(item.title, item.path) }}
         </t-menu-item>
         <t-menu-item v-else :name="item.path" :value="getPath(item)" :to="item.path" @click="handleMenuClick(item)">
           <template #icon>
             <component :is="menuIcon(item)" class="t-icon"></component>
           </template>
-          {{ renderMenuTitle(item.title) }}
+          {{ renderMenuTitle(item.title, item.path) }}
         </t-menu-item>
       </template>
-      <t-submenu v-else :name="item.path" :value="item.path" :title="renderMenuTitle(item.title)">
+      <t-submenu v-else :name="item.path" :value="item.path" :title="renderMenuTitle(item.title, item.path)">
         <template #icon>
           <component :is="menuIcon(item)" class="t-icon"></component>
         </template>
@@ -33,6 +33,7 @@ import { useLocale } from '@/locales/useLocale';
 import { getActive } from '@/router';
 import { useTabsRouterStore } from '@/store';
 import type { MenuRoute } from '@/types/interface';
+import { resolveRouteTitle } from '@/utils/routeTitle';
 
 type ListItemType = MenuRoute;
 
@@ -64,9 +65,8 @@ const menuIcon = (item: ListItemType) => {
   return RenderIcon;
 };
 
-const renderMenuTitle = (title: string | Record<string, string>) => {
-  if (typeof title === 'string') return title;
-  return title[locale.value];
+const renderMenuTitle = (title: string | Record<string, string> | undefined, fallback = '') => {
+  return resolveRouteTitle(title, locale.value, fallback);
 };
 
 const getMenuList = (list: MenuRoute[], basePath?: string): ListItemType[] => {

@@ -214,6 +214,17 @@
       min-width: 0;
       white-space: nowrap;
     }
+
+    // Reset global adjacent-button spacing in split layout to avoid squeeze on small screens.
+    :deep(.t-button + .t-button) {
+      margin-left: 0;
+    }
+
+    // Keep loading indicator stable in login split buttons (especially on mobile width).
+    :deep(.t-button.t-size-l.t-is-loading) {
+      height: var(--td-comp-size-xl);
+      white-space: nowrap;
+    }
   }
 }
 
@@ -325,6 +336,17 @@
 
       button {
         width: 112px;
+      }
+    }
+  }
+
+  .item-container {
+    .btn-container.split-buttons {
+      :deep(.t-button .t-loading) {
+        width: 1em;
+        height: 1em;
+        line-height: 1;
+        flex-shrink: 0;
       }
     }
   }

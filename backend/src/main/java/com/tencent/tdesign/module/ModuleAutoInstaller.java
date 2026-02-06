@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.SmartLifecycle;
 import org.springframework.lang.NonNull;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -12,10 +13,15 @@ public class ModuleAutoInstaller implements SmartLifecycle {
   private static final Logger log = LoggerFactory.getLogger(ModuleAutoInstaller.class);
 
   private final ModuleRegistryService moduleRegistryService;
+  private final boolean autoInstallEnabled;
   private volatile boolean running;
 
-  public ModuleAutoInstaller(ModuleRegistryService moduleRegistryService) {
+  public ModuleAutoInstaller(
+    ModuleRegistryService moduleRegistryService,
+    @Value("${tdesign.modules.auto-install:false}") boolean autoInstallEnabled
+  ) {
     this.moduleRegistryService = moduleRegistryService;
+    this.autoInstallEnabled = autoInstallEnabled;
   }
 
   @Override
@@ -47,7 +53,7 @@ public class ModuleAutoInstaller implements SmartLifecycle {
 
   @Override
   public boolean isAutoStartup() {
-    return true;
+    return autoInstallEnabled;
   }
 
   @Override

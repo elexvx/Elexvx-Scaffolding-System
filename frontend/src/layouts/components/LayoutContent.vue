@@ -79,6 +79,7 @@ import { t } from '@/locales';
 import { useLocale } from '@/locales/useLocale';
 import { useSettingStore, useTabsRouterStore } from '@/store';
 import type { TRouterInfo, TTabRemoveOptions } from '@/types/interface';
+import { resolveRouteTitle } from '@/utils/routeTitle';
 
 import LBreadcrumb from './Breadcrumb.vue';
 import LContent from './Content.vue';
@@ -205,9 +206,7 @@ const handleRemove = (options: TTabRemoveOptions) => {
 };
 
 const renderTitle = (title?: string | Record<string, string>) => {
-  if (!title) return '';
-  if (typeof title === 'string') return title;
-  return title[locale.value] || Object.values(title)[0] || '';
+  return resolveRouteTitle(title, locale.value, '');
 };
 const handleRefresh = (route: TRouterInfo, routeIdx: number) => {
   tabsRouterStore.toggleTabRouterAlive(routeIdx);

@@ -17,6 +17,7 @@ import WatermarkOverlay from '@/components/WatermarkOverlay.vue';
 import { t } from '@/locales';
 import { useLocale } from '@/locales/useLocale';
 import { useAppStore, useSettingStore, useUserStore } from '@/store';
+import { resolveRouteTitle } from '@/utils/routeTitle';
 import { getTokenStorageKey } from '@/utils/secureToken';
 import { isLocalTokenExpired } from '@/utils/tokenExpire';
 
@@ -201,7 +202,7 @@ const updateTitle = () => {
     if (typeof pageTitle === 'string') {
       titleContent = t(pageTitle);
     } else if (typeof pageTitle === 'object') {
-      titleContent = (pageTitle as any)[locale.value] || (pageTitle as any).zh_CN;
+      titleContent = resolveRouteTitle(pageTitle as Record<string, string>, locale.value, '');
     }
   }
 

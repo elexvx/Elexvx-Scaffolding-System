@@ -15,7 +15,7 @@
           <template #enabled="{ row }">
             <t-switch
               v-model="row.enabled"
-              :disabled="row.installState !== 'INSTALLED' || isActionLoading(row.moduleKey, 'toggle')"
+              :disabled="!isInstalled(row.installState) || isActionLoading(row.moduleKey, 'toggle')"
               @change="(value) => toggleModule(row, Boolean(value))"
             />
           </template>
@@ -29,7 +29,7 @@
                 theme="primary"
                 variant="outline"
                 :loading="isActionLoading(row.moduleKey, 'install')"
-                :disabled="row.installState === 'INSTALLED'"
+                :disabled="isInstalled(row.installState)"
                 @click="install(row)"
               >
                 安装
@@ -39,7 +39,7 @@
                 theme="danger"
                 variant="outline"
                 :loading="isActionLoading(row.moduleKey, 'uninstall')"
-                :disabled="row.installState !== 'INSTALLED'"
+                :disabled="!isInstalled(row.installState)"
                 @click="uninstall(row)"
               >
                 卸载
@@ -80,8 +80,14 @@ const columns: PrimaryTableCol[] = [
   { colKey: 'op', title: '操作', width: 200, fixed: 'right' },
 ];
 
+const normalizeInstallState = (state?: string) =>
+  String(state || '')
+    .trim()
+    .toUpperCase();
+const isInstalled = (state?: string) => normalizeInstallState(state) === 'INSTALLED';
+
 const stateLabel = (state?: string) => {
-  const normalized = String(state || '').toUpperCase();
+  const normalized = normalizeInstallState(state);
   if (normalized === 'INSTALLED') return '已安装';
   if (normalized === 'FAILED') return '安装失败';
   if (normalized === 'UNINSTALLED') return '已卸载';
@@ -89,7 +95,7 @@ const stateLabel = (state?: string) => {
 };
 
 const stateTheme = (state?: string) => {
-  const normalized = String(state || '').toUpperCase();
+  const normalized = normalizeInstallState(state);
   if (normalized === 'INSTALLED') return 'success';
   if (normalized === 'FAILED') return 'danger';
   if (normalized === 'UNINSTALLED') return 'default';
