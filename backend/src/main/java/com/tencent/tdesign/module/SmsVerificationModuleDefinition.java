@@ -24,4 +24,16 @@ public class SmsVerificationModuleDefinition implements ModuleDefinition {
   public List<String> getRequiredTables() {
     return List.of("verification_sms_settings");
   }
+
+  @Override
+  public void initialize(ModuleInstallationContext context) {
+    if (context.tableExists("verification_sms_settings")) return;
+    context.executeSqlResource(context.resolveModuleResource("sms", "install"));
+  }
+
+  @Override
+  public void uninstall(ModuleInstallationContext context) {
+    if (!context.tableExists("verification_sms_settings")) return;
+    context.executeSqlResourceIfExists(context.resolveModuleResource("sms", "uninstall"));
+  }
 }

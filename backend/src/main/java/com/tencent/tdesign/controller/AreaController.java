@@ -33,10 +33,8 @@ public class AreaController {
   public ApiResponse<List<AreaPathNode>> resolve(
     @RequestParam(required = false) String province,
     @RequestParam(required = false) String city,
-    @RequestParam(required = false) String district,
-    @RequestParam(required = false) String town,
-    @RequestParam(required = false) String street
+    @RequestParam(required = false) String district
   ) {
-    return ApiResponse.success(areaService.resolvePath(province, city, district, town, street));
+    return ApiResponse.success(areaService.resolvePath(province, city, district));
   }
 }

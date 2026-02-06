@@ -22,10 +22,6 @@ export interface UserProfile {
   city: string;
   districtId?: number | null;
   district: string;
-  townId?: number | null;
-  town?: string;
-  streetId?: number | null;
-  street?: string;
   zipCode?: string;
   address: string;
   introduction: string;
@@ -55,10 +51,6 @@ export interface UserProfileUpdate {
   city?: string;
   districtId?: number | null;
   district?: string;
-  townId?: number | null;
-  town?: string;
-  streetId?: number | null;
-  street?: string;
   zipCode?: string;
   address?: string;
   introduction?: string;

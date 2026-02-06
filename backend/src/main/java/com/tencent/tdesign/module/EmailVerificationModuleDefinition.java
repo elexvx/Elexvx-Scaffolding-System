@@ -24,4 +24,16 @@ public class EmailVerificationModuleDefinition implements ModuleDefinition {
   public List<String> getRequiredTables() {
     return List.of("verification_email_settings");
   }
+
+  @Override
+  public void initialize(ModuleInstallationContext context) {
+    if (context.tableExists("verification_email_settings")) return;
+    context.executeSqlResource(context.resolveModuleResource("email", "install"));
+  }
+
+  @Override
+  public void uninstall(ModuleInstallationContext context) {
+    if (!context.tableExists("verification_email_settings")) return;
+    context.executeSqlResourceIfExists(context.resolveModuleResource("email", "uninstall"));
+  }
 }

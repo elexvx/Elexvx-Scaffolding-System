@@ -70,15 +70,13 @@ public class AreaService {
     return path;
   }
 
-  public List<AreaPathNode> resolvePath(String province, String city, String district, String town, String street) {
+  public List<AreaPathNode> resolvePath(String province, String city, String district) {
     List<AreaPathNode> path = new ArrayList<>();
     Integer parentId = 0;
     try {
       parentId = appendByName(path, parentId, province);
       parentId = appendByName(path, parentId, city);
       parentId = appendByName(path, parentId, district);
-      parentId = appendByName(path, parentId, town);
-      appendByName(path, parentId, street);
     } catch (Exception e) {
       log.error("Resolve area path failed.", e);
       throw new IllegalArgumentException("地区数据未初始化，请先导入地区数据");
