@@ -71,7 +71,6 @@ tdesign:
     captcha:
       enabled: true # 是否启用验证码（登录流程）
   modules:
-    auto-install: false # 是否在启动时自动安装模块（建议关闭，改由模块管理手动控制）
     sms:
       enabled: true # 是否启用短信模块
     email:

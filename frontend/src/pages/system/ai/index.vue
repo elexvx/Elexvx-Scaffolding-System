@@ -343,8 +343,8 @@ const handleTestForm = async () => {
   }
 };
 
-const submitForm = async (ctx?: SubmitContext) => {
-  if (ctx && ctx.validateResult !== true) return;
+const submitForm = async (ctx?: SubmitContext | MouseEvent) => {
+  if (ctx && 'validateResult' in ctx && ctx.validateResult !== true) return;
   saving.value = true;
   const res = await saveAiProvider(form);
   try {

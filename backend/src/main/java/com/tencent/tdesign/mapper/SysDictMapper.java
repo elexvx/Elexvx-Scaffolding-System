@@ -5,6 +5,8 @@ import java.util.List;
 import org.apache.ibatis.annotations.Param;
 
 public interface SysDictMapper {
+  List<SysDict> selectAll();
+
   List<SysDict> selectPage(
     @Param("keyword") String keyword,
     @Param("status") Integer status,

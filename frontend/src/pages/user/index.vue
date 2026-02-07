@@ -186,6 +186,7 @@
         <t-card title="更改密码" :bordered="false" class="user-setting-card" style="margin-top: 24px">
           <t-form
             ref="passwordFormRef"
+            class="password-form"
             :data="passwordForm"
             :rules="passwordRules"
             label-align="right"
@@ -193,23 +194,15 @@
             colon
             @submit="handleSubmitPassword"
           >
-            <t-row :gutter="[24, 24]">
-              <t-col :span="24">
-                <t-form-item label="当前密码" name="oldPassword">
-                  <t-input v-model="passwordForm.oldPassword" type="password" placeholder="请输入当前密码" />
-                </t-form-item>
-              </t-col>
-              <t-col :span="24">
-                <t-form-item label="新密码" name="newPassword">
-                  <t-input v-model="passwordForm.newPassword" type="password" placeholder="请输入新密码" />
-                </t-form-item>
-              </t-col>
-              <t-col :span="24">
-                <t-form-item label="确认新密码" name="confirmPassword">
-                  <t-input v-model="passwordForm.confirmPassword" type="password" placeholder="请再次输入新密码" />
-                </t-form-item>
-              </t-col>
-            </t-row>
+            <t-form-item label="当前密码" name="oldPassword">
+              <t-input v-model="passwordForm.oldPassword" type="password" placeholder="请输入当前密码" />
+            </t-form-item>
+            <t-form-item label="新密码" name="newPassword">
+              <t-input v-model="passwordForm.newPassword" type="password" placeholder="请输入新密码" />
+            </t-form-item>
+            <t-form-item label="确认新密码" name="confirmPassword">
+              <t-input v-model="passwordForm.confirmPassword" type="password" placeholder="请再次输入新密码" />
+            </t-form-item>
             <t-form-item class="form-submit">
               <t-button theme="primary" type="submit" :loading="changingPassword">修改密码</t-button>
             </t-form-item>
@@ -346,11 +339,12 @@ interface AreaOption {
 const areaOptions = ref<AreaOption[]>([]);
 const areaValue = ref<Array<number | string>>([]);
 const areaLoadingState = ref(false);
+const hasDictAreaData = computed(
+  () => provinceDict.items.value.length > 0 || cityDict.items.value.length > 0 || districtDict.items.value.length > 0,
+);
+const useDictArea = computed(() => hasDictAreaData.value);
 const areaLoading = computed(
   () => areaLoadingState.value || provinceDict.loading.value || cityDict.loading.value || districtDict.loading.value,
-);
-const useDictArea = computed(
-  () => provinceDict.items.value.length > 0 || cityDict.items.value.length > 0 || districtDict.items.value.length > 0,
 );
 const areaLazy = computed(() => !useDictArea.value);
 
@@ -412,49 +406,59 @@ const parseDictAreaMeta = (item: any) => {
   };
 };
 
-const createDictAreaOptions = () => {
+const toAreaDictValue = (raw: unknown): string | number => {
+  if (typeof raw === 'number' && Number.isFinite(raw)) return raw;
+  if (typeof raw === 'string') return raw;
+  if (typeof raw === 'boolean') return raw ? 'true' : 'false';
+  if (raw == null) return '';
+  return String(raw);
+};
+
+const createDictAreaOptions = (): AreaOption[] => {
   const provinceItems = provinceDict.items.value;
   const cityItems = cityDict.items.value;
   const districtItems = districtDict.items.value;
 
   const districtEntries = districtItems.map((item) => {
     const meta = parseDictAreaMeta(item);
+    const fallbackDistrict = String(item.label || '').trim();
     return {
       label: item.label,
-      value: parseDictValue(item),
+      value: toAreaDictValue(parseDictValue(item)),
       province: meta.province,
       city: meta.city,
+      district: meta.district || fallbackDistrict,
       zipCode: meta.zipCode,
     };
   });
 
   const cityEntries = cityItems.map((item) => {
     const meta = parseDictAreaMeta(item);
+    const fallbackCity = String(item.label || '').trim();
     return {
       label: item.label,
-      value: parseDictValue(item),
+      value: toAreaDictValue(parseDictValue(item)),
       province: meta.province,
-      city: meta.city,
+      city: meta.city || fallbackCity,
     };
   });
 
-  const allDistrictOptions = districtEntries.map((entry) => ({
-    label: entry.label,
-    value: entry.value,
-    level: 3,
-    zipCode: entry.zipCode ?? null,
-    children: [],
-  }));
-
-  const buildDistrictOptions = (province?: string, city?: string) => {
+  const buildDistrictOptions = (province?: string, city?: string): AreaOption[] => {
+    if (!province || !city) return [];
     const filtered = districtEntries.filter((entry) => {
-      if (entry.city) return entry.city === city;
-      if (entry.province) return entry.province === province;
-      return true;
+      if (!entry.province || !entry.city || !entry.district) return false;
+      return entry.province === province && entry.city === city;
     });
-    const source = filtered.length > 0 ? filtered : districtEntries;
-    return source.map((entry) => ({
-      label: entry.label,
+    const unique = new Set<string>();
+    return filtered
+      .filter((entry) => {
+        const key = `${entry.province}/${entry.city}/${entry.district}`;
+        if (unique.has(key)) return false;
+        unique.add(key);
+        return true;
+      })
+      .map((entry) => ({
+      label: entry.district,
       value: entry.value,
       level: 3,
       zipCode: entry.zipCode ?? null,
@@ -462,33 +466,39 @@ const createDictAreaOptions = () => {
     }));
   };
 
-  const buildCityOptions = (province?: string) => {
-    const filtered = cityEntries.filter((entry) => !entry.province || entry.province === province);
-    const source = filtered.length > 0 ? filtered : cityEntries;
+  const buildCityOptions = (province?: string): AreaOption[] => {
+    if (!province) return [];
+    const directMatched = cityEntries.filter((entry) => entry.province === province && !!entry.city);
+    const source =
+      directMatched.length > 0
+        ? directMatched
+        : Array.from(
+            new Map(
+              districtEntries
+                .filter((entry) => entry.province === province && !!entry.city)
+                .map((entry) => [entry.city as string, entry]),
+            ).values(),
+          );
     return source.map((entry) => ({
-      label: entry.label,
-      value: entry.value,
+      label: entry.city,
+      value: entry.value || `${province}/${entry.city}`,
       level: 2,
-      children: buildDistrictOptions(province, entry.city || entry.label),
+      children: buildDistrictOptions(province, entry.city),
     }));
   };
 
-  const provinces =
+  const provinceLabels =
     provinceItems.length > 0
-      ? provinceItems
-      : [
-          {
-            label: '默认省份',
-            value: 'default',
-            status: 1,
-          },
-        ];
+      ? provinceItems.map((item) => String(item.label || '').trim()).filter(Boolean)
+      : Array.from(new Set(districtEntries.map((entry) => String(entry.province || '').trim()).filter(Boolean)));
 
-  return provinces.map((item) => ({
-    label: item.label,
-    value: parseDictValue(item),
+  if (provinceLabels.length === 0) return [];
+
+  return provinceLabels.map((province) => ({
+    label: province,
+    value: province,
     level: 1,
-    children: buildCityOptions(item.label),
+    children: buildCityOptions(province),
   }));
 };
 
@@ -824,10 +834,15 @@ const updateIsMobile = () => {
   isMobile.value = window.innerWidth <= 768;
 };
 
-const openEditDrawer = () => {
-  void loadDictionaries(true);
-  void loadRootAreas();
+const openEditDrawer = async () => {
   editProfileVisible.value = true;
+  try {
+    await loadDictionaries(true);
+    areaOptions.value = [];
+    await loadRootAreas();
+  } catch (error) {
+    console.error('Load area dictionaries failed:', error);
+  }
 };
 
 // 提交个人资料更新
@@ -1005,6 +1020,16 @@ onUnmounted(() => {
       padding-top: 16px;
     }
 
+    .password-form {
+      :deep(.t-form__controls) {
+        width: 100%;
+      }
+
+      :deep(.t-input) {
+        width: 100%;
+      }
+    }
+
     .introduction-textarea {
       width: 100%;
     }
@@ -1069,13 +1094,13 @@ onUnmounted(() => {
       }
 
       .form-submit {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 12px;
+        justify-content: flex-end;
       }
 
-      .form-submit :deep(.t-button) {
-        width: 100%;
+      .password-form {
+        :deep(.t-form__controls) {
+          width: 100%;
+        }
       }
     }
   }

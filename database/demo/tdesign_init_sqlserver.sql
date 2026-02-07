@@ -1,5 +1,5 @@
--- SQL Server initialization script for TDesign
--- Use: sqlcmd -d tdesign -i database/tdesign_init_sqlserver.sql
+﻿-- SQL Server initialization script for TDesign
+-- Use: sqlcmd -d tdesign -i database/demo/tdesign_init_sqlserver.sql
 -- Note: run on an empty schema or drop existing tables first.
 
 CREATE TABLE users (
@@ -141,21 +141,6 @@ CREATE TABLE sys_dict (
 );
 GO
 
-CREATE TABLE sys_dict_items (
-  id BIGINT IDENTITY(1,1) PRIMARY KEY,
-  dict_id BIGINT NOT NULL,
-  label NVARCHAR(64) NOT NULL,
-  value NVARCHAR(128) NOT NULL,
-  value_type NVARCHAR(16) NOT NULL DEFAULT 'string',
-  status TINYINT NOT NULL DEFAULT 1,
-  sort INT NOT NULL DEFAULT 0,
-  tag_color NVARCHAR(32),
-  created_at DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
-  updated_at DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
-  CONSTRAINT uk_sys_dict_item_value UNIQUE (dict_id, value)
-);
-GO
-
 CREATE TABLE role_menus (
   role_id BIGINT NOT NULL,
   menu_id BIGINT NOT NULL,
@@ -228,40 +213,6 @@ CREATE TABLE ui_system_settings (
   id BIGINT IDENTITY(1,1) PRIMARY KEY,
   log_retention_days INT,
   ai_assistant_enabled TINYINT
-);
-GO
-
-CREATE TABLE verification_sms_settings (
-  id BIGINT IDENTITY(1,1) PRIMARY KEY,
-  sms_enabled TINYINT,
-  sms_provider NVARCHAR(32),
-  sms_aliyun_enabled TINYINT,
-  sms_aliyun_access_key_id NVARCHAR(256),
-  sms_aliyun_access_key_secret NVARCHAR(256),
-  sms_aliyun_sign_name NVARCHAR(128),
-  sms_aliyun_template_code NVARCHAR(64),
-  sms_aliyun_region_id NVARCHAR(64),
-  sms_aliyun_endpoint NVARCHAR(255),
-  sms_tencent_enabled TINYINT,
-  sms_tencent_secret_id NVARCHAR(256),
-  sms_tencent_secret_key NVARCHAR(256),
-  sms_tencent_sign_name NVARCHAR(128),
-  sms_tencent_template_id NVARCHAR(64),
-  sms_tencent_region NVARCHAR(64),
-  sms_tencent_endpoint NVARCHAR(255),
-  sms_sdk_app_id NVARCHAR(64)
-);
-GO
-
-CREATE TABLE verification_email_settings (
-  id BIGINT IDENTITY(1,1) PRIMARY KEY,
-  email_enabled TINYINT,
-  email_host NVARCHAR(255),
-  email_port INT,
-  email_username NVARCHAR(128),
-  email_password NVARCHAR(256),
-  email_from NVARCHAR(128),
-  email_ssl TINYINT
 );
 GO
 
@@ -465,96 +416,44 @@ SET IDENTITY_INSERT sys_dict OFF;
 GO
 
 -- ----------------------------
--- Records of sys_dict_items
 -- ----------------------------
-SET IDENTITY_INSERT sys_dict_items ON;
-INSERT INTO sys_dict_items (id, dict_id, label, value, value_type, status, sort, tag_color, created_at, updated_at) VALUES
-  (2101, 2001, N'男', N'male', N'string', 1, 1, N'success', '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (2102, 2001, N'女', N'female', N'string', 1, 2, N'danger', '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (2103, 2001, N'未知', N'unknown', N'string', 1, 3, N'warning', '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (2201, 2002, N'广东省', N'广东省', N'string', 1, 1, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (2202, 2002, N'上海市', N'上海市', N'string', 1, 2, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (2203, 2002, N'北京市', N'北京市', N'string', 1, 3, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (2204, 2002, N'浙江省', N'浙江省', N'string', 1, 4, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (2301, 2003, N'深圳市', N'深圳市', N'string', 1, 1, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (2302, 2003, N'广州市', N'广州市', N'string', 1, 2, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (2303, 2003, N'上海市', N'上海市', N'string', 1, 3, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (2304, 2003, N'北京市', N'北京市', N'string', 1, 4, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (2305, 2003, N'杭州市', N'杭州市', N'string', 1, 5, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (2401, 2004, N'南山区', N'南山区', N'string', 1, 1, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (2402, 2004, N'福田区', N'福田区', N'string', 1, 2, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (2403, 2004, N'宝安区', N'宝安区', N'string', 1, 3, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (2404, 2004, N'龙岗区', N'龙岗区', N'string', 1, 4, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (2405, 2004, N'龙华区', N'龙华区', N'string', 1, 5, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (2406, 2004, N'天河区', N'天河区', N'string', 1, 6, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (2407, 2004, N'越秀区', N'越秀区', N'string', 1, 7, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (2408, 2004, N'番禺区', N'番禺区', N'string', 1, 8, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (2409, 2004, N'海珠区', N'海珠区', N'string', 1, 9, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (2410, 2004, N'白云区', N'白云区', N'string', 1, 10, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (2411, 2004, N'黄浦区', N'黄浦区', N'string', 1, 11, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (2412, 2004, N'徐汇区', N'徐汇区', N'string', 1, 12, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (2413, 2004, N'长宁区', N'长宁区', N'string', 1, 13, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (2414, 2004, N'静安区', N'静安区', N'string', 1, 14, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (2415, 2004, N'浦东新区', N'浦东新区', N'string', 1, 15, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (2416, 2004, N'东城区', N'东城区', N'string', 1, 16, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (2417, 2004, N'西城区', N'西城区', N'string', 1, 17, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (2418, 2004, N'朝阳区', N'朝阳区', N'string', 1, 18, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (2419, 2004, N'海淀区', N'海淀区', N'string', 1, 19, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (2420, 2004, N'西湖区', N'西湖区', N'string', 1, 20, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (2421, 2004, N'上城区', N'上城区', N'string', 1, 21, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (2422, 2004, N'下城区', N'下城区', N'string', 1, 22, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (2423, 2004, N'江干区', N'江干区', N'string', 1, 23, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (2501, 2005, N'公告', N'announcement', N'string', 1, 1, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (2511, 2006, N'高', N'high', N'string', 1, 1, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (2512, 2006, N'中', N'middle', N'string', 1, 2, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (2513, 2006, N'低', N'low', N'string', 1, 3, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (2521, 2007, N'草稿', N'draft', N'string', 1, 1, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (2522, 2007, N'已发布', N'published', N'string', 1, 2, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (2523, 2007, N'已撤回', N'withdrawn', N'string', 1, 3, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (2601, 2008, N'通知', N'notification', N'string', 1, 1, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (2611, 2009, N'高', N'high', N'string', 1, 1, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (2612, 2009, N'中', N'middle', N'string', 1, 2, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (2613, 2009, N'低', N'low', N'string', 1, 3, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (2621, 2010, N'草稿', N'draft', N'string', 1, 1, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (2622, 2010, N'已发布', N'published', N'string', 1, 2, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (2623, 2010, N'已撤回', N'withdrawn', N'string', 1, 3, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (2701, 2011, N'高', N'high', N'string', 1, 1, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (2702, 2011, N'中', N'middle', N'string', 1, 2, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (2703, 2011, N'低', N'low', N'string', 1, 3, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (2801, 2012, N'登录', N'LOGIN', N'string', 1, 1, N'primary', '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (2802, 2012, N'新增', N'CREATE', N'string', 1, 2, N'success', '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (2803, 2012, N'修改', N'UPDATE', N'string', 1, 3, N'warning', '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (2804, 2012, N'删除', N'DELETE', N'string', 1, 4, N'danger', '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (2901, 2013, N'正常', N'1', N'number', 1, 1, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (2902, 2013, N'停用', N'0', N'number', 1, 2, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (3001, 2014, N'单位', N'UNIT', N'string', 1, 1, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (3002, 2014, N'部门', N'DEPARTMENT', N'string', 1, 2, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (3003, 2014, N'科室', N'SECTION', N'string', 1, 3, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (3004, 2014, N'班组', N'TEAM', N'string', 1, 4, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (3005, 2014, N'用户', N'USER', N'string', 1, 5, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (3011, 2015, N'正常', N'1', N'number', 1, 1, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (3012, 2015, N'停用', N'0', N'number', 1, 2, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (3101, 2016, N'目录', N'DIR', N'string', 1, 1, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (3102, 2016, N'页面', N'PAGE', N'string', 1, 2, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (3103, 2016, N'按钮', N'BTN', N'string', 1, 3, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (3201, 2017, N'查询', N'query', N'string', 1, 1, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (3202, 2017, N'新增', N'create', N'string', 1, 2, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (3203, 2017, N'修改', N'update', N'string', 1, 3, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (3204, 2017, N'删除', N'delete', N'string', 1, 4, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (3301, 2018, N'本地存储', N'LOCAL', N'string', 1, 1, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (3302, 2018, N'阿里云 OSS', N'ALIYUN', N'string', 1, 2, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (3303, 2018, N'腾讯云 COS', N'TENCENT', N'string', 1, 3, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (3401, 2019, N'阿里云短信服务', N'aliyun', N'string', 1, 1, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (3402, 2019, N'腾讯云短信服务', N'tencent', N'string', 1, 2, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (3501, 2020, N'OpenAI / 兼容', N'OPENAI', N'string', 1, 1, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (3502, 2020, N'Azure OpenAI', N'AZURE_OPENAI', N'string', 1, 2, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (3503, 2020, N'DeepSeek', N'DEEPSEEK', N'string', 1, 3, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (3504, 2020, N'月之暗面 / Moonshot', N'MOONSHOT', N'string', 1, 4, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (3505, 2020, N'通义千问 (兼容模式)', N'QWEN', N'string', 1, 5, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (3506, 2020, N'Ollama 本地部署', N'OLLAMA', N'string', 1, 6, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-SET IDENTITY_INSERT sys_dict_items OFF;
+GO
+
+-- Demo users/roles
+IF NOT EXISTS (SELECT 1 FROM roles WHERE id = 1)
+BEGIN
+  SET IDENTITY_INSERT roles ON;
+  INSERT INTO roles (id, name, description) VALUES (1, N'admin', N'管理员 - 拥有所有权限');
+  SET IDENTITY_INSERT roles OFF;
+END;
+GO
+
+IF NOT EXISTS (SELECT 1 FROM users WHERE id = 1)
+BEGIN
+  SET IDENTITY_INSERT users ON;
+  INSERT INTO users (id, account, guid, name, password_hash, status, created_at, updated_at)
+  VALUES (
+    1,
+    N'admin',
+    N'e59c3cd1-3b52-47c7-bf88-fad5b2281827',
+    N'管理员',
+    N'$2a$10$BbVSQCIChdR.4gfwiG1OduJiKE/KpUTbhBXd.7Sr.uwi8eggDpYeu',
+    1,
+    SYSDATETIME(),
+    SYSDATETIME()
+  );
+  SET IDENTITY_INSERT users OFF;
+END;
+GO
+
+IF NOT EXISTS (SELECT 1 FROM user_roles WHERE user_id = 1 AND role = N'admin')
+BEGIN
+  INSERT INTO user_roles (user_id, role) VALUES (1, N'admin');
+END;
 GO
 
 INSERT INTO module_registry (module_key, name, version, enabled, install_state, installed_at) VALUES ('sms', N'短信验证', '1.0.0', 1, 'PENDING', NULL);
 INSERT INTO module_registry (module_key, name, version, enabled, install_state, installed_at) VALUES ('email', N'邮箱验证', '1.0.0', 1, 'PENDING', NULL);
 GO
+
+

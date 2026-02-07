@@ -15,6 +15,11 @@
     FROM sys_dict
   </sql>
 
+  <select id="selectAll" resultType="com.tencent.tdesign.entity.SysDict">
+    <include refid="BaseSelect" />
+    ORDER BY sort ASC, id DESC
+  </select>
+
   <select id="selectPage" resultType="com.tencent.tdesign.entity.SysDict">
     <include refid="BaseSelect" />
     <where>

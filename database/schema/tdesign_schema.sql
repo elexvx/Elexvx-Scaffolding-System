@@ -1,4 +1,4 @@
-/*
+﻿/*
  Navicat Premium Data Transfer
 
  Source Server         : localhost
@@ -46,9 +46,6 @@ CREATE TABLE `ai_provider_settings`  (
 
 -- ----------------------------
 -- Records of ai_provider_settings
--- ----------------------------
-
--- ----------------------------
 -- Table structure for announcements
 -- ----------------------------
 DROP TABLE IF EXISTS `announcements`;
@@ -74,31 +71,6 @@ CREATE TABLE `announcements`  (
 
 -- ----------------------------
 -- Records of announcements
--- ----------------------------
-
--- ----------------------------
--- Table structure for file_download_history
--- ----------------------------
-DROP TABLE IF EXISTS `file_download_history`;
-CREATE TABLE `file_download_history`  (
-  `id` bigint NOT NULL AUTO_INCREMENT,
-  `user_id` bigint NULL DEFAULT NULL,
-  `file_id` bigint NOT NULL,
-  `file_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
-  `size_bytes` bigint NOT NULL DEFAULT 0,
-  `downloaded_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`) USING BTREE,
-  INDEX `idx_file_download_history_user_time`(`user_id` ASC, `downloaded_at` ASC) USING BTREE,
-  INDEX `idx_file_download_history_file_time`(`file_id` ASC, `downloaded_at` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 3 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
-
--- ----------------------------
--- Records of file_download_history
--- ----------------------------
-INSERT INTO `file_download_history` VALUES (1, 1, 1, 'TDesign设计规范.pdf', 5242880, '2026-01-13 22:45:31');
-INSERT INTO `file_download_history` VALUES (2, 1, 2, '系统架构图.png', 2097152, '2026-01-13 23:10:58');
-
--- ----------------------------
 -- Table structure for file_resources
 -- ----------------------------
 DROP TABLE IF EXISTS `file_resources`;
@@ -117,9 +89,6 @@ CREATE TABLE `file_resources`  (
 
 -- ----------------------------
 -- Records of file_resources
--- ----------------------------
-
--- ----------------------------
 -- Table structure for messages
 -- ----------------------------
 DROP TABLE IF EXISTS `messages`;
@@ -140,10 +109,6 @@ CREATE TABLE `messages`  (
 -- ----------------------------
 -- Records of messages
 -- ----------------------------
-INSERT INTO `messages` VALUES ('631b2bb4-526a-44c1-833f-3a22c0a5b138', 1, '111', 'message', 0, 0, 'high', '2026-01-18 14:54:11');
-INSERT INTO `messages` VALUES ('8ba05d7b-d74e-4877-9d6c-0ad0322f1a3a', 3, '111', 'message', 1, 0, 'high', '2026-01-18 14:54:11');
-INSERT INTO `messages` VALUES ('a06fe751-8ab7-4e41-b898-8a7717306e0a', 1, '【公告】云计算技术发展趋势与未来展望：深入分析了云计算技术的演进历程，探讨了混合云、边缘计算和云原生等新兴技术趋势，展望了云计算对数字经济的推动作用。', 'announcement', 1, 0, 'high', '2026-01-09 04:03:19');
-INSERT INTO `messages` VALUES ('b2109c0f-7a9a-4620-b561-8173b7590e3b', 3, '【公告】云计算技术发展趋势与未来展望：深入分析了云计算技术的演进历程，探讨了混合云、边缘计算和云原生等新兴技术趋势，展望了云计算对数字经济的推动作用。', 'announcement', 1, 0, 'high', '2026-01-09 04:03:19');
 
 -- ----------------------------
 -- Table structure for notifications
@@ -170,9 +135,6 @@ CREATE TABLE `notifications`  (
 
 -- ----------------------------
 -- Records of notifications
--- ----------------------------
-
--- ----------------------------
 -- Table structure for operation_logs
 -- ----------------------------
 DROP TABLE IF EXISTS `operation_logs`;
@@ -195,12 +157,6 @@ CREATE TABLE `operation_logs`  (
 -- ----------------------------
 -- Records of operation_logs
 -- ----------------------------
-INSERT INTO `operation_logs` VALUES (379, 'LOGIN', '登录', '用户登录', 1, 'admin', '127.0.0.1', 'Windows 设备', 'Windows 10', 'Edge', '2026-01-23 03:36:20', 'e59c3cd1-3b52-47c7-bf88-fad5b2281827');
-INSERT INTO `operation_logs` VALUES (380, 'DELETE', '公告管理', '删除公告: AI技术在医疗领域的创新应用与发展前景', 1, 'admin', '127.0.0.1', 'Windows 设备', 'Windows 10', 'Edge', '2026-01-23 03:36:57', 'e59c3cd1-3b52-47c7-bf88-fad5b2281827');
-INSERT INTO `operation_logs` VALUES (381, 'DELETE', '公告管理', '删除公告: 大数据分析助力企业决策的实践案例', 1, 'admin', '127.0.0.1', 'Windows 设备', 'Windows 10', 'Edge', '2026-01-23 03:36:59', 'e59c3cd1-3b52-47c7-bf88-fad5b2281827');
-INSERT INTO `operation_logs` VALUES (382, 'DELETE', '公告管理', '删除公告: 区块链技术在供应链管理中的应用', 1, 'admin', '127.0.0.1', 'Windows 设备', 'Windows 10', 'Edge', '2026-01-23 03:37:01', 'e59c3cd1-3b52-47c7-bf88-fad5b2281827');
-INSERT INTO `operation_logs` VALUES (383, 'WITHDRAW', '公告管理', '更改公告状态: 云计算技术发展趋势与未来展望', 1, 'admin', '127.0.0.1', 'Windows 设备', 'Windows 10', 'Edge', '2026-01-23 03:37:03', 'e59c3cd1-3b52-47c7-bf88-fad5b2281827');
-INSERT INTO `operation_logs` VALUES (384, 'DELETE', '公告管理', '删除公告: 云计算技术发展趋势与未来展望', 1, 'admin', '127.0.0.1', 'Windows 设备', 'Windows 10', 'Edge', '2026-01-23 03:37:10', 'e59c3cd1-3b52-47c7-bf88-fad5b2281827');
 
 -- ----------------------------
 -- Table structure for role_menus
@@ -215,40 +171,6 @@ CREATE TABLE `role_menus`  (
 -- ----------------------------
 -- Records of role_menus
 -- ----------------------------
-INSERT INTO `role_menus` VALUES (1, 910);
-INSERT INTO `role_menus` VALUES (1, 911);
-INSERT INTO `role_menus` VALUES (1, 1000);
-INSERT INTO `role_menus` VALUES (1, 1001);
-INSERT INTO `role_menus` VALUES (1, 1002);
-INSERT INTO `role_menus` VALUES (1, 1003);
-INSERT INTO `role_menus` VALUES (1, 1004);
-INSERT INTO `role_menus` VALUES (1, 1005);
-INSERT INTO `role_menus` VALUES (1, 1006);
-INSERT INTO `role_menus` VALUES (1, 1007);
-INSERT INTO `role_menus` VALUES (1, 1008);
-INSERT INTO `role_menus` VALUES (1, 1013);
-INSERT INTO `role_menus` VALUES (1, 1018);
-INSERT INTO `role_menus` VALUES (1, 1019);
-INSERT INTO `role_menus` VALUES (1, 1020);
-INSERT INTO `role_menus` VALUES (1, 1021);
-INSERT INTO `role_menus` VALUES (1, 1022);
-INSERT INTO `role_menus` VALUES (1, 1023);
-INSERT INTO `role_menus` VALUES (1, 1030);
-INSERT INTO `role_menus` VALUES (1, 1031);
-INSERT INTO `role_menus` VALUES (1, 1032);
-INSERT INTO `role_menus` VALUES (1, 1034);
-INSERT INTO `role_menus` VALUES (1, 1035);
-INSERT INTO `role_menus` VALUES (1, 1036);
-INSERT INTO `role_menus` VALUES (1, 1037);
-INSERT INTO `role_menus` VALUES (1, 1038);
-INSERT INTO `role_menus` VALUES (1, 1039);
-INSERT INTO `role_menus` VALUES (1, 1040);
-INSERT INTO `role_menus` VALUES (1, 1041);
-INSERT INTO `role_menus` VALUES (1, 1042);
-INSERT INTO `role_menus` VALUES (1, 1043);
-INSERT INTO `role_menus` VALUES (2, 911);
-INSERT INTO `role_menus` VALUES (2, 1031);
-INSERT INTO `role_menus` VALUES (2, 1032);
 
 -- ----------------------------
 -- Table structure for role_permissions
@@ -264,129 +186,6 @@ CREATE TABLE `role_permissions`  (
 -- ----------------------------
 -- Records of role_permissions
 -- ----------------------------
-INSERT INTO `role_permissions` VALUES (1, 'system:announcement:create');
-INSERT INTO `role_permissions` VALUES (1, 'system:announcement:delete');
-INSERT INTO `role_permissions` VALUES (1, 'system:announcement:query');
-INSERT INTO `role_permissions` VALUES (1, 'system:announcement:update');
-INSERT INTO `role_permissions` VALUES (1, 'system:AnnouncementCards:create');
-INSERT INTO `role_permissions` VALUES (1, 'system:AnnouncementCards:delete');
-INSERT INTO `role_permissions` VALUES (1, 'system:AnnouncementCards:query');
-INSERT INTO `role_permissions` VALUES (1, 'system:AnnouncementCards:update');
-INSERT INTO `role_permissions` VALUES (1, 'system:AnnouncementTable:create');
-INSERT INTO `role_permissions` VALUES (1, 'system:AnnouncementTable:delete');
-INSERT INTO `role_permissions` VALUES (1, 'system:AnnouncementTable:query');
-INSERT INTO `role_permissions` VALUES (1, 'system:AnnouncementTable:update');
-INSERT INTO `role_permissions` VALUES (1, 'system:example:create');
-INSERT INTO `role_permissions` VALUES (1, 'system:example:delete');
-INSERT INTO `role_permissions` VALUES (1, 'system:example:query');
-INSERT INTO `role_permissions` VALUES (1, 'system:example:update');
-INSERT INTO `role_permissions` VALUES (1, 'system:ExampleGoods:create');
-INSERT INTO `role_permissions` VALUES (1, 'system:ExampleGoods:delete');
-INSERT INTO `role_permissions` VALUES (1, 'system:ExampleGoods:query');
-INSERT INTO `role_permissions` VALUES (1, 'system:ExampleGoods:update');
-INSERT INTO `role_permissions` VALUES (1, 'system:ExampleOrder:create');
-INSERT INTO `role_permissions` VALUES (1, 'system:ExampleOrder:delete');
-INSERT INTO `role_permissions` VALUES (1, 'system:ExampleOrder:query');
-INSERT INTO `role_permissions` VALUES (1, 'system:ExampleOrder:update');
-INSERT INTO `role_permissions` VALUES (1, 'system:ExamplePrint:query');
-INSERT INTO `role_permissions` VALUES (1, 'system:MessageSend:create');
-INSERT INTO `role_permissions` VALUES (1, 'system:MessageSend:delete');
-INSERT INTO `role_permissions` VALUES (1, 'system:MessageSend:query');
-INSERT INTO `role_permissions` VALUES (1, 'system:MessageSend:update');
-INSERT INTO `role_permissions` VALUES (1, 'system:SwaggerUI:create');
-INSERT INTO `role_permissions` VALUES (1, 'system:SwaggerUI:delete');
-INSERT INTO `role_permissions` VALUES (1, 'system:SwaggerUI:query');
-INSERT INTO `role_permissions` VALUES (1, 'system:SwaggerUI:update');
-INSERT INTO `role_permissions` VALUES (1, 'system:system:create');
-INSERT INTO `role_permissions` VALUES (1, 'system:system:delete');
-INSERT INTO `role_permissions` VALUES (1, 'system:system:query');
-INSERT INTO `role_permissions` VALUES (1, 'system:system:update');
-INSERT INTO `role_permissions` VALUES (1, 'system:SystemAi:create');
-INSERT INTO `role_permissions` VALUES (1, 'system:SystemAi:delete');
-INSERT INTO `role_permissions` VALUES (1, 'system:SystemAi:query');
-INSERT INTO `role_permissions` VALUES (1, 'system:SystemAi:update');
-INSERT INTO `role_permissions` VALUES (1, 'system:SystemLog:create');
-INSERT INTO `role_permissions` VALUES (1, 'system:SystemLog:delete');
-INSERT INTO `role_permissions` VALUES (1, 'system:SystemLog:query');
-INSERT INTO `role_permissions` VALUES (1, 'system:SystemLog:update');
-INSERT INTO `role_permissions` VALUES (1, 'system:SystemMenu:create');
-INSERT INTO `role_permissions` VALUES (1, 'system:SystemMenu:delete');
-INSERT INTO `role_permissions` VALUES (1, 'system:SystemMenu:query');
-INSERT INTO `role_permissions` VALUES (1, 'system:SystemMenu:update');
-INSERT INTO `role_permissions` VALUES (1, 'system:SystemModule:query');
-INSERT INTO `role_permissions` VALUES (1, 'system:SystemModule:update');
-INSERT INTO `role_permissions` VALUES (1, 'system:SystemMonitor:create');
-INSERT INTO `role_permissions` VALUES (1, 'system:SystemMonitor:delete');
-INSERT INTO `role_permissions` VALUES (1, 'system:SystemMonitor:query');
-INSERT INTO `role_permissions` VALUES (1, 'system:SystemMonitor:update');
-INSERT INTO `role_permissions` VALUES (1, 'system:SystemMonitorDruid:query');
-INSERT INTO `role_permissions` VALUES (1, 'system:SystemMonitorOnlineUser:create');
-INSERT INTO `role_permissions` VALUES (1, 'system:SystemMonitorOnlineUser:delete');
-INSERT INTO `role_permissions` VALUES (1, 'system:SystemMonitorOnlineUser:query');
-INSERT INTO `role_permissions` VALUES (1, 'system:SystemMonitorOnlineUser:update');
-INSERT INTO `role_permissions` VALUES (1, 'system:SystemMonitorRedis:create');
-INSERT INTO `role_permissions` VALUES (1, 'system:SystemMonitorRedis:delete');
-INSERT INTO `role_permissions` VALUES (1, 'system:SystemMonitorRedis:query');
-INSERT INTO `role_permissions` VALUES (1, 'system:SystemMonitorRedis:update');
-INSERT INTO `role_permissions` VALUES (1, 'system:SystemMonitorServer:create');
-INSERT INTO `role_permissions` VALUES (1, 'system:SystemMonitorServer:delete');
-INSERT INTO `role_permissions` VALUES (1, 'system:SystemMonitorServer:query');
-INSERT INTO `role_permissions` VALUES (1, 'system:SystemMonitorServer:update');
-INSERT INTO `role_permissions` VALUES (1, 'system:SystemPersonalize:create');
-INSERT INTO `role_permissions` VALUES (1, 'system:SystemPersonalize:delete');
-INSERT INTO `role_permissions` VALUES (1, 'system:SystemPersonalize:query');
-INSERT INTO `role_permissions` VALUES (1, 'system:SystemPersonalize:update');
-INSERT INTO `role_permissions` VALUES (1, 'system:SystemRole:create');
-INSERT INTO `role_permissions` VALUES (1, 'system:SystemRole:delete');
-INSERT INTO `role_permissions` VALUES (1, 'system:SystemRole:query');
-INSERT INTO `role_permissions` VALUES (1, 'system:SystemRole:update');
-INSERT INTO `role_permissions` VALUES (1, 'system:SystemSecurity:query');
-INSERT INTO `role_permissions` VALUES (1, 'system:SystemSecurity:update');
-INSERT INTO `role_permissions` VALUES (1, 'system:SystemSensitive:create');
-INSERT INTO `role_permissions` VALUES (1, 'system:SystemSensitive:delete');
-INSERT INTO `role_permissions` VALUES (1, 'system:SystemSensitive:query');
-INSERT INTO `role_permissions` VALUES (1, 'system:SystemSensitive:update');
-INSERT INTO `role_permissions` VALUES (1, 'system:SystemStorage:query');
-INSERT INTO `role_permissions` VALUES (1, 'system:SystemStorage:update');
-INSERT INTO `role_permissions` VALUES (1, 'system:SystemUser:create');
-INSERT INTO `role_permissions` VALUES (1, 'system:SystemUser:delete');
-INSERT INTO `role_permissions` VALUES (1, 'system:SystemUser:query');
-INSERT INTO `role_permissions` VALUES (1, 'system:SystemUser:update');
-INSERT INTO `role_permissions` VALUES (1, 'system:SystemVerification:query');
-INSERT INTO `role_permissions` VALUES (1, 'system:SystemVerification:update');
-INSERT INTO `role_permissions` VALUES (1, 'system:SystemWatermark:create');
-INSERT INTO `role_permissions` VALUES (1, 'system:SystemWatermark:delete');
-INSERT INTO `role_permissions` VALUES (1, 'system:SystemWatermark:query');
-INSERT INTO `role_permissions` VALUES (1, 'system:SystemWatermark:update');
-INSERT INTO `role_permissions` VALUES (1, 'system:user:create');
-INSERT INTO `role_permissions` VALUES (1, 'system:user:delete');
-INSERT INTO `role_permissions` VALUES (1, 'system:user:query');
-INSERT INTO `role_permissions` VALUES (1, 'system:user:update');
-INSERT INTO `role_permissions` VALUES (1, 'system:UserIndex:create');
-INSERT INTO `role_permissions` VALUES (1, 'system:UserIndex:delete');
-INSERT INTO `role_permissions` VALUES (1, 'system:UserIndex:query');
-INSERT INTO `role_permissions` VALUES (1, 'system:UserIndex:update');
-INSERT INTO `role_permissions` VALUES (1, 'system:users:create');
-INSERT INTO `role_permissions` VALUES (1, 'system:users:delete');
-INSERT INTO `role_permissions` VALUES (1, 'system:users:query');
-INSERT INTO `role_permissions` VALUES (1, 'system:users:update');
-INSERT INTO `role_permissions` VALUES (2, 'system:ExampleGoods:create');
-INSERT INTO `role_permissions` VALUES (2, 'system:ExampleGoods:delete');
-INSERT INTO `role_permissions` VALUES (2, 'system:ExampleGoods:query');
-INSERT INTO `role_permissions` VALUES (2, 'system:ExampleGoods:update');
-INSERT INTO `role_permissions` VALUES (2, 'system:ExampleOrder:create');
-INSERT INTO `role_permissions` VALUES (2, 'system:ExampleOrder:delete');
-INSERT INTO `role_permissions` VALUES (2, 'system:ExampleOrder:query');
-INSERT INTO `role_permissions` VALUES (2, 'system:ExampleOrder:update');
-INSERT INTO `role_permissions` VALUES (2, 'system:ExamplePrint:query');
-INSERT INTO `role_permissions` VALUES (2, 'system:SystemLog:create');
-INSERT INTO `role_permissions` VALUES (2, 'system:SystemLog:delete');
-INSERT INTO `role_permissions` VALUES (2, 'system:SystemLog:query');
-INSERT INTO `role_permissions` VALUES (2, 'system:SystemLog:update');
-INSERT INTO `role_permissions` VALUES (2, 'system:UserIndex:create');
-INSERT INTO `role_permissions` VALUES (2, 'system:UserIndex:delete');
-INSERT INTO `role_permissions` VALUES (2, 'system:UserIndex:query');
-INSERT INTO `role_permissions` VALUES (2, 'system:UserIndex:update');
 
 -- ----------------------------
 -- Table structure for roles
@@ -403,8 +202,6 @@ CREATE TABLE `roles`  (
 -- ----------------------------
 -- Records of roles
 -- ----------------------------
-INSERT INTO `roles` VALUES (1, 'admin', '管理员 - 拥有所有权限');
-INSERT INTO `roles` VALUES (2, 'user', '普通用户 - 基本查看权限');
 
 -- ----------------------------
 -- Table structure for security_captcha_settings
@@ -425,7 +222,6 @@ CREATE TABLE `security_captcha_settings`  (
 -- ----------------------------
 -- Records of security_captcha_settings
 -- ----------------------------
-INSERT INTO `security_captcha_settings` VALUES (1, 'drag', 350, 200, 98, 5, 8, 1);
 
 -- ----------------------------
 -- Table structure for security_password_policy
@@ -444,7 +240,6 @@ CREATE TABLE `security_password_policy`  (
 -- ----------------------------
 -- Records of security_password_policy
 -- ----------------------------
-INSERT INTO `security_password_policy` VALUES (1, 6, 1, 1, 1, 0);
 
 -- ----------------------------
 -- Table structure for security_token_settings
@@ -462,7 +257,6 @@ CREATE TABLE `security_token_settings`  (
 -- ----------------------------
 -- Records of security_token_settings
 -- ----------------------------
-INSERT INTO `security_token_settings` VALUES (1, 1440, 1440, 60, 0);
 
 -- ----------------------------
 -- Table structure for sensitive_page_settings
@@ -482,22 +276,6 @@ CREATE TABLE `sensitive_page_settings`  (
 -- ----------------------------
 -- Records of sensitive_page_settings
 -- ----------------------------
-INSERT INTO `sensitive_page_settings` VALUES (21, '/monitor/online-user', '系统监控 / 在线用户', 0, '2026-01-09 22:20:58', '2026-01-09 22:32:28');
-INSERT INTO `sensitive_page_settings` VALUES (22, '/monitor/server', '系统监控 / 服务监控', 0, '2026-01-09 22:20:58', '2026-01-09 22:32:28');
-INSERT INTO `sensitive_page_settings` VALUES (23, '/monitor/redis', '系统监控 / Redis监控', 0, '2026-01-09 22:20:58', '2026-01-09 22:32:28');
-INSERT INTO `sensitive_page_settings` VALUES (24, '/user/index', '个人中心 / 个人中心', 0, '2026-01-09 22:20:58', '2026-01-09 22:32:28');
-INSERT INTO `sensitive_page_settings` VALUES (25, '/system/menu', '系统设置 / 目录/页面管理', 0, '2026-01-09 22:20:58', '2026-01-09 22:32:28');
-INSERT INTO `sensitive_page_settings` VALUES (26, '/system/personalize', '系统设置 / 个性化设置', 0, '2026-01-09 22:20:58', '2026-01-09 22:32:28');
-INSERT INTO `sensitive_page_settings` VALUES (27, '/system/storage', '系统设置 / 对象存储', 0, '2026-01-09 22:20:58', '2026-01-09 22:32:28');
-INSERT INTO `sensitive_page_settings` VALUES (28, '/system/verification', '系统设置 / 验证设置', 0, '2026-01-09 22:20:58', '2026-01-09 22:32:28');
-INSERT INTO `sensitive_page_settings` VALUES (29, '/system/security', '系统设置 / 安全设置', 0, '2026-01-09 22:20:58', '2026-01-09 22:32:28');
-INSERT INTO `sensitive_page_settings` VALUES (30, '/system/sensitive', '系统设置 / 敏感词拦截', 0, '2026-01-09 22:20:58', '2026-01-09 22:32:28');
-INSERT INTO `sensitive_page_settings` VALUES (31, '/system/ai', '系统设置 / AI设置', 0, '2026-01-09 22:20:58', '2026-01-09 22:32:28');
-INSERT INTO `sensitive_page_settings` VALUES (32, '/user-settings/user', '用户设置 / 用户管理', 0, '2026-01-09 22:20:58', '2026-01-09 22:32:28');
-INSERT INTO `sensitive_page_settings` VALUES (33, '/user-settings/role', '用户设置 / 角色管理', 0, '2026-01-09 22:20:58', '2026-01-09 22:32:28');
-INSERT INTO `sensitive_page_settings` VALUES (34, '/user-settings/log', '用户设置 / 操作日志', 0, '2026-01-09 22:20:58', '2026-01-09 22:32:28');
-INSERT INTO `sensitive_page_settings` VALUES (35, '/announcement/table', '公告管理 / 公告列表', 0, '2026-01-09 22:20:58', '2026-01-09 22:32:28');
-INSERT INTO `sensitive_page_settings` VALUES (36, '/announcement/cards', '公告管理 / 公告卡片', 0, '2026-01-09 22:20:58', '2026-01-09 22:32:28');
 
 -- ----------------------------
 -- Table structure for sensitive_settings
@@ -513,7 +291,6 @@ CREATE TABLE `sensitive_settings`  (
 -- ----------------------------
 -- Records of sensitive_settings
 -- ----------------------------
-INSERT INTO `sensitive_settings` VALUES (1, 0, '2026-01-09 22:32:28');
 
 -- ----------------------------
 -- Table structure for sensitive_words
@@ -531,9 +308,6 @@ CREATE TABLE `sensitive_words`  (
 
 -- ----------------------------
 -- Records of sensitive_words
--- ----------------------------
-
--- ----------------------------
 -- Table structure for storage_settings
 -- ----------------------------
 DROP TABLE IF EXISTS `storage_settings`;
@@ -554,7 +328,6 @@ CREATE TABLE `storage_settings`  (
 -- ----------------------------
 -- Records of storage_settings
 -- ----------------------------
-INSERT INTO `storage_settings` VALUES (1, 'LOCAL', NULL, NULL, NULL, NULL, 'zz', NULL, NULL, 1);
 
 -- ----------------------------
 -- Table structure for sys_menu_items
@@ -591,37 +364,6 @@ CREATE TABLE `sys_menu_items`  (
 -- ----------------------------
 -- Records of sys_menu_items
 -- ----------------------------
-INSERT INTO `sys_menu_items` VALUES (910, NULL, 'DIR', '/user', 'user', 'LAYOUT', '/user/index', '个人中心', 'User Center', 'user-safety-filled', 0, 1, NULL, 0, 1, NULL, NULL, 3, 6, '2025-12-30 23:58:19', '2026-01-18 21:21:03', 'query,create,update,delete');
-INSERT INTO `sys_menu_items` VALUES (911, 910, 'PAGE', 'index', 'UserIndex', '/user/index', NULL, '个人中心', 'User Center', 'user', 0, 1, NULL, 0, 1, NULL, NULL, 0, 5, '2025-12-30 23:58:19', '2026-01-18 21:21:03', 'query,create,update,delete');
-INSERT INTO `sys_menu_items` VALUES (1000, NULL, 'DIR', '/system', 'system', 'LAYOUT', NULL, '系统设置', 'System', 'setting', 0, 1, NULL, 0, 1, NULL, NULL, 6, 7, '2025-12-14 03:19:00', '2026-01-18 21:21:03', NULL);
-INSERT INTO `sys_menu_items` VALUES (1001, 1019, 'PAGE', 'user', 'SystemUser', '/system/user/index', NULL, '用户管理', 'Users', 'user', 0, 1, NULL, 0, 1, 'admin', NULL, 0, 16, '2025-12-14 03:19:00', '2026-01-18 21:21:03', 'create,update,delete,query');
-INSERT INTO `sys_menu_items` VALUES (1002, 1019, 'PAGE', 'role', 'SystemRole', '/system/role/index', NULL, '角色管理', 'Roles', 'usergroup', 0, 1, NULL, 0, 1, 'admin', NULL, 1, 12, '2025-12-14 03:19:00', '2026-01-18 21:21:03', 'create,update,delete,query');
-INSERT INTO `sys_menu_items` VALUES (1008, 1019, 'PAGE', 'org', 'SystemOrg', '/system/org/index', NULL, '机构管理', 'Organization', 'tree-round-dot-vertical', 0, 1, NULL, 0, 1, 'admin', NULL, 2, 0, '2025-12-14 03:19:00', '2026-01-18 21:21:03', 'create,update,delete,query');
-INSERT INTO `sys_menu_items` VALUES (1003, 1000, 'PAGE', 'menu', 'SystemMenu', '/system/menu/index', NULL, '目录/页面管理', 'Menu Manager', 'tree-round-dot-vertical', 0, 1, NULL, 0, 1, 'admin', NULL, 0, 7, '2025-12-14 03:19:00', '2026-01-18 21:21:03', 'create,update,delete,query');
-INSERT INTO `sys_menu_items` VALUES (1004, NULL, 'DIR', '/monitor', 'SystemMonitor', 'LAYOUT', NULL, '系统监控', 'Monitor', 'chart-bar', 0, 1, NULL, 0, 1, 'admin', NULL, 5, 14, '2025-12-16 01:38:31', '2026-01-18 21:21:03', 'query,create,update,delete');
-INSERT INTO `sys_menu_items` VALUES (1005, 1004, 'PAGE', 'online-user', 'SystemMonitorOnlineUser', '/system/monitor/online-user/index', NULL, '在线用户', 'Online User', 'usergroup-add', 0, 1, NULL, 0, 1, 'admin', NULL, 0, 5, '2025-12-16 01:38:31', '2026-01-18 21:22:37', 'create,update,delete,query');
-INSERT INTO `sys_menu_items` VALUES (1006, 1004, 'PAGE', 'server', 'SystemMonitorServer', '/system/monitor/server/index', NULL, '服务监控', 'Server Monitor', 'server', 0, 1, NULL, 0, 1, 'admin', NULL, 0, 4, '2025-12-16 03:21:37', '2026-01-18 21:21:03', 'create,update,delete,query');
-INSERT INTO `sys_menu_items` VALUES (1007, 1004, 'PAGE', 'redis', 'SystemMonitorRedis', '/system/monitor/redis/index', NULL, 'Redis监控', 'Redis Monitor', 'chart-3d', 0, 1, NULL, 0, 1, 'admin', NULL, 1, 9, '2025-12-16 03:28:05', '2026-01-18 21:21:03', 'query,create,update,delete');
-INSERT INTO `sys_menu_items` VALUES (1013, 1000, 'PAGE', 'personalize', 'SystemPersonalize', '/system/personalize/index', NULL, '个性化设置', 'Personalize', 'setting-1', 0, 1, NULL, 0, 1, NULL, NULL, 2, 7, '2025-12-14 03:19:00', '2026-01-18 21:21:03', 'create,update,delete,query');
-INSERT INTO `sys_menu_items` VALUES (1018, 1019, 'PAGE', 'log', 'SystemLog', '/system/log/index', NULL, '操作日志', 'Operation Logs', 'file', 0, 1, NULL, 0, 1, 'admin', NULL, 2, 6, '2025-12-29 14:21:55', '2026-01-18 21:21:03', 'create,update,delete,query');
-INSERT INTO `sys_menu_items` VALUES (1019, NULL, 'DIR', '/user-settings', 'users', 'LAYOUT', NULL, '用户设置', NULL, 'usergroup', 0, 1, NULL, 0, 1, NULL, NULL, 4, 7, '2025-12-29 20:45:20', '2026-01-18 21:21:03', NULL);
-INSERT INTO `sys_menu_items` VALUES (1020, 1004, 'PAGE', 'swagger', 'SwaggerUI', 'IFRAME', NULL, '接口文档', 'API Docs', 'api', 0, 1, '/api/swagger-ui/index.html', 0, 1, NULL, NULL, 2, 5, '2025-12-29 21:40:49', '2026-01-18 21:21:03', 'create,update,delete,query');
-INSERT INTO `sys_menu_items` VALUES (1021, 1000, 'PAGE', 'storage', 'SystemStorage', '/system/storage/index', NULL, '对象存储', 'Object Storage', 'cloud-upload', 0, 1, NULL, 0, 1, NULL, NULL, 3, 5, '2025-12-31 05:05:00', '2026-01-18 21:21:03', 'update,query');
-INSERT INTO `sys_menu_items` VALUES (1022, 1000, 'PAGE', 'verification', 'SystemVerification', '/system/verification/index', NULL, '验证设置', 'Verification', 'check-circle', 0, 1, NULL, 0, 1, NULL, NULL, 4, 5, '2026-01-05 15:24:28', '2026-01-18 21:21:03', 'update,query');
-INSERT INTO `sys_menu_items` VALUES (1023, 1000, 'PAGE', 'security', 'SystemSecurity', '/system/security/index', NULL, '安全设置', 'Security', 'lock-on', 0, 1, NULL, 0, 1, NULL, NULL, 5, 5, '2026-01-06 02:27:43', '2026-01-18 21:21:03', 'update,query');
-INSERT INTO `sys_menu_items` VALUES (1030, NULL, 'DIR', '/example', 'example', 'LAYOUT', '/example/goods', '示例页面', 'Examples', 'file', 0, 1, NULL, 0, 1, 'admin', NULL, 0, 12, '2026-01-05 15:49:43', '2026-01-19 00:09:21', NULL);
-INSERT INTO `sys_menu_items` VALUES (1031, 1030, 'PAGE', 'goods', 'ExampleGoods', '/example/goods/index', NULL, '商品管理', 'Goods', NULL, 0, 1, NULL, 0, 1, 'admin', NULL, 0, 11, '2026-01-05 15:49:43', '2026-01-19 00:09:23', 'create,update,delete,query');
-INSERT INTO `sys_menu_items` VALUES (1032, 1030, 'PAGE', 'order', 'ExampleOrder', '/example/order/index', NULL, '订单管理', 'Orders', NULL, 0, 1, NULL, 0, 1, 'admin', NULL, 1, 11, '2026-01-05 15:49:43', '2026-01-19 00:09:23', 'create,update,delete,query');
-INSERT INTO `sys_menu_items` VALUES (1034, 1000, 'PAGE', 'sensitive', 'SystemSensitive', '/system/sensitive/index', NULL, '敏感词拦截', 'Sensitive Words', 'filter', 0, 1, NULL, 0, 1, NULL, NULL, 6, 4, '2026-01-08 21:22:11', '2026-01-18 21:21:03', 'create,update,delete,query');
-INSERT INTO `sys_menu_items` VALUES (1035, NULL, 'DIR', '/announcement', 'announcement', 'LAYOUT', '/announcement/table', '公告管理', 'Announcements', 'notification', 0, 1, NULL, 0, 1, NULL, NULL, 2, 4, '2026-01-08 22:43:08', '2026-01-18 21:21:03', NULL);
-INSERT INTO `sys_menu_items` VALUES (1036, 1035, 'PAGE', 'table', 'AnnouncementTable', '/announcement/table/index', NULL, '公告管理', 'Announcement Table', NULL, 0, 1, NULL, 0, 1, NULL, NULL, 1, 5, '2026-01-08 22:43:20', '2026-01-18 21:21:03', 'query,create,update,delete');
-INSERT INTO `sys_menu_items` VALUES (1037, 1035, 'PAGE', 'cards', 'AnnouncementCards', '/announcement/cards/index', NULL, '通知中心', 'Announcement Cards', NULL, 0, 1, NULL, 0, 1, NULL, NULL, 2, 5, '2026-01-08 22:43:25', '2026-01-18 21:21:03', 'query,create,update,delete');
-INSERT INTO `sys_menu_items` VALUES (1038, 1000, 'PAGE', 'ai', 'SystemAi', '/system/ai/index', NULL, 'AI设置', 'AI Settings', 'chat', 0, 1, NULL, 0, 1, NULL, NULL, 7, 4, '2026-01-08 22:45:58', '2026-01-18 21:21:03', 'create,update,delete,query');
-INSERT INTO `sys_menu_items` VALUES (1039, 1035, 'PAGE', 'send', 'MessageSend', '/message/send/index', NULL, '消息发送', 'Message Send', NULL, 0, 1, NULL, 0, 1, NULL, NULL, 0, 4, '2026-01-08 22:43:25', '2026-01-18 21:21:03', 'create,update,delete,query');
-INSERT INTO `sys_menu_items` VALUES (1040, NULL, 'DIR', '/console', 'console', 'LAYOUT', '/console/download', '文件下载', 'Console', 'download', 0, 1, NULL, 0, 1, NULL, NULL, 1, 4, '2026-01-14 02:30:00', '2026-01-18 21:21:03', NULL);
-INSERT INTO `sys_menu_items` VALUES (1041, 1040, 'PAGE', 'download', 'ConsoleDownload', '/console/download/index', NULL, '文件下载', 'File Download', 'download', 0, 1, NULL, 0, 1, NULL, NULL, 0, 3, '2026-01-14 02:30:00', '2026-01-18 21:21:03', 'create,update,delete,query');
-INSERT INTO `sys_menu_items` VALUES (1042, 1000, 'PAGE', 'dict', 'SystemDict', '/system/dict/index', NULL, '字典管理', 'Dictionary', 'book', 0, 1, NULL, 0, 1, 'admin', NULL, 8, 4, '2026-01-18 21:21:03', '2026-01-18 21:21:03', 'create,update,delete,query');
-INSERT INTO `sys_menu_items` VALUES (1043, 1000, 'PAGE', 'modules', 'SystemModule', '/system/modules/index', NULL, '????', 'Modules', 'grid-view', 0, 1, NULL, 0, 1, NULL, NULL, 6, 4, '2026-01-18 21:21:03', '2026-01-18 21:21:03', 'update,query');
 
 -- ----------------------------
 -- Table structure for ui_brand_settings
@@ -641,7 +383,6 @@ CREATE TABLE `ui_brand_settings`  (
 -- ----------------------------
 -- Records of ui_brand_settings
 -- ----------------------------
-INSERT INTO `ui_brand_settings` VALUES (1, 'Elexvx 脚手架系统', '1.0', '', '', NULL, '');
 
 -- ----------------------------
 -- Table structure for ui_footer_settings
@@ -658,7 +399,6 @@ CREATE TABLE `ui_footer_settings`  (
 -- ----------------------------
 -- Records of ui_footer_settings
 -- ----------------------------
-INSERT INTO `ui_footer_settings` VALUES (1, 'Elexvx Inc', '苏ICP备2025160017号', '2025');
 
 -- ----------------------------
 -- Table structure for ui_layout_settings
@@ -685,7 +425,6 @@ CREATE TABLE `ui_layout_settings`  (
 -- ----------------------------
 -- Records of ui_layout_settings
 -- ----------------------------
-INSERT INTO `ui_layout_settings` VALUES (1, '/example/goods', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 
 -- ----------------------------
 -- Table structure for ui_legal_settings
@@ -701,7 +440,6 @@ CREATE TABLE `ui_legal_settings`  (
 -- ----------------------------
 -- Records of ui_legal_settings
 -- ----------------------------
-INSERT INTO `ui_legal_settings` VALUES (1, '<h1 style=\"text-align: start;\">用户协议</h1><p style=\"text-align: start;\"><em>宏翔商道（南京）科技发展有限公司（Elexvx Inc）</em>（以下简称“我们”）依据本协议为用户（以下简称“你”）提供<em>Elexvx 脚手架系统</em>服务。本协议对你和我们均具有法律约束力。</p><h2 style=\"text-align: start;\">一、本服务的功能</h2><p style=\"text-align: start;\">你可以使用本服务企业底层脚手架系统。</p><p style=\"text-align: start;\"><br></p><h2 style=\"text-align: start;\">二、责任范围及限制</h2><p style=\"text-align: start;\">你使用本服务得到的结果仅供参考，实际情况以官方为准。</p><p style=\"text-align: start;\"><br></p><h2 style=\"text-align: start;\">三、隐私保护</h2><p style=\"text-align: start;\">我们重视对你隐私的保护，你的个人隐私信息将根据《隐私政策》受到保护与规范，详情请参阅《隐私政策》。</p><p style=\"text-align: start;\"><br></p><h2 style=\"text-align: start;\">四、其他条款</h2><p style=\"text-align: start;\">4.1 本协议所有条款的标题仅为阅读方便，本身并无实际涵义，不能作为本协议涵义解释的依据。</p><p style=\"text-align: start;\">4.2 本协议条款无论因何种原因部分无效或不可执行，其余条款仍有效，对双方具有约束力。</p>', '<h1 style=\"text-align: start;\">隐私政策</h1><p>更新日期：<strong>2026/1/8</strong></p><p>生效日期：<strong>2026/1/8</strong></p><h1 style=\"text-align: start;\">导言</h1><p style=\"text-align: start;\"><em>Elexvx 脚手架系统</em> 是一款由 <em>宏翔商道（南京）科技发展有限公司（Elexvx Inc）</em> （以下简称“我们”）提供的产品。 您在使用我们的服务时，我们可能会收集和使用您的相关信息。我们希望通过本《隐私政策》向您说明，在使用我们的服务时，我们如何收集、使用、储存和分享这些信息，以及我们为您提供的访问、更新、控制和保护这些信息的方式。 本《隐私政策》与您所使用的 <em>Elexvx 脚手架系统</em> 服务息息相关，希望您仔细阅读，在需要时，按照本《隐私政策》的指引，作出您认为适当的选择。本《隐私政策》中涉及的相关技术词汇，我们尽量以简明扼要的表述，并提供进一步说明的链接，以便您的理解。</p><p style=\"text-align: start;\"><strong>您使用或继续使用我们的服务，即意味着同意我们按照本《隐私政策》收集、使用、储存和分享您的相关信息。</strong></p><p style=\"text-align: start;\">如对本《隐私政策》或相关事宜有任何问题，请通过 <strong>elexvx@elexvx.com</strong> 与我们联系。</p><p style=\"text-align: start;\"><br></p><h1 style=\"text-align: start;\">1. 我们收集的信息</h1><p style=\"text-align: start;\">我们或我们的第三方合作伙伴提供服务时，可能会收集、储存和使用下列与您有关的信息。如果您不提供相关信息，可能无法注册成为我们的用户或无法享受我们提供的某些服务，或者无法达到相关服务拟达到的效果。</p><ul><li style=\"text-align: start;\"><strong>个人信息</strong>，您在注册账户或使用我们的服务时，向我们提供的相关个人信息，例如电话号码、电子邮件等。</li></ul><p style=\"text-align: start;\"><br></p><h1 style=\"text-align: start;\">2. 信息的存储</h1><h2 style=\"text-align: start;\">2.1 信息存储的方式和期限</h2><ul><li style=\"text-align: start;\">我们会通过安全的方式存储您的信息，包括本地存储（例如利用APP进行数据缓存）、数据库和服务器日志。</li><li style=\"text-align: start;\">一般情况下，我们只会在为实现服务目的所必需的时间内或法律法规规定的条件下存储您的个人信息。</li></ul><h2 style=\"text-align: start;\">2.2 信息存储的地域</h2><ul><li style=\"text-align: start;\">我们会按照法律法规规定，将境内收集的用户个人信息存储于中国境内。</li><li style=\"text-align: start;\">目前我们不会跨境传输或存储您的个人信息。将来如需跨境传输或存储的，我们会向您告知信息出境的目的、接收方、安全保证措施和安全风险，并征得您的同意。</li></ul><h2 style=\"text-align: start;\">2.3 产品或服务停止运营时的通知</h2><ul><li style=\"text-align: start;\">当我们的产品或服务发生停止运营的情况时，我们将以推送通知、公告等形式通知您，并在合理期限内删除您的个人信息或进行匿名化处理，法律法规另有规定的除外。</li></ul><p style=\"text-align: start;\"><br></p><h1 style=\"text-align: start;\">3. 信息安全</h1><p style=\"text-align: start;\">我们使用各种安全技术和程序，以防信息的丢失、不当使用、未经授权阅览或披露。例如，在某些服务中，我们将利用加密技术（例如SSL）来保护您提供的个人信息。但请您理解，由于技术的限制以及可能存在的各种恶意手段，在互联网行业，即便竭尽所能加强安全措施，也不可能始终保证信息百分之百的安全。您需要了解，您接入我们的服务所用的系统和通讯网络，有可能因我们可控范围外的因素而出现问题。</p><p style=\"text-align: start;\"><br></p><h1 style=\"text-align: start;\">4. 我们如何使用信息</h1><p style=\"text-align: start;\">我们可能将在向您提供服务的过程之中所收集的信息用作下列用途：</p><ul><li style=\"text-align: start;\">向您提供服务；</li><li style=\"text-align: start;\">在我们提供服务时，用于身份验证、客户服务、安全防范、诈骗监测、存档和备份用途，确保我们向您提供的产品和服务的安全性；</li><li style=\"text-align: start;\">帮助我们设计新服务，改善我们现有服务；</li><li style=\"text-align: start;\">使我们更加了解您如何接入和使用我们的服务，从而针对性地回应您的个性化需求，例如语言设定、位置设定、个性化的帮助服务和指示，或对您和其他用户作出其他方面的回应；</li><li style=\"text-align: start;\">向您提供与您更加相关的广告以替代普遍投放的广告；</li><li style=\"text-align: start;\">评估我们服务中的广告和其他促销及推广活动的效果，并加以改善；</li><li style=\"text-align: start;\">软件认证或管理软件升级；</li><li style=\"text-align: start;\">让您参与有关我们产品和服务的调查。</li></ul><p style=\"text-align: start;\"><br></p><h1 style=\"text-align: start;\">5. 信息共享</h1><p style=\"text-align: start;\">目前，我们不会主动共享或转让您的个人信息至第三方，如存在其他共享或转让您的个人信息或您需要我们将您的个人信息共享或转让至第三方情形时，我们会直接或确认第三方征得您对上述行为的明示同意。</p><p style=\"text-align: start;\">为了投放广告，评估、优化广告投放效果等目的，我们需要向广告主及其代理商等第三方合作伙伴共享您的部分数据，要求其严格遵守我们关于数据隐私保护的措施与要求，包括但不限于根据数据保护协议、承诺书及相关数据处理政策进行处理，避免识别出个人身份，保障隐私安全。</p><p style=\"text-align: start;\">我们不会向合作伙伴分享可用于识别您个人身份的信息（例如您的姓名或电子邮件地址），除非您明确授权。</p><p style=\"text-align: start;\">我们不会对外公开披露所收集的个人信息，如必须公开披露时，我们会向您告知此次公开披露的目的、披露信息的类型及可能涉及的敏感信息，并征得您的明示同意。</p><p style=\"text-align: start;\">随着我们业务的持续发展，我们有可能进行合并、收购、资产转让等交易，我们将告知您相关情形，按照法律法规及不低于本《隐私政策》所要求的标准继续保护或要求新的控制者继续保护您的个人信息。</p><p style=\"text-align: start;\">另外，根据相关法律法规及国家标准，以下情形中，我们可能会共享、转让、公开披露个人信息无需事先征得您的授权同意：</p><ul><li style=\"text-align: start;\">与国家安全、国防安全直接相关的；</li><li style=\"text-align: start;\">与公共安全、公共卫生、重大公共利益直接相关的；</li><li style=\"text-align: start;\">犯罪侦查、起诉、审判和判决执行等直接相关的；</li><li style=\"text-align: start;\">出于维护个人信息主体或其他个人的生命、财产等重大合法权益但又很难得到本人同意的；</li><li style=\"text-align: start;\">个人信息主体自行向社会公众公开个人信息的；</li><li style=\"text-align: start;\">从合法公开披露的信息中收集个人信息的，如合法的新闻报道、政府信息公开等渠道。</li></ul><p style=\"text-align: start;\"><br></p><h1 style=\"text-align: start;\">6. 您的权利</h1><p style=\"text-align: start;\">在您使用我们的服务期间，我们可能会视产品具体情况为您提供相应的操作设置，以便您可以查询、删除、更正或撤回您的相关个人信息，您可参考相应的具体指引进行操作。此外，我们还设置了投诉举报渠道，您的意见将会得到及时的处理。如果您无法通过上述途径和方式行使您的个人信息主体权利，您可以通过本《隐私政策》中提供的联系方式提出您的请求，我们会按照法律法规的规定予以反馈。</p><p style=\"text-align: start;\">当您决定不再使用我们的产品或服务时，可以申请注销账户。注销账户后，除法律法规另有规定外，我们将删除或匿名化处理您的个人信息。</p><p style=\"text-align: start;\"><br></p><h1 style=\"text-align: start;\">7. 变更</h1><p style=\"text-align: start;\">我们可能适时修订本《隐私政策》的条款。当变更发生时，我们会在版本更新时向您提示新的《隐私政策》，并向您说明生效日期。请您仔细阅读变更后的《隐私政策》内容，<strong>若您继续使用我们的服务，即表示您同意我们按照更新后的《隐私政策》处理您的个人信息。</strong></p><p style=\"text-align: start;\"><br></p><h1 style=\"text-align: start;\">8. 未成年人保护</h1><p style=\"text-align: start;\">我们鼓励父母或监护人指导未满十八岁的未成年人使用我们的服务。我们建议未成年人鼓励他们的父母或监护人阅读本《隐私政策》，并建议未成年人在提交的个人信息之前寻求父母或监护人的同意和指导。</p>');
 
 -- ----------------------------
 -- Table structure for ui_login_settings
@@ -717,7 +455,6 @@ CREATE TABLE `ui_login_settings`  (
 -- ----------------------------
 -- Records of ui_login_settings
 -- ----------------------------
-INSERT INTO `ui_login_settings` VALUES (1, '', 0);
 
 -- ----------------------------
 -- Table structure for ui_system_settings
@@ -735,7 +472,6 @@ CREATE TABLE `ui_system_settings`  (
 -- ----------------------------
 -- Records of ui_system_settings
 -- ----------------------------
-INSERT INTO `ui_system_settings` VALUES (1, 0, 1, 0, '系统维护中，请稍后访问');
 
 -- ----------------------------
 -- Table structure for ui_theme_settings
@@ -754,7 +490,6 @@ CREATE TABLE `ui_theme_settings`  (
 -- ----------------------------
 -- Records of ui_theme_settings
 -- ----------------------------
-INSERT INTO `ui_theme_settings` VALUES (1, 0, '06:00', '18:00', 'light', NULL);
 
 -- ----------------------------
 -- Table structure for sys_dict
@@ -774,138 +509,6 @@ CREATE TABLE `sys_dict`  (
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
--- Table structure for sys_dict_items
--- ----------------------------
-DROP TABLE IF EXISTS `sys_dict_items`;
-CREATE TABLE `sys_dict_items`  (
-  `id` bigint NOT NULL AUTO_INCREMENT,
-  `dict_id` bigint NOT NULL,
-  `label` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
-  `value` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
-  `value_type` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT 'string',
-  `status` tinyint NOT NULL DEFAULT 1,
-  `sort` int NOT NULL DEFAULT 0,
-  `tag_color` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
-  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`) USING BTREE,
-  UNIQUE INDEX `uk_sys_dict_item_value`(`dict_id` ASC, `value` ASC) USING BTREE,
-  INDEX `idx_sys_dict_item_dict`(`dict_id` ASC) USING BTREE
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
-
--- ----------------------------
--- Records of sys_dict
--- ----------------------------
-INSERT INTO `sys_dict` VALUES (2001, '性别', 'gender', 1, 1, '性别选项', '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict` VALUES (2002, '地址-省', 'address_province', 1, 2, '地址省份', '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict` VALUES (2003, '地址-市', 'address_city', 1, 3, '地址城市', '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict` VALUES (2004, '地址-区', 'address_district', 1, 4, '地址区县', '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict` VALUES (2005, '公告-类型', 'announcement_type', 1, 5, '公告类型', '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict` VALUES (2006, '公告-优先级', 'announcement_priority', 1, 6, '公告优先级', '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict` VALUES (2007, '公告-状态', 'announcement_status', 1, 7, '公告状态', '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict` VALUES (2008, '通知-类型', 'notification_type', 1, 8, '通知类型', '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict` VALUES (2009, '通知-优先级', 'notification_priority', 1, 9, '通知优先级', '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict` VALUES (2010, '通知-状态', 'notification_status', 1, 10, '通知状态', '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict` VALUES (2011, '消息-优先级', 'message_quality', 1, 11, '消息优先级', '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict` VALUES (2012, '日志-操作类型', 'log_action', 1, 12, '操作日志类型', '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict` VALUES (2013, '用户-状态', 'user_status', 1, 13, '用户状态', '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict` VALUES (2014, '机构-类型', 'org_type', 1, 14, '机构类型', '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict` VALUES (2015, '机构-状态', 'org_status', 1, 15, '机构状态', '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict` VALUES (2016, '菜单-节点类型', 'menu_node_type', 1, 16, '菜单节点类型', '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict` VALUES (2017, '菜单-权限动作', 'menu_action', 1, 17, '菜单权限动作', '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict` VALUES (2018, '存储-提供商', 'storage_provider', 1, 18, '存储提供商', '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict` VALUES (2019, '短信-通道', 'sms_provider', 1, 19, '短信通道', '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict` VALUES (2020, 'AI-厂商', 'ai_vendor', 1, 20, 'AI厂商', '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict` VALUES (2021, '团队', 'team', 1, 21, '团队管理', '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-
--- ----------------------------
--- Records of sys_dict_items
--- ----------------------------
-INSERT INTO `sys_dict_items` VALUES (2101, 2001, '男', 'male', 'string', 1, 1, 'success', '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (2102, 2001, '女', 'female', 'string', 1, 2, 'danger', '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (2103, 2001, '未知', 'unknown', 'string', 1, 3, 'warning', '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (2201, 2002, '广东省', '广东省', 'string', 1, 1, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (2202, 2002, '上海市', '上海市', 'string', 1, 2, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (2203, 2002, '北京市', '北京市', 'string', 1, 3, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (2204, 2002, '浙江省', '浙江省', 'string', 1, 4, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (2301, 2003, '深圳市', '深圳市', 'string', 1, 1, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (2302, 2003, '广州市', '广州市', 'string', 1, 2, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (2303, 2003, '上海市', '上海市', 'string', 1, 3, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (2304, 2003, '北京市', '北京市', 'string', 1, 4, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (2305, 2003, '杭州市', '杭州市', 'string', 1, 5, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (2401, 2004, '南山区', '南山区', 'string', 1, 1, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (2402, 2004, '福田区', '福田区', 'string', 1, 2, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (2403, 2004, '宝安区', '宝安区', 'string', 1, 3, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (2404, 2004, '龙岗区', '龙岗区', 'string', 1, 4, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (2405, 2004, '龙华区', '龙华区', 'string', 1, 5, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (2406, 2004, '天河区', '天河区', 'string', 1, 6, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (2407, 2004, '越秀区', '越秀区', 'string', 1, 7, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (2408, 2004, '番禺区', '番禺区', 'string', 1, 8, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (2409, 2004, '海珠区', '海珠区', 'string', 1, 9, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (2410, 2004, '白云区', '白云区', 'string', 1, 10, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (2411, 2004, '黄浦区', '黄浦区', 'string', 1, 11, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (2412, 2004, '徐汇区', '徐汇区', 'string', 1, 12, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (2413, 2004, '长宁区', '长宁区', 'string', 1, 13, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (2414, 2004, '静安区', '静安区', 'string', 1, 14, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (2415, 2004, '浦东新区', '浦东新区', 'string', 1, 15, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (2416, 2004, '东城区', '东城区', 'string', 1, 16, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (2417, 2004, '西城区', '西城区', 'string', 1, 17, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (2418, 2004, '朝阳区', '朝阳区', 'string', 1, 18, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (2419, 2004, '海淀区', '海淀区', 'string', 1, 19, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (2420, 2004, '西湖区', '西湖区', 'string', 1, 20, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (2421, 2004, '上城区', '上城区', 'string', 1, 21, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (2422, 2004, '下城区', '下城区', 'string', 1, 22, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (2423, 2004, '江干区', '江干区', 'string', 1, 23, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (2501, 2005, '公告', 'announcement', 'string', 1, 1, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (2511, 2006, '高', 'high', 'string', 1, 1, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (2512, 2006, '中', 'middle', 'string', 1, 2, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (2513, 2006, '低', 'low', 'string', 1, 3, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (2521, 2007, '草稿', 'draft', 'string', 1, 1, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (2522, 2007, '已发布', 'published', 'string', 1, 2, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (2523, 2007, '已撤回', 'withdrawn', 'string', 1, 3, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (2601, 2008, '通知', 'notification', 'string', 1, 1, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (2611, 2009, '高', 'high', 'string', 1, 1, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (2612, 2009, '中', 'middle', 'string', 1, 2, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (2613, 2009, '低', 'low', 'string', 1, 3, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (2621, 2010, '草稿', 'draft', 'string', 1, 1, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (2622, 2010, '已发布', 'published', 'string', 1, 2, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (2623, 2010, '已撤回', 'withdrawn', 'string', 1, 3, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (2701, 2011, '高', 'high', 'string', 1, 1, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (2702, 2011, '中', 'middle', 'string', 1, 2, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (2703, 2011, '低', 'low', 'string', 1, 3, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (2801, 2012, '登录', 'LOGIN', 'string', 1, 1, 'primary', '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (2802, 2012, '新增', 'CREATE', 'string', 1, 2, 'success', '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (2803, 2012, '修改', 'UPDATE', 'string', 1, 3, 'warning', '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (2804, 2012, '删除', 'DELETE', 'string', 1, 4, 'danger', '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (2901, 2013, '正常', '1', 'number', 1, 1, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (2902, 2013, '停用', '0', 'number', 1, 2, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (3001, 2014, '单位', 'UNIT', 'string', 1, 1, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (3002, 2014, '部门', 'DEPARTMENT', 'string', 1, 2, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (3003, 2014, '科室', 'SECTION', 'string', 1, 3, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (3004, 2014, '班组', 'TEAM', 'string', 1, 4, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (3005, 2014, '用户', 'USER', 'string', 1, 5, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (3011, 2015, '正常', '1', 'number', 1, 1, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (3012, 2015, '停用', '0', 'number', 1, 2, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (3101, 2016, '目录', 'DIR', 'string', 1, 1, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (3102, 2016, '页面', 'PAGE', 'string', 1, 2, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (3103, 2016, '按钮', 'BTN', 'string', 1, 3, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (3201, 2017, '查询', 'query', 'string', 1, 1, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (3202, 2017, '新增', 'create', 'string', 1, 2, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (3203, 2017, '修改', 'update', 'string', 1, 3, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (3204, 2017, '删除', 'delete', 'string', 1, 4, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (3301, 2018, '本地存储', 'LOCAL', 'string', 1, 1, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (3302, 2018, '阿里云 OSS', 'ALIYUN', 'string', 1, 2, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (3303, 2018, '腾讯云 COS', 'TENCENT', 'string', 1, 3, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (3401, 2019, '阿里云短信服务', 'aliyun', 'string', 1, 1, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (3402, 2019, '腾讯云短信服务', 'tencent', 'string', 1, 2, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (3501, 2020, 'OpenAI / 兼容', 'OPENAI', 'string', 1, 1, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (3502, 2020, 'Azure OpenAI', 'AZURE_OPENAI', 'string', 1, 2, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (3503, 2020, 'DeepSeek', 'DEEPSEEK', 'string', 1, 3, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (3504, 2020, '月之暗面 / Moonshot', 'MOONSHOT', 'string', 1, 4, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (3505, 2020, '通义千问 (兼容模式)', 'QWEN', 'string', 1, 5, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-INSERT INTO `sys_dict_items` VALUES (3506, 2020, 'Ollama 本地部署', 'OLLAMA', 'string', 1, 6, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
-
--- ----------------------------
 -- Table structure for user_parameters
 -- ----------------------------
 DROP TABLE IF EXISTS `user_parameters`;
@@ -922,9 +525,6 @@ CREATE TABLE `user_parameters`  (
 
 -- ----------------------------
 -- Records of user_parameters
--- ----------------------------
-
--- ----------------------------
 -- Table structure for user_roles
 -- ----------------------------
 DROP TABLE IF EXISTS `user_roles`;
@@ -938,8 +538,6 @@ CREATE TABLE `user_roles`  (
 -- ----------------------------
 -- Records of user_roles
 -- ----------------------------
-INSERT INTO `user_roles` VALUES (1, 'admin');
-INSERT INTO `user_roles` VALUES (3, 'user');
 
 -- ----------------------------
 -- Table structure for users
@@ -988,8 +586,6 @@ CREATE TABLE `users`  (
 -- ----------------------------
 -- Records of users
 -- ----------------------------
-INSERT INTO `users` VALUES (1, 'admin', '张三', '$2a$10$BbVSQCIChdR.4gfwiG1OduJiKE/KpUTbhBXd.7Sr.uwi8eggDpYeu', '+86 13800000000', '0000', 'admin@qq.com', 'T32F 001', '腾讯集团', 'CEO', '系统管理员', '2018-01-01', '腾讯/腾讯公司/管理层/系统管理组', 'male', '张三的昵称', NULL, '', NULL, '', NULL, '', NULL, NULL, NULL, NULL, NULL, '', '张三的简介', '/api/uploads/business/b27eeb829cd64ccaab15123e70678c24.jpg', '', '', 'e59c3cd1-3b52-47c7-bf88-fad5b2281827', 1, NOW(), NOW());
-INSERT INTO `users` VALUES (3, 'bob', 'Bob', '$2a$10$BbVSQCIChdR.4gfwiG1OduJiKE/KpUTbhBXd.7Sr.uwi8eggDpYeu', '+86 13923456789', '8889', 'bob@tencent.com', 'T32F 012', '腾讯集团', 'Sarah Li', '后端开发工程师', '2020-07-01', '腾讯/腾讯公司/CSIG事业群/云计算部/后端架构组', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '700e0805-c571-4e6a-873b-00899a32ede2', 1, NOW(), NOW());
 
 -- ----------------------------
 -- Table structure for areas
@@ -1056,53 +652,6 @@ CREATE TABLE `user_departments`  (
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
--- Table structure for verification_email_settings
--- ----------------------------
-DROP TABLE IF EXISTS `verification_email_settings`;
-CREATE TABLE `verification_email_settings`  (
-  `id` bigint NOT NULL AUTO_INCREMENT,
-  `email_enabled` tinyint NULL DEFAULT NULL,
-  `email_host` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
-  `email_port` int NULL DEFAULT NULL,
-  `email_username` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
-  `email_password` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
-  `email_from` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
-  `email_ssl` tinyint NULL DEFAULT NULL,
-  PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 3 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
-
--- ----------------------------
--- Records of verification_email_settings
--- ----------------------------
-INSERT INTO `verification_email_settings` VALUES (2, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-
--- ----------------------------
--- Table structure for verification_sms_settings
--- ----------------------------
-DROP TABLE IF EXISTS `verification_sms_settings`;
-CREATE TABLE `verification_sms_settings`  (
-  `id` bigint NOT NULL AUTO_INCREMENT,
-  `sms_enabled` tinyint NULL DEFAULT NULL,
-  `sms_provider` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
-  `sms_aliyun_enabled` tinyint NULL DEFAULT NULL,
-  `sms_aliyun_access_key_id` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
-  `sms_aliyun_access_key_secret` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
-  `sms_aliyun_sign_name` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
-  `sms_aliyun_template_code` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
-  `sms_aliyun_region_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
-  `sms_aliyun_endpoint` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
-  `sms_tencent_enabled` tinyint NULL DEFAULT NULL,
-  `sms_tencent_secret_id` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
-  `sms_tencent_secret_key` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
-  `sms_tencent_sign_name` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
-  `sms_tencent_template_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
-  `sms_tencent_region` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
-  `sms_tencent_endpoint` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
-  `sms_sdk_app_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
-  PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 3 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
-
--- ----------------------------
 -- Table structure for module_registry
 -- ----------------------------
 DROP TABLE IF EXISTS `module_registry`;
@@ -1117,15 +666,11 @@ CREATE TABLE `module_registry`  (
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
--- Records of verification_sms_settings
 -- ----------------------------
-INSERT INTO `verification_sms_settings` VALUES (2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 
 -- ----------------------------
 -- Records of module_registry
 -- ----------------------------
-INSERT INTO `module_registry` VALUES ('sms', '短信验证', '1.0.0', 1, 'PENDING', NULL);
-INSERT INTO `module_registry` VALUES ('email', '邮箱验证', '1.0.0', 1, 'PENDING', NULL);
 
 -- ----------------------------
 -- Table structure for watermark_settings
@@ -1148,7 +693,6 @@ CREATE TABLE `watermark_settings`  (
 -- ----------------------------
 -- Records of watermark_settings
 -- ----------------------------
-INSERT INTO `watermark_settings` VALUES (1, 'text_single', '水印', '', 0.12, 30, 200, 200, 20, 1);
 
 SET FOREIGN_KEY_CHECKS = 1;
 
@@ -1192,13 +736,6 @@ ALTER TABLE `announcements` MODIFY COLUMN `created_by_name` varchar(64) CHARACTE
 ALTER TABLE `announcements` MODIFY COLUMN `attachment_url` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'attachment_url';
 ALTER TABLE `announcements` MODIFY COLUMN `attachment_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'attachment_name';
 ALTER TABLE `announcements` MODIFY COLUMN `is_broadcasted` tinyint NOT NULL DEFAULT 0 COMMENT 'is_broadcasted';
-ALTER TABLE `file_download_history` COMMENT = '表: file_download_history';
-ALTER TABLE `file_download_history` MODIFY COLUMN `id` bigint NOT NULL AUTO_INCREMENT COMMENT 'id';
-ALTER TABLE `file_download_history` MODIFY COLUMN `user_id` bigint NULL DEFAULT NULL COMMENT 'user_id';
-ALTER TABLE `file_download_history` MODIFY COLUMN `file_id` bigint NOT NULL COMMENT 'file_id';
-ALTER TABLE `file_download_history` MODIFY COLUMN `file_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT 'file_name';
-ALTER TABLE `file_download_history` MODIFY COLUMN `size_bytes` bigint NOT NULL DEFAULT 0 COMMENT 'size_bytes';
-ALTER TABLE `file_download_history` MODIFY COLUMN `downloaded_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'downloaded_at';
 ALTER TABLE `file_resources` COMMENT = '表: file_resources';
 ALTER TABLE `file_resources` MODIFY COLUMN `id` bigint NOT NULL AUTO_INCREMENT COMMENT 'id';
 ALTER TABLE `file_resources` MODIFY COLUMN `content` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT 'content';
@@ -1436,34 +973,6 @@ ALTER TABLE `org_unit_leaders` MODIFY COLUMN `user_id` bigint NOT NULL COMMENT '
 ALTER TABLE `user_org_units` COMMENT = '表: user_org_units';
 ALTER TABLE `user_org_units` MODIFY COLUMN `user_id` bigint NOT NULL COMMENT 'user_id';
 ALTER TABLE `user_org_units` MODIFY COLUMN `org_unit_id` bigint NOT NULL COMMENT 'org_unit_id';
-ALTER TABLE `verification_email_settings` COMMENT = '表: verification_email_settings';
-ALTER TABLE `verification_email_settings` MODIFY COLUMN `id` bigint NOT NULL AUTO_INCREMENT COMMENT 'id';
-ALTER TABLE `verification_email_settings` MODIFY COLUMN `email_enabled` tinyint NULL DEFAULT NULL COMMENT 'email_enabled';
-ALTER TABLE `verification_email_settings` MODIFY COLUMN `email_host` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'email_host';
-ALTER TABLE `verification_email_settings` MODIFY COLUMN `email_port` int NULL DEFAULT NULL COMMENT 'email_port';
-ALTER TABLE `verification_email_settings` MODIFY COLUMN `email_username` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'email_username';
-ALTER TABLE `verification_email_settings` MODIFY COLUMN `email_password` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'email_password';
-ALTER TABLE `verification_email_settings` MODIFY COLUMN `email_from` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'email_from';
-ALTER TABLE `verification_email_settings` MODIFY COLUMN `email_ssl` tinyint NULL DEFAULT NULL COMMENT 'email_ssl';
-ALTER TABLE `verification_sms_settings` COMMENT = '表: verification_sms_settings';
-ALTER TABLE `verification_sms_settings` MODIFY COLUMN `id` bigint NOT NULL AUTO_INCREMENT COMMENT 'id';
-ALTER TABLE `verification_sms_settings` MODIFY COLUMN `sms_enabled` tinyint NULL DEFAULT NULL COMMENT 'sms_enabled';
-ALTER TABLE `verification_sms_settings` MODIFY COLUMN `sms_provider` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'sms_provider';
-ALTER TABLE `verification_sms_settings` MODIFY COLUMN `sms_aliyun_enabled` tinyint NULL DEFAULT NULL COMMENT 'sms_aliyun_enabled';
-ALTER TABLE `verification_sms_settings` MODIFY COLUMN `sms_aliyun_access_key_id` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'sms_aliyun_access_key_id';
-ALTER TABLE `verification_sms_settings` MODIFY COLUMN `sms_aliyun_access_key_secret` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'sms_aliyun_access_key_secret';
-ALTER TABLE `verification_sms_settings` MODIFY COLUMN `sms_aliyun_sign_name` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'sms_aliyun_sign_name';
-ALTER TABLE `verification_sms_settings` MODIFY COLUMN `sms_aliyun_template_code` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'sms_aliyun_template_code';
-ALTER TABLE `verification_sms_settings` MODIFY COLUMN `sms_aliyun_region_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'sms_aliyun_region_id';
-ALTER TABLE `verification_sms_settings` MODIFY COLUMN `sms_aliyun_endpoint` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'sms_aliyun_endpoint';
-ALTER TABLE `verification_sms_settings` MODIFY COLUMN `sms_tencent_enabled` tinyint NULL DEFAULT NULL COMMENT 'sms_tencent_enabled';
-ALTER TABLE `verification_sms_settings` MODIFY COLUMN `sms_tencent_secret_id` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'sms_tencent_secret_id';
-ALTER TABLE `verification_sms_settings` MODIFY COLUMN `sms_tencent_secret_key` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'sms_tencent_secret_key';
-ALTER TABLE `verification_sms_settings` MODIFY COLUMN `sms_tencent_sign_name` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'sms_tencent_sign_name';
-ALTER TABLE `verification_sms_settings` MODIFY COLUMN `sms_tencent_template_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'sms_tencent_template_id';
-ALTER TABLE `verification_sms_settings` MODIFY COLUMN `sms_tencent_region` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'sms_tencent_region';
-ALTER TABLE `verification_sms_settings` MODIFY COLUMN `sms_tencent_endpoint` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'sms_tencent_endpoint';
-ALTER TABLE `verification_sms_settings` MODIFY COLUMN `sms_sdk_app_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'sms_sdk_app_id';
 ALTER TABLE `module_registry` COMMENT = '表: module_registry';
 ALTER TABLE `module_registry` MODIFY COLUMN `module_key` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT 'module_key';
 ALTER TABLE `module_registry` MODIFY COLUMN `name` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'name';
@@ -1480,17 +989,6 @@ ALTER TABLE `sys_dict` MODIFY COLUMN `sort` int NOT NULL DEFAULT 0 COMMENT 'sort
 ALTER TABLE `sys_dict` MODIFY COLUMN `remark` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'remark';
 ALTER TABLE `sys_dict` MODIFY COLUMN `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'created_at';
 ALTER TABLE `sys_dict` MODIFY COLUMN `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'updated_at';
-ALTER TABLE `sys_dict_items` COMMENT = '表: sys_dict_items';
-ALTER TABLE `sys_dict_items` MODIFY COLUMN `id` bigint NOT NULL AUTO_INCREMENT COMMENT 'id';
-ALTER TABLE `sys_dict_items` MODIFY COLUMN `dict_id` bigint NOT NULL COMMENT 'dict_id';
-ALTER TABLE `sys_dict_items` MODIFY COLUMN `label` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT 'label';
-ALTER TABLE `sys_dict_items` MODIFY COLUMN `value` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT 'value';
-ALTER TABLE `sys_dict_items` MODIFY COLUMN `value_type` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT 'string' COMMENT 'value_type';
-ALTER TABLE `sys_dict_items` MODIFY COLUMN `status` tinyint NOT NULL DEFAULT 1 COMMENT 'status';
-ALTER TABLE `sys_dict_items` MODIFY COLUMN `sort` int NOT NULL DEFAULT 0 COMMENT 'sort';
-ALTER TABLE `sys_dict_items` MODIFY COLUMN `tag_color` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'tag_color';
-ALTER TABLE `sys_dict_items` MODIFY COLUMN `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'created_at';
-ALTER TABLE `sys_dict_items` MODIFY COLUMN `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'updated_at';
 ALTER TABLE `watermark_settings` COMMENT = '表: watermark_settings';
 ALTER TABLE `watermark_settings` MODIFY COLUMN `id` bigint NOT NULL AUTO_INCREMENT COMMENT 'id';
 ALTER TABLE `watermark_settings` MODIFY COLUMN `type` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT 'type';
@@ -1502,3 +1000,5 @@ ALTER TABLE `watermark_settings` MODIFY COLUMN `gap_x` int NOT NULL COMMENT 'gap
 ALTER TABLE `watermark_settings` MODIFY COLUMN `gap_y` int NOT NULL COMMENT 'gap_y';
 ALTER TABLE `watermark_settings` MODIFY COLUMN `rotate` int NOT NULL COMMENT 'rotate';
 ALTER TABLE `watermark_settings` MODIFY COLUMN `enabled` tinyint NOT NULL COMMENT 'enabled';
+
+

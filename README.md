@@ -19,8 +19,8 @@ Elexvx 脚手架系统 是由 Elexvx ® Inc 推出的一套面向企业后台的
 
 ### 初始化数据库
 
-- 可导入 `database/tdesign_init.sql` 作为初始结构与示例数据
-- 或直接启动后端自动建表（数据库不存在会自动创建）
+- 可导入 `database/demo/tdesign_init.sql` 作为初始结构与示例数据
+- 若只需要结构，可导入 `database/schema/tdesign_schema.sql`
 
 ### 启动后端
 

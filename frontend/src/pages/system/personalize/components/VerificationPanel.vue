@@ -1,5 +1,16 @@
 <template>
-  <t-tabs v-model="activeTab">
+  <div v-if="availableTabs.length === 0" class="verification-empty-state">
+    <t-alert theme="warning" :close="false">
+      <template #message>
+        当前路由未检测到可用模块，请先在模块管理中安装并启用以下任一模块：短信模块（`sms`）或邮箱模块（`email`）。
+      </template>
+    </t-alert>
+    <t-space style="margin-top: 12px">
+      <t-button theme="primary" @click="goToModuleManagement">前往模块管理</t-button>
+      <t-button variant="outline" @click="loadModuleRegistries">重新检测</t-button>
+    </t-space>
+  </div>
+  <t-tabs v-else v-model="activeTab">
     <t-tab-panel v-if="smsInstalled" value="sms" label="短信验证码设置" :destroy-on-hide="false">
       <div class="verification-content">
         <t-form :data="smsForm" layout="vertical" label-align="right" label-width="140px" @submit="onSubmitSms">
@@ -453,6 +464,41 @@ const loadModuleRegistries = async () => {
   }
 };
 
+const resolveModuleRouteTarget = () => {
+  const preferredNames = ['SystemModule', 'systemModule', 'modules'];
+  for (const name of preferredNames) {
+    if (router.hasRoute(name)) {
+      return { name };
+    }
+  }
+
+  const matchedPath = router
+    .getRoutes()
+    .map((item) => String(item.path || ''))
+    .find((path) => path.includes('/system/modules'));
+  if (matchedPath) {
+    return { path: matchedPath };
+  }
+
+  return { path: '/system/modules/index' };
+};
+
+const goToModuleManagement = () => {
+  const target = resolveModuleRouteTarget();
+  router
+    .push({
+      ...target,
+      query: {
+        requiredModules: 'sms,email',
+        from: route.fullPath,
+      },
+    })
+    .catch((error) => {
+      console.error('Go to module page failed:', error);
+      MessagePlugin.error('无法跳转到模块管理页，请从左侧菜单进入“模块管理”');
+    });
+};
+
 watch(
   availableTabs,
   (tabs) => {
@@ -486,5 +532,9 @@ onMounted(() => {
   :deep(.t-divider) {
     margin: var(--td-starter-gap-lg) 0 0;
   }
+}
+
+.verification-empty-state {
+  padding-top: 8px;
 }
 </style>
