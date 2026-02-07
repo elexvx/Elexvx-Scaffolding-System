@@ -11,6 +11,9 @@ public class SysDictItem {
   private Integer status;
   private Integer sort;
   private String tagColor;
+  private String province;
+  private String city;
+  private String district;
   private LocalDateTime createdAt;
   private LocalDateTime updatedAt;
 
@@ -76,6 +79,30 @@ public class SysDictItem {
 
   public void setTagColor(String tagColor) {
     this.tagColor = tagColor;
+  }
+
+  public String getProvince() {
+    return province;
+  }
+
+  public void setProvince(String province) {
+    this.province = province;
+  }
+
+  public String getCity() {
+    return city;
+  }
+
+  public void setCity(String city) {
+    this.city = city;
+  }
+
+  public String getDistrict() {
+    return district;
+  }
+
+  public void setDistrict(String district) {
+    this.district = district;
   }
 
   public LocalDateTime getCreatedAt() {

@@ -28,6 +28,9 @@
         :loading="loading"
         @page-change="onPageChange"
       >
+        <template #serial="{ rowIndex }">
+          {{ (pagination.current - 1) * pagination.pageSize + rowIndex + 1 }}
+        </template>
         <template #status="{ row }">
           <t-switch :value="row.status === 1" @change="(val) => toggleStatus(row, Boolean(val))" />
         </template>
@@ -183,6 +186,15 @@
         <t-form-item label="标签颜色" name="tagColor">
           <t-select v-model="itemForm.tagColor" :options="tagColorOptions" clearable placeholder="可选" />
         </t-form-item>
+        <t-form-item v-if="isAddressDistrictDict" label="省" name="province">
+          <t-input v-model="itemForm.province" placeholder="例如：广东省" />
+        </t-form-item>
+        <t-form-item v-if="isAddressDistrictDict" label="市" name="city">
+          <t-input v-model="itemForm.city" placeholder="例如：深圳市" />
+        </t-form-item>
+        <t-form-item v-if="isAddressDistrictDict" label="区" name="district">
+          <t-input v-model="itemForm.district" placeholder="例如：南山区" />
+        </t-form-item>
       </t-form>
       <template #footer>
         <t-space>
@@ -255,11 +267,10 @@ const statusOptions = [
 ];
 
 const dictColumns: PrimaryTableCol[] = [
-  { colKey: 'id', title: '序号', width: 80 },
+  { colKey: 'serial', title: '序号', width: 80 },
   { colKey: 'name', title: '字典名称', minWidth: 180 },
   { colKey: 'code', title: '字典编码', minWidth: 200 },
   { colKey: 'status', title: '状态', width: 120 },
-  { colKey: 'sort', title: '排序', width: 100 },
   { colKey: 'op', title: '操作', width: 220, fixed: 'right' },
 ];
 
@@ -267,6 +278,7 @@ const dictDialogTitle = computed(() => (dictDialogMode.value === 'create' ? '新
 
 const configDialogVisible = ref(false);
 const selectedDict = ref<SysDict | null>(null);
+const isAddressDistrictDict = computed(() => selectedDict.value?.code === 'address_district');
 const itemLoading = ref(false);
 const itemSaving = ref(false);
 const itemDialogVisible = ref(false);
@@ -293,6 +305,9 @@ const itemForm = reactive({
   status: 1,
   sort: 0,
   tagColor: '' as string | '',
+  province: '',
+  city: '',
+  district: '',
 });
 
 const itemRules: Record<string, FormRule[]> = {
@@ -320,15 +335,35 @@ const tagColorOptions = [
   { label: 'default', value: 'default' },
 ];
 
-const itemColumns: PrimaryTableCol[] = [
+const baseItemColumns: PrimaryTableCol[] = [
+  { colKey: 'sort', title: '排序', width: 100 },
   { colKey: 'label', title: '名称', minWidth: 120 },
   { colKey: 'valueType', title: '数据值类型', width: 120 },
   { colKey: 'value', title: '数据值', minWidth: 120 },
   { colKey: 'status', title: '状态', width: 100 },
-  { colKey: 'sort', title: '排序', width: 100 },
   { colKey: 'tagColor', title: '标签颜色', width: 120 },
   { colKey: 'op', title: '操作', width: 140, fixed: 'right' },
 ];
+const addressAreaColumns: PrimaryTableCol[] = [
+  { colKey: 'province', title: '省', minWidth: 120 },
+  { colKey: 'city', title: '市', minWidth: 120 },
+  { colKey: 'district', title: '区', minWidth: 120 },
+];
+const itemColumns = computed<PrimaryTableCol[]>(() => {
+  if (!isAddressDistrictDict.value) {
+    return baseItemColumns;
+  }
+  return [
+    { colKey: 'sort', title: '排序', width: 100 },
+    { colKey: 'label', title: '名称', minWidth: 120 },
+    { colKey: 'valueType', title: '数据值类型', width: 120 },
+    { colKey: 'value', title: '数据值', minWidth: 120 },
+    ...addressAreaColumns,
+    { colKey: 'status', title: '状态', width: 100 },
+    { colKey: 'tagColor', title: '标签颜色', width: 120 },
+    { colKey: 'op', title: '操作', width: 140, fixed: 'right' },
+  ];
+});
 
 const configDialogTitle = computed(() => (selectedDict.value ? `${selectedDict.value.name} - 字典配置` : '字典配置'));
 const itemDialogTitle = computed(() => (itemDialogMode.value === 'create' ? '新增字典项' : '编辑字典项'));
@@ -485,6 +520,9 @@ const openItemCreate = () => {
   itemForm.status = 1;
   itemForm.sort = 0;
   itemForm.tagColor = '';
+  itemForm.province = '';
+  itemForm.city = '';
+  itemForm.district = '';
   itemDialogVisible.value = true;
 };
 
@@ -497,6 +535,9 @@ const openItemEdit = (row: SysDictItem) => {
   itemForm.status = row.status ?? 1;
   itemForm.sort = row.sort ?? 0;
   itemForm.tagColor = row.tagColor || '';
+  itemForm.province = row.province || '';
+  itemForm.city = row.city || '';
+  itemForm.district = row.district || '';
   itemDialogVisible.value = true;
 };
 
@@ -504,6 +545,13 @@ const submitItem = async () => {
   if (!selectedDict.value) return;
   const valid = await itemFormRef.value?.validate();
   if (valid !== true) return;
+  if (
+    isAddressDistrictDict.value &&
+    (!itemForm.province.trim() || !itemForm.city.trim() || !itemForm.district.trim())
+  ) {
+    MessagePlugin.error('address_district 字典项必须填写省/市/区字段');
+    return;
+  }
   itemSaving.value = true;
   try {
     const payload = {
@@ -513,6 +561,9 @@ const submitItem = async () => {
       status: itemForm.status,
       sort: itemForm.sort,
       tagColor: itemForm.tagColor || undefined,
+      province: isAddressDistrictDict.value ? itemForm.province.trim() : undefined,
+      city: isAddressDistrictDict.value ? itemForm.city.trim() : undefined,
+      district: isAddressDistrictDict.value ? itemForm.district.trim() : undefined,
     };
     if (itemDialogMode.value === 'create') {
       await createDictItem(selectedDict.value.id, payload);

@@ -34,6 +34,7 @@ public class SystemMenuController {
     PermissionUtil.check("system:SystemMenu:query");
     try { menuItemService.ensureOrgManagementMenuSeeded(); } catch (Exception ignored) {}
     try { menuItemService.removeObsoleteNotificationRoute(); } catch (Exception ignored) {}
+    try { menuItemService.removeObsoleteTeamRoute(); } catch (Exception ignored) {}
     try { menuItemService.removeObsoletePrintRoute(); } catch (Exception ignored) {}
     return ApiResponse.success(menuItemService.getAdminTree());
   }

@@ -22,6 +22,7 @@ public class MenuController {
       // 清理已合并的旧页面路由
       try { menuItemService.removeObsoleteWatermarkRoute(); } catch (Exception ignored) {}
       if (menuItemService.isConfigured()) {
+        try { menuItemService.removeObsoleteTeamRoute(); } catch (Exception ignored) {}
         try { menuItemService.removeObsoletePrintRoute(); } catch (Exception ignored) {}
         try { menuItemService.removeObsoleteNotificationRoute(); } catch (Exception ignored) {}
         return ApiResponse.success(new MenuListResult(menuItemService.getMenuRoutesForCurrentUser()));

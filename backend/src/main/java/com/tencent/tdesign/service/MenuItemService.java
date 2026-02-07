@@ -250,6 +250,15 @@ public class MenuItemService {
   }
 
   @Transactional
+  public boolean removeObsoleteTeamRoute() {
+    MenuItemEntity teamPage = menuItemMapper.selectByRouteName("SystemTeam");
+    if (teamPage != null) return delete(teamPage.getId(), true);
+    MenuItemEntity teamRoute = menuItemMapper.selectByRouteName("team");
+    if (teamRoute != null) return delete(teamRoute.getId(), true);
+    return false;
+  }
+
+  @Transactional
   public boolean ensureOrgManagementMenuSeeded() {
     if (menuItemMapper.count() == 0) return false;
     if (menuItemMapper.selectByRouteName("SystemOrg") != null) return false;
@@ -920,26 +929,6 @@ public class MenuItemService {
           false,
           true,
           0,
-          "create,update,delete,query"
-        )
-      );
-      list.add(
-        new SeedNode(
-          "users",
-          null,
-          "PAGE",
-          "team",
-          "SystemTeam",
-          "/system/team/index",
-          null,
-          "团队管理",
-          "Teams",
-          "usergroup",
-          false,
-          null,
-          false,
-          true,
-          3,
           "create,update,delete,query"
         )
       );

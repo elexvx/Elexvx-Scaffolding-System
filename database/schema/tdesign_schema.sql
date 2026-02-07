@@ -497,10 +497,10 @@ CREATE TABLE `ui_theme_settings`  (
 DROP TABLE IF EXISTS `sys_dict`;
 CREATE TABLE `sys_dict`  (
   `id` bigint NOT NULL AUTO_INCREMENT,
+  `sort` int NOT NULL DEFAULT 0,
   `name` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `code` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `status` tinyint NOT NULL DEFAULT 1,
-  `sort` int NOT NULL DEFAULT 0,
   `remark` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

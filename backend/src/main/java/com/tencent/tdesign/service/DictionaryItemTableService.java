@@ -24,7 +24,6 @@ import org.springframework.util.StringUtils;
 
 @Service
 public class DictionaryItemTableService {
-  private static final String LEGACY_TABLE = "sys_dict_items";
   private static final String TABLE_PREFIX = "sys_di_";
   private static final String CODE_PATTERN = "[^a-z0-9_]";
 
@@ -54,7 +53,7 @@ public class DictionaryItemTableService {
     if (!tableExists(tableName)) {
       jdbcTemplate.execute(buildCreateTableSql(tableName));
     }
-    migrateLegacyRowsIfNeeded(dict, tableName);
+    ensureExtendedColumns(tableName);
     initializedTables.add(tableName);
   }
 
@@ -98,10 +97,15 @@ public class DictionaryItemTableService {
     initializedTables.remove(tableName);
   }
 
-  public void deleteLegacyByDictId(long dictId) {
-    if (tableExists(LEGACY_TABLE)) {
-      jdbcTemplate.update("DELETE FROM " + LEGACY_TABLE + " WHERE dict_id = ?", dictId);
+  public boolean dictTableExists(String dictCode) {
+    if (!StringUtils.hasText(dictCode)) {
+      return false;
     }
+    return tableExists(resolveTableName(dictCode));
+  }
+
+  public String resolvePhysicalTableName(String dictCode) {
+    return resolveTableName(dictCode);
   }
 
   public List<SysDictItem> selectPage(
@@ -113,7 +117,7 @@ public class DictionaryItemTableService {
   ) {
     String tableName = ensureAndResolve(dict);
     StringBuilder sql = new StringBuilder()
-      .append("SELECT id, label, value, value_type, status, sort, tag_color, created_at, updated_at ")
+      .append("SELECT id, label, value, value_type, status, sort, tag_color, province, city, district, created_at, updated_at ")
       .append("FROM ")
       .append(tableName)
       .append(" WHERE 1=1");
@@ -121,7 +125,10 @@ public class DictionaryItemTableService {
 
     if (StringUtils.hasText(keyword)) {
       String like = "%" + keyword.trim().toLowerCase(Locale.ROOT) + "%";
-      sql.append(" AND (LOWER(label) LIKE ? OR LOWER(value) LIKE ?)");
+      sql.append(" AND (LOWER(label) LIKE ? OR LOWER(value) LIKE ? OR LOWER(province) LIKE ? OR LOWER(city) LIKE ? OR LOWER(district) LIKE ?)");
+      args.add(like);
+      args.add(like);
+      args.add(like);
       args.add(like);
       args.add(like);
     }
@@ -155,7 +162,10 @@ public class DictionaryItemTableService {
     List<Object> args = new ArrayList<>();
     if (StringUtils.hasText(keyword)) {
       String like = "%" + keyword.trim().toLowerCase(Locale.ROOT) + "%";
-      sql.append(" AND (LOWER(label) LIKE ? OR LOWER(value) LIKE ?)");
+      sql.append(" AND (LOWER(label) LIKE ? OR LOWER(value) LIKE ? OR LOWER(province) LIKE ? OR LOWER(city) LIKE ? OR LOWER(district) LIKE ?)");
+      args.add(like);
+      args.add(like);
+      args.add(like);
       args.add(like);
       args.add(like);
     }
@@ -170,7 +180,7 @@ public class DictionaryItemTableService {
   public List<SysDictItem> selectByDict(SysDict dict) {
     String tableName = ensureAndResolve(dict);
     String sql =
-      "SELECT id, label, value, value_type, status, sort, tag_color, created_at, updated_at FROM " +
+      "SELECT id, label, value, value_type, status, sort, tag_color, province, city, district, created_at, updated_at FROM " +
       tableName +
       " ORDER BY sort ASC, id ASC";
     return jdbcTemplate.query(sql, (rs, rowNum) -> mapItem(rs, dict.getId()));
@@ -179,7 +189,7 @@ public class DictionaryItemTableService {
   public List<SysDictItem> selectEnabledByDict(SysDict dict) {
     String tableName = ensureAndResolve(dict);
     String sql =
-      "SELECT id, label, value, value_type, status, sort, tag_color, created_at, updated_at FROM " +
+      "SELECT id, label, value, value_type, status, sort, tag_color, province, city, district, created_at, updated_at FROM " +
       tableName +
       " WHERE status = 1 ORDER BY sort ASC, id ASC";
     return jdbcTemplate.query(sql, (rs, rowNum) -> mapItem(rs, dict.getId()));
@@ -188,7 +198,7 @@ public class DictionaryItemTableService {
   public SysDictItem selectByDictValue(SysDict dict, String value) {
     String tableName = ensureAndResolve(dict);
     String sql =
-      "SELECT id, label, value, value_type, status, sort, tag_color, created_at, updated_at FROM " +
+      "SELECT id, label, value, value_type, status, sort, tag_color, province, city, district, created_at, updated_at FROM " +
       tableName +
       " WHERE value = ? " +
       buildSingleRowSuffix();
@@ -199,7 +209,7 @@ public class DictionaryItemTableService {
   public SysDictItem selectById(SysDict dict, long id) {
     String tableName = ensureAndResolve(dict);
     String sql =
-      "SELECT id, label, value, value_type, status, sort, tag_color, created_at, updated_at FROM " +
+      "SELECT id, label, value, value_type, status, sort, tag_color, province, city, district, created_at, updated_at FROM " +
       tableName +
       " WHERE id = ? " +
       buildSingleRowSuffix();
@@ -227,7 +237,7 @@ public class DictionaryItemTableService {
     String sql =
       "UPDATE " +
       tableName +
-      " SET label = ?, value = ?, value_type = ?, status = ?, sort = ?, tag_color = ?, updated_at = ? WHERE id = ?";
+      " SET label = ?, value = ?, value_type = ?, status = ?, sort = ?, tag_color = ?, province = ?, city = ?, district = ?, updated_at = ? WHERE id = ?";
     return jdbcTemplate.update(
       sql,
       item.getLabel(),
@@ -236,6 +246,9 @@ public class DictionaryItemTableService {
       item.getStatus(),
       item.getSort(),
       item.getTagColor(),
+      item.getProvince(),
+      item.getCity(),
+      item.getDistrict(),
       toTimestamp(item.getUpdatedAt()),
       item.getId()
     );
@@ -256,41 +269,9 @@ public class DictionaryItemTableService {
     return resolveTableName(dict.getCode());
   }
 
-  private void migrateLegacyRowsIfNeeded(SysDict dict, String tableName) {
-    if (dict.getId() == null) {
-      return;
-    }
-    if (!tableExists(LEGACY_TABLE)) {
-      return;
-    }
-    Long count = jdbcTemplate.queryForObject("SELECT COUNT(1) FROM " + tableName, Long.class);
-    if (count != null && count > 0) {
-      return;
-    }
-
-    String sql =
-      "SELECT id, label, value, value_type, status, sort, tag_color, created_at, updated_at " +
-      "FROM " +
-      LEGACY_TABLE +
-      " WHERE dict_id = ? ORDER BY sort ASC, id ASC";
-    List<SysDictItem> legacyRows = jdbcTemplate.query(sql, (rs, rowNum) -> mapItem(rs, dict.getId()), dict.getId());
-    for (SysDictItem row : legacyRows) {
-      if (row.getId() == null) {
-        row.setId(nextId());
-      }
-      if (row.getCreatedAt() == null) {
-        row.setCreatedAt(LocalDateTime.now());
-      }
-      if (row.getUpdatedAt() == null) {
-        row.setUpdatedAt(row.getCreatedAt());
-      }
-      insertIntoTable(tableName, row);
-    }
-  }
-
   private List<SysDictItem> queryAllItems(String tableName, Long dictId) {
     String sql =
-      "SELECT id, label, value, value_type, status, sort, tag_color, created_at, updated_at FROM " +
+      "SELECT id, label, value, value_type, status, sort, tag_color, province, city, district, created_at, updated_at FROM " +
       tableName +
       " ORDER BY sort ASC, id ASC";
     return jdbcTemplate.query(sql, (rs, rowNum) -> mapItem(rs, dictId));
@@ -300,7 +281,7 @@ public class DictionaryItemTableService {
     String sql =
       "INSERT INTO " +
       tableName +
-      " (id, label, value, value_type, status, sort, tag_color, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+      " (id, label, value, value_type, status, sort, tag_color, province, city, district, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     jdbcTemplate.update(
       sql,
       item.getId(),
@@ -310,6 +291,9 @@ public class DictionaryItemTableService {
       item.getStatus(),
       item.getSort(),
       item.getTagColor(),
+      item.getProvince(),
+      item.getCity(),
+      item.getDistrict(),
       toTimestamp(item.getCreatedAt()),
       toTimestamp(item.getUpdatedAt())
     );
@@ -325,6 +309,9 @@ public class DictionaryItemTableService {
     item.setStatus(rs.getInt("status"));
     item.setSort(rs.getInt("sort"));
     item.setTagColor(rs.getString("tag_color"));
+    item.setProvince(rs.getString("province"));
+    item.setCity(rs.getString("city"));
+    item.setDistrict(rs.getString("district"));
     Timestamp createdAt = rs.getTimestamp("created_at");
     Timestamp updatedAt = rs.getTimestamp("updated_at");
     item.setCreatedAt(createdAt == null ? null : createdAt.toLocalDateTime());
@@ -356,12 +343,15 @@ public class DictionaryItemTableService {
         tableName +
         " (" +
         "id NUMBER(19) PRIMARY KEY, " +
+        "sort NUMBER(10) DEFAULT 0 NOT NULL, " +
         "label VARCHAR2(64) NOT NULL, " +
         "value VARCHAR2(128) NOT NULL UNIQUE, " +
         "value_type VARCHAR2(16) DEFAULT 'string' NOT NULL, " +
         "status NUMBER(3) DEFAULT 1 NOT NULL, " +
-        "sort NUMBER(10) DEFAULT 0 NOT NULL, " +
         "tag_color VARCHAR2(32), " +
+        "province VARCHAR2(128), " +
+        "city VARCHAR2(128), " +
+        "district VARCHAR2(128), " +
         "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL, " +
         "updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL" +
         ")";
@@ -370,12 +360,15 @@ public class DictionaryItemTableService {
         tableName +
         " (" +
         "id BIGINT NOT NULL PRIMARY KEY, " +
+        "sort INT NOT NULL DEFAULT 0, " +
         "label NVARCHAR(64) NOT NULL, " +
         "value NVARCHAR(128) NOT NULL UNIQUE, " +
         "value_type NVARCHAR(16) NOT NULL DEFAULT 'string', " +
         "status SMALLINT NOT NULL DEFAULT 1, " +
-        "sort INT NOT NULL DEFAULT 0, " +
         "tag_color NVARCHAR(32) NULL, " +
+        "province NVARCHAR(128) NULL, " +
+        "city NVARCHAR(128) NULL, " +
+        "district NVARCHAR(128) NULL, " +
         "created_at DATETIME2 NOT NULL DEFAULT SYSDATETIME(), " +
         "updated_at DATETIME2 NOT NULL DEFAULT SYSDATETIME()" +
         ")";
@@ -384,12 +377,15 @@ public class DictionaryItemTableService {
         tableName +
         " (" +
         "id BIGINT PRIMARY KEY, " +
+        "sort INTEGER NOT NULL DEFAULT 0, " +
         "label VARCHAR(64) NOT NULL, " +
         "value VARCHAR(128) NOT NULL UNIQUE, " +
         "value_type VARCHAR(16) NOT NULL DEFAULT 'string', " +
         "status SMALLINT NOT NULL DEFAULT 1, " +
-        "sort INTEGER NOT NULL DEFAULT 0, " +
         "tag_color VARCHAR(32), " +
+        "province VARCHAR(128), " +
+        "city VARCHAR(128), " +
+        "district VARCHAR(128), " +
         "created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, " +
         "updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP" +
         ")";
@@ -398,15 +394,70 @@ public class DictionaryItemTableService {
         tableName +
         " (" +
         "id BIGINT NOT NULL PRIMARY KEY, " +
+        "sort INT NOT NULL DEFAULT 0, " +
         "label VARCHAR(64) NOT NULL, " +
         "value VARCHAR(128) NOT NULL UNIQUE, " +
         "value_type VARCHAR(16) NOT NULL DEFAULT 'string', " +
         "status TINYINT NOT NULL DEFAULT 1, " +
-        "sort INT NOT NULL DEFAULT 0, " +
         "tag_color VARCHAR(32), " +
+        "province VARCHAR(128), " +
+        "city VARCHAR(128), " +
+        "district VARCHAR(128), " +
         "created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, " +
         "updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP" +
         ")";
+    };
+  }
+
+  private void ensureExtendedColumns(String tableName) {
+    addColumnIfMissing(tableName, "province");
+    addColumnIfMissing(tableName, "city");
+    addColumnIfMissing(tableName, "district");
+  }
+
+  private void addColumnIfMissing(String tableName, String columnName) {
+    if (columnExists(tableName, columnName)) {
+      return;
+    }
+    jdbcTemplate.execute(buildAddColumnSql(tableName, columnName));
+  }
+
+  private boolean columnExists(String tableName, String columnName) {
+    if (!StringUtils.hasText(tableName) || !StringUtils.hasText(columnName)) {
+      return false;
+    }
+    String targetTable = tableName.trim().toLowerCase(Locale.ROOT);
+    String targetColumn = columnName.trim().toLowerCase(Locale.ROOT);
+    try (Connection connection = dataSource.getConnection()) {
+      DatabaseMetaData metaData = connection.getMetaData();
+      try (ResultSet columns = metaData.getColumns(connection.getCatalog(), null, "%", "%")) {
+        while (columns.next()) {
+          String foundTable = columns.getString("TABLE_NAME");
+          String foundColumn = columns.getString("COLUMN_NAME");
+          if (foundTable == null || foundColumn == null) {
+            continue;
+          }
+          if (
+            targetTable.equals(foundTable.trim().toLowerCase(Locale.ROOT)) &&
+            targetColumn.equals(foundColumn.trim().toLowerCase(Locale.ROOT))
+          ) {
+            return true;
+          }
+        }
+      }
+    } catch (SQLException ignored) {
+      return false;
+    }
+    return false;
+  }
+
+  private String buildAddColumnSql(String tableName, String columnName) {
+    String db = getDatabaseKey();
+    return switch (db) {
+      case "oracle" -> "ALTER TABLE " + tableName + " ADD (" + columnName + " VARCHAR2(128))";
+      case "sqlserver" -> "ALTER TABLE " + tableName + " ADD " + columnName + " NVARCHAR(128) NULL";
+      case "postgresql" -> "ALTER TABLE " + tableName + " ADD COLUMN IF NOT EXISTS " + columnName + " VARCHAR(128)";
+      default -> "ALTER TABLE " + tableName + " ADD COLUMN " + columnName + " VARCHAR(128) NULL";
     };
   }
 

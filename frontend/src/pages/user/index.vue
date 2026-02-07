@@ -141,8 +141,6 @@
                   <t-cascader
                     v-model="areaValue"
                     :options="areaOptions"
-                    :lazy="areaLazy"
-                    :load="areaLazy ? loadAreaChildren : undefined"
                     :loading="areaLoading"
                     value-type="full"
                     :show-all-levels="true"
@@ -228,8 +226,6 @@ import type { FormInstanceFunctions, FormRule, PrimaryTableCol, SubmitContext } 
 import { MessagePlugin } from 'tdesign-vue-next';
 import { computed, onMounted, onUnmounted, reactive, ref } from 'vue';
 
-import type { AreaNodeResponse, AreaPathNode } from '@/api/system/area';
-import { fetchAreaChildren, fetchAreaPath, resolveAreaPath } from '@/api/system/area';
 import type { ChangePasswordRequest, UserProfile } from '@/api/user';
 import { changePassword, getMyProfile, updateMyProfile } from '@/api/user';
 import ConfirmDrawer from '@/components/ConfirmDrawer.vue';
@@ -316,17 +312,9 @@ const profileForm = reactive({
 });
 
 const genderDict = useDictionary('gender');
-const provinceDict = useDictionary('address_province');
-const cityDict = useDictionary('address_city');
-const districtDict = useDictionary('address_district');
+const areaDict = useDictionary('address_district');
 
-const fallbackGenderOptions = [
-  { label: '?', value: 'male' },
-  { label: '?', value: 'female' },
-  { label: '保密', value: 'secret' },
-];
-
-const genderOptions = computed(() => buildDictOptions(genderDict.items.value, fallbackGenderOptions));
+const genderOptions = computed(() => buildDictOptions(genderDict.items.value));
 
 interface AreaOption {
   label: string;
@@ -339,72 +327,11 @@ interface AreaOption {
 const areaOptions = ref<AreaOption[]>([]);
 const areaValue = ref<Array<number | string>>([]);
 const areaLoadingState = ref(false);
-const hasDictAreaData = computed(
-  () => provinceDict.items.value.length > 0 || cityDict.items.value.length > 0 || districtDict.items.value.length > 0,
-);
-const useDictArea = computed(() => hasDictAreaData.value);
+const areaDictHintMessage =
+  '\u5730\u5740\u5b57\u5178\u672a\u5b8c\u5584\uff0c\u8bf7\u5148\u5728\u7cfb\u7edf\u5b57\u5178\u4e2d\u5728 address_district \u5b57\u5178\u9879\u4e2d\u5b8c\u5584 province/city/district \u5b57\u6bb5\u6570\u636e';
 const areaLoading = computed(
-  () => areaLoadingState.value || provinceDict.loading.value || cityDict.loading.value || districtDict.loading.value,
+  () => areaLoadingState.value || areaDict.loading.value,
 );
-const areaLazy = computed(() => !useDictArea.value);
-
-const showAreaError = (error: any) => {
-  const raw = error?.response?.data?.message || error?.message || error?.response?.statusText || '';
-  const msg = String(raw)
-    .replace(/\s*\[\d{3}\]\s*$/, '')
-    .trim();
-  MessagePlugin.error(msg || '加载地区失败');
-};
-
-const toAreaOption = (row: AreaNodeResponse): AreaOption => ({
-  label: row.name,
-  value: row.id,
-  level: row.level,
-  zipCode: row.zipCode ?? null,
-  children: row.level >= 3 ? [] : row.hasChildren ? true : [],
-});
-
-const resolveDictPathParts = (raw: string) => {
-  const text = raw.trim();
-  if (!text) return [];
-  return text
-    .split(/[>|/]/)
-    .map((part) => part.trim())
-    .filter(Boolean);
-};
-
-const parseDictAreaMeta = (item: any) => {
-  const raw = String(item?.value ?? item?.label ?? '').trim();
-  let province;
-  let city;
-  let district;
-  let zipCode;
-  if (raw.startsWith('{') && raw.endsWith('}')) {
-    try {
-      const parsed = JSON.parse(raw);
-      province = parsed.province ?? parsed.p;
-      city = parsed.city ?? parsed.c;
-      district = parsed.district ?? parsed.d;
-      zipCode = parsed.zipCode ?? parsed.zip;
-    } catch (error) {
-      console.warn('Parse area dict json failed:', error);
-    }
-  }
-  if (!province && !city && !district) {
-    const parts = resolveDictPathParts(raw);
-    if (parts.length === 2) {
-      [province, city] = parts;
-    } else if (parts.length >= 3) {
-      [province, city, district] = parts;
-    }
-  }
-  return {
-    province,
-    city,
-    district,
-    zipCode,
-  };
-};
 
 const toAreaDictValue = (raw: unknown): string | number => {
   if (typeof raw === 'number' && Number.isFinite(raw)) return raw;
@@ -415,122 +342,139 @@ const toAreaDictValue = (raw: unknown): string | number => {
 };
 
 const createDictAreaOptions = (): AreaOption[] => {
-  const provinceItems = provinceDict.items.value;
-  const cityItems = cityDict.items.value;
-  const districtItems = districtDict.items.value;
+  const areaItems = areaDict.items.value;
+  if (areaItems.length === 0) {
+    return [];
+  }
 
-  const districtEntries = districtItems.map((item) => {
-    const meta = parseDictAreaMeta(item);
-    const fallbackDistrict = String(item.label || '').trim();
-    return {
-      label: item.label,
-      value: toAreaDictValue(parseDictValue(item)),
-      province: meta.province,
-      city: meta.city,
-      district: meta.district || fallbackDistrict,
-      zipCode: meta.zipCode,
-    };
-  });
-
-  const cityEntries = cityItems.map((item) => {
-    const meta = parseDictAreaMeta(item);
-    const fallbackCity = String(item.label || '').trim();
-    return {
-      label: item.label,
-      value: toAreaDictValue(parseDictValue(item)),
-      province: meta.province,
-      city: meta.city || fallbackCity,
-    };
-  });
+  const districtEntries = areaItems
+    .map((item) => {
+      const row = item as any;
+      const province = String(row.province || '').trim();
+      const city = String(row.city || '').trim();
+      const district = String(row.district || '').trim();
+      const parsedValue = parseDictValue(item);
+      return {
+        label: item.label,
+        value: toAreaDictValue(item.id ?? parsedValue),
+        province,
+        city,
+        district,
+      };
+    })
+    .filter((entry) => !!entry.province && !!entry.city && !!entry.district);
+  const validEntries = districtEntries;
+  if (validEntries.length === 0) {
+    return [];
+  }
 
   const buildDistrictOptions = (province?: string, city?: string): AreaOption[] => {
     if (!province || !city) return [];
-    const filtered = districtEntries.filter((entry) => {
-      if (!entry.province || !entry.city || !entry.district) return false;
-      return entry.province === province && entry.city === city;
-    });
+    const filtered = validEntries.filter((entry) => entry.province === province && entry.city === city);
     const unique = new Set<string>();
     return filtered
       .filter((entry) => {
-        const key = `${entry.province}/${entry.city}/${entry.district}`;
+        const key = `${province}/${city}/${entry.district}`;
         if (unique.has(key)) return false;
         unique.add(key);
         return true;
       })
       .map((entry) => ({
-      label: entry.district,
-      value: entry.value,
-      level: 3,
-      zipCode: entry.zipCode ?? null,
-      children: [],
-    }));
+        label: entry.district,
+        value: entry.value,
+        level: 3,
+        children: [],
+      }));
   };
 
   const buildCityOptions = (province?: string): AreaOption[] => {
     if (!province) return [];
-    const directMatched = cityEntries.filter((entry) => entry.province === province && !!entry.city);
-    const source =
-      directMatched.length > 0
-        ? directMatched
-        : Array.from(
-            new Map(
-              districtEntries
-                .filter((entry) => entry.province === province && !!entry.city)
-                .map((entry) => [entry.city as string, entry]),
-            ).values(),
-          );
-    return source.map((entry) => ({
-      label: entry.city,
-      value: entry.value || `${province}/${entry.city}`,
-      level: 2,
-      children: buildDistrictOptions(province, entry.city),
-    }));
+    const source = Array.from(
+      new Map(
+        validEntries
+          .filter((entry) => entry.province === province)
+          .map((entry) => [entry.city as string, entry]),
+      ).values(),
+    );
+    const unique = new Set<string>();
+    return source
+      .filter((entry) => {
+        const city = String(entry.city || '').trim();
+        if (!city || unique.has(city)) return false;
+        unique.add(city);
+        return true;
+      })
+      .map((entry) => {
+        const city = String(entry.city || '').trim();
+        return {
+          label: city,
+          value: `${province}/${city}`,
+          level: 2,
+          children: buildDistrictOptions(province, city),
+        };
+      });
   };
 
-  const provinceLabels =
-    provinceItems.length > 0
-      ? provinceItems.map((item) => String(item.label || '').trim()).filter(Boolean)
-      : Array.from(new Set(districtEntries.map((entry) => String(entry.province || '').trim()).filter(Boolean)));
-
-  if (provinceLabels.length === 0) return [];
-
-  return provinceLabels.map((province) => ({
-    label: province,
-    value: province,
+  const provinceEntries = Array.from(
+    new Map(
+      validEntries.map((entry) => [
+        entry.province as string,
+        {
+          label: String(entry.province || '').trim(),
+          value: String(entry.province || '').trim(),
+        },
+      ]),
+    ).values(),
+  )
+    .map((entry) => ({
+      label: entry.label,
+      value: toAreaDictValue(entry.value),
+    }))
+    .filter((entry) => !!entry.label);
+  const uniqueProvince = new Set<string>();
+  const provinceList = provinceEntries.filter((entry) => {
+    if (uniqueProvince.has(entry.label)) return false;
+    uniqueProvince.add(entry.label);
+    return true;
+  });
+  if (provinceList.length === 0) return [];
+  return provinceList.map((province) => ({
+    label: province.label,
+    value: province.value || province.label,
     level: 1,
-    children: buildCityOptions(province),
+    children: buildCityOptions(province.label),
   }));
 };
 
-const loadRootAreas = async () => {
-  if (useDictArea.value) {
-    areaOptions.value = createDictAreaOptions();
-    return;
+const areaDictReady = computed(() => {
+  const options = createDictAreaOptions();
+  if (options.length === 0) return false;
+  const hasCity = options.some((province) => Array.isArray(province.children) && province.children.length > 0);
+  const hasDistrict = options.some(
+    (province) =>
+      Array.isArray(province.children) &&
+      province.children.some((city) => Array.isArray(city.children) && city.children.length > 0),
+  );
+  return hasCity && hasDistrict;
+});
+
+const ensureAreaDictReady = (notify = true) => {
+  if (areaDictReady.value) return true;
+  areaOptions.value = [];
+  if (notify) {
+    MessagePlugin.error(areaDictHintMessage);
   }
-  if (areaOptions.value.length > 0) return;
-  areaLoadingState.value = true;
-  try {
-    const rows = await fetchAreaChildren(0);
-    areaOptions.value = rows.map(toAreaOption);
-  } catch (error) {
-    console.error('Load area root failed:', error);
-    showAreaError(error);
-  } finally {
-    areaLoadingState.value = false;
-  }
+  return false;
 };
 
-const loadAreaChildren = async (node: any) => {
-  if (useDictArea.value) return [];
-  if (node?.data?.level >= 3) return [];
-  const parentId = Number(node?.value || 0);
+const loadRootAreas = async (notify = true) => {
+  areaLoadingState.value = true;
   try {
-    const rows = await fetchAreaChildren(parentId);
-    return rows.map(toAreaOption);
-  } catch (error) {
-    console.error('Load area children failed:', error);
-    showAreaError(error);
-    return [];
+    if (!ensureAreaDictReady(notify)) return false;
+    areaOptions.value = createDictAreaOptions();
+    return true;
+  } finally {
+    areaLoadingState.value = false;
   }
 };
 
@@ -547,121 +491,46 @@ const resetAreaFields = () => {
 
 const toNumericId = (value: unknown) => (typeof value === 'number' && Number.isFinite(value) ? value : null);
 
-const applyAreaPath = (path: AreaPathNode[]) => {
-  if (!path || path.length === 0) {
-    resetAreaFields();
-    return;
-  }
-  const trimmedPath = path.slice(0, 3);
-  const ids = trimmedPath.map((node) => node.id);
-  const names = trimmedPath.map((node) => node.name || '');
-  areaValue.value = ids;
-  profileForm.provinceId = toNumericId(ids[0]);
-  profileForm.cityId = toNumericId(ids[1]);
-  profileForm.districtId = toNumericId(ids[2]);
-  profileForm.province = names[0] ?? '';
-  profileForm.city = names[1] ?? '';
-  profileForm.district = names[2] ?? '';
-  profileForm.zipCode = trimmedPath[trimmedPath.length - 1]?.zipCode || '';
-};
-
-const ensureAreaPathOptions = async (path: AreaPathNode[]) => {
-  if (!path || path.length === 0) return;
-  await loadRootAreas();
-  let cursor = areaOptions.value;
-  const trimmedPath = path.slice(0, 3);
-  for (let i = 0; i < trimmedPath.length; i += 1) {
-    const node = trimmedPath[i];
-    let option = cursor.find((item) => item.value === node.id);
-    if (!option) {
-      option = {
-        label: node.name,
-        value: node.id,
-        level: node.level,
-        zipCode: node.zipCode ?? null,
-        children: i < trimmedPath.length - 1 ? true : [],
-      };
-      cursor.push(option);
-    } else {
-      option.label = node.name || option.label;
-      option.level = node.level ?? option.level;
-      if (node.zipCode !== undefined) {
-        option.zipCode = node.zipCode ?? null;
-      }
-    }
-    if (i === trimmedPath.length - 1) break;
-    if (!Array.isArray(option.children)) {
-      const rows = await fetchAreaChildren(node.id);
-      option.children = rows.map(toAreaOption);
-    }
-    cursor = Array.isArray(option.children) ? option.children : [];
-  }
-};
-
 const syncAreaFromProfile = async (data: UserProfile) => {
-  if (useDictArea.value) {
-    await loadRootAreas();
-    const matchedProvince = areaOptions.value.find(
-      (option) => option.label === data.province || String(option.value) === data.province,
-    );
-    const provincesToScan = matchedProvince ? [matchedProvince] : areaOptions.value;
-    let matchedCity: AreaOption | undefined;
-    let matchedDistrict: AreaOption | undefined;
-
-    for (const province of provincesToScan) {
-      const cityChildren = Array.isArray(province.children) ? province.children : [];
-      matchedCity = cityChildren.find(
-        (option) => option.label === data.city || String(option.value) === data.city,
-      );
-      if (matchedCity) {
-        const districtChildren = Array.isArray(matchedCity.children) ? matchedCity.children : [];
-        matchedDistrict = districtChildren.find(
-          (option) => option.label === data.district || String(option.value) === data.district,
-        );
-      }
-      if (matchedCity || matchedDistrict) break;
-    }
-
-    const path: AreaOption[] = [];
-    if (matchedProvince) path.push(matchedProvince);
-    if (matchedCity) path.push(matchedCity);
-    if (matchedDistrict) path.push(matchedDistrict);
-
-    if (path.length > 0) {
-      areaValue.value = path.map((option) => option.value);
-      profileForm.provinceId = toNumericId(path[0]?.value);
-      profileForm.cityId = toNumericId(path[1]?.value);
-      profileForm.districtId = toNumericId(path[2]?.value);
-      profileForm.province = path[0]?.label || data.province || '';
-      profileForm.city = path[1]?.label || data.city || '';
-      profileForm.district = path[2]?.label || data.district || '';
-      profileForm.zipCode = path[path.length - 1]?.zipCode || data.zipCode || '';
-    } else if (!data.province && !data.city && !data.district) {
-      resetAreaFields();
-    }
+  const loaded = await loadRootAreas(true);
+  if (!loaded) {
+    areaValue.value = [];
     return;
   }
+  const matchedProvince = areaOptions.value.find(
+    (option) => option.label === data.province || String(option.value) === data.province,
+  );
+  const provincesToScan = matchedProvince ? [matchedProvince] : areaOptions.value;
+  let matchedCity: AreaOption | undefined;
+  let matchedDistrict: AreaOption | undefined;
 
-  const areaId = data.districtId || data.cityId || data.provinceId;
-  const hasName = !!(data.province || data.city || data.district);
-  let path: AreaPathNode[] = [];
-  try {
-    if (areaId) {
-      path = await fetchAreaPath(areaId);
-    } else if (hasName) {
-      path = await resolveAreaPath({
-        province: data.province,
-        city: data.city,
-        district: data.district,
-      });
+  for (const province of provincesToScan) {
+    const cityChildren = Array.isArray(province.children) ? province.children : [];
+    matchedCity = cityChildren.find((option) => option.label === data.city || String(option.value) === data.city);
+    if (matchedCity) {
+      const districtChildren = Array.isArray(matchedCity.children) ? matchedCity.children : [];
+      matchedDistrict = districtChildren.find(
+        (option) => option.label === data.district || String(option.value) === data.district,
+      );
     }
-  } catch (error) {
-    console.error('Resolve area path failed:', error);
+    if (matchedCity || matchedDistrict) break;
   }
+
+  const path: AreaOption[] = [];
+  if (matchedProvince) path.push(matchedProvince);
+  if (matchedCity) path.push(matchedCity);
+  if (matchedDistrict) path.push(matchedDistrict);
+
   if (path.length > 0) {
-    await ensureAreaPathOptions(path);
-    applyAreaPath(path);
-  } else if (!areaId && !hasName) {
+    areaValue.value = path.map((option) => option.value);
+    profileForm.provinceId = toNumericId(path[0]?.value);
+    profileForm.cityId = toNumericId(path[1]?.value);
+    profileForm.districtId = toNumericId(path[2]?.value);
+    profileForm.province = path[0]?.label || data.province || '';
+    profileForm.city = path[1]?.label || data.city || '';
+    profileForm.district = path[2]?.label || data.district || '';
+    profileForm.zipCode = path[path.length - 1]?.zipCode || data.zipCode || '';
+  } else if (!data.province && !data.city && !data.district) {
     resetAreaFields();
   }
 };
@@ -747,9 +616,7 @@ const loginLogColumns: PrimaryTableCol[] = [
 const loadDictionaries = async (force = false) => {
   await Promise.all([
     genderDict.load(force),
-    provinceDict.load(force),
-    cityDict.load(force),
-    districtDict.load(force),
+    areaDict.load(force),
   ]);
 };
 
@@ -1022,7 +889,8 @@ onUnmounted(() => {
 
     .password-form {
       :deep(.t-form__controls) {
-        width: 100%;
+        flex: 1;
+        min-width: 0;
       }
 
       :deep(.t-input) {
@@ -1099,7 +967,8 @@ onUnmounted(() => {
 
       .password-form {
         :deep(.t-form__controls) {
-          width: 100%;
+          flex: 1;
+          min-width: 0;
         }
       }
     }

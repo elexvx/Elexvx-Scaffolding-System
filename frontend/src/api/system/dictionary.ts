@@ -25,6 +25,9 @@ export interface SysDictItem {
   status: number;
   sort: number;
   tagColor?: string;
+  province?: string;
+  city?: string;
+  district?: string;
   createdAt?: string;
   updatedAt?: string;
 }

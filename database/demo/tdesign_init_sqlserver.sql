@@ -1,4 +1,4 @@
-﻿-- SQL Server initialization script for TDesign
+-- SQL Server initialization script for TDesign
 -- Use: sqlcmd -d tdesign -i database/demo/tdesign_init_sqlserver.sql
 -- Note: run on an empty schema or drop existing tables first.
 
@@ -131,10 +131,10 @@ GO
 
 CREATE TABLE sys_dict (
   id BIGINT IDENTITY(1,1) PRIMARY KEY,
+  sort INT NOT NULL DEFAULT 0,
   name NVARCHAR(64) NOT NULL,
   code NVARCHAR(64) NOT NULL UNIQUE,
   status TINYINT NOT NULL DEFAULT 1,
-  sort INT NOT NULL DEFAULT 0,
   remark NVARCHAR(255),
   created_at DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
   updated_at DATETIME2 NOT NULL DEFAULT SYSDATETIME()
@@ -392,8 +392,6 @@ GO
 SET IDENTITY_INSERT sys_dict ON;
 INSERT INTO sys_dict (id, name, code, status, sort, remark, created_at, updated_at) VALUES
   (2001, N'性别', N'gender', 1, 1, N'性别选项', '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (2002, N'地址-省', N'address_province', 1, 2, N'地址省份', '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (2003, N'地址-市', N'address_city', 1, 3, N'地址城市', '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
   (2004, N'地址-区', N'address_district', 1, 4, N'地址区县', '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
   (2005, N'公告-类型', N'announcement_type', 1, 5, N'公告类型', '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
   (2006, N'公告-优先级', N'announcement_priority', 1, 6, N'公告优先级', '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
@@ -410,11 +408,344 @@ INSERT INTO sys_dict (id, name, code, status, sort, remark, created_at, updated_
   (2017, N'菜单-权限动作', N'menu_action', 1, 17, N'菜单权限动作', '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
   (2018, N'存储-提供商', N'storage_provider', 1, 18, N'存储提供商', '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
   (2019, N'短信-通道', N'sms_provider', 1, 19, N'短信通道', '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (2020, N'AI-厂商', N'ai_vendor', 1, 20, N'AI厂商', '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
-  (2021, N'团队', N'team', 1, 21, N'团队管理', '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+  (2020, N'AI-厂商', N'ai_vendor', 1, 20, N'AI厂商', '2026-01-18 21:21:03', '2026-01-18 21:21:03');
 SET IDENTITY_INSERT sys_dict OFF;
 GO
 
+-- Dictionary item tables (per dictionary)
+GO
+
+CREATE TABLE sys_di_gender_de9feaea (
+  id BIGINT NOT NULL PRIMARY KEY,
+  sort INT NOT NULL DEFAULT 0,
+  label NVARCHAR(64) NOT NULL,
+  value NVARCHAR(128) NOT NULL UNIQUE,
+  value_type NVARCHAR(16) NOT NULL DEFAULT 'string',
+  status SMALLINT NOT NULL DEFAULT 1,
+  tag_color NVARCHAR(32) NULL,
+  created_at DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+  updated_at DATETIME2 NOT NULL DEFAULT SYSDATETIME()
+);
+GO
+INSERT INTO sys_di_gender_de9feaea (id, label, value, value_type, status, sort, tag_color, created_at, updated_at) VALUES (2101, N'男', N'male', N'string', 1, 1, N'success', '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+INSERT INTO sys_di_gender_de9feaea (id, label, value, value_type, status, sort, tag_color, created_at, updated_at) VALUES (2102, N'女', N'female', N'string', 1, 2, N'danger', '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+INSERT INTO sys_di_gender_de9feaea (id, label, value, value_type, status, sort, tag_color, created_at, updated_at) VALUES (2103, N'未知', N'unknown', N'string', 1, 3, N'warning', '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+GO
+
+CREATE TABLE sys_di_address_distri_a4210592 (
+  id BIGINT NOT NULL PRIMARY KEY,
+  sort INT NOT NULL DEFAULT 0,
+  label NVARCHAR(64) NOT NULL,
+  value NVARCHAR(128) NOT NULL UNIQUE,
+  value_type NVARCHAR(16) NOT NULL DEFAULT 'string',
+  status SMALLINT NOT NULL DEFAULT 1,
+  tag_color NVARCHAR(32) NULL,
+  province NVARCHAR(128) NULL,
+  city NVARCHAR(128) NULL,
+  district NVARCHAR(128) NULL,
+  created_at DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+  updated_at DATETIME2 NOT NULL DEFAULT SYSDATETIME()
+);
+GO
+INSERT INTO sys_di_address_distri_a4210592 (id, label, value, value_type, status, sort, tag_color, province, city, district, created_at, updated_at) VALUES (2401, N'南山区', N'南山区', N'string', 1, 1, NULL, N'广东省', N'深圳市', N'南山区', '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+INSERT INTO sys_di_address_distri_a4210592 (id, label, value, value_type, status, sort, tag_color, province, city, district, created_at, updated_at) VALUES (2402, N'福田区', N'福田区', N'string', 1, 2, NULL, N'广东省', N'深圳市', N'福田区', '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+INSERT INTO sys_di_address_distri_a4210592 (id, label, value, value_type, status, sort, tag_color, province, city, district, created_at, updated_at) VALUES (2403, N'宝安区', N'宝安区', N'string', 1, 3, NULL, N'广东省', N'深圳市', N'宝安区', '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+INSERT INTO sys_di_address_distri_a4210592 (id, label, value, value_type, status, sort, tag_color, province, city, district, created_at, updated_at) VALUES (2404, N'龙岗区', N'龙岗区', N'string', 1, 4, NULL, N'广东省', N'深圳市', N'龙岗区', '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+INSERT INTO sys_di_address_distri_a4210592 (id, label, value, value_type, status, sort, tag_color, province, city, district, created_at, updated_at) VALUES (2405, N'龙华区', N'龙华区', N'string', 1, 5, NULL, N'广东省', N'深圳市', N'龙华区', '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+INSERT INTO sys_di_address_distri_a4210592 (id, label, value, value_type, status, sort, tag_color, province, city, district, created_at, updated_at) VALUES (2406, N'天河区', N'天河区', N'string', 1, 6, NULL, N'广东省', N'广州市', N'天河区', '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+INSERT INTO sys_di_address_distri_a4210592 (id, label, value, value_type, status, sort, tag_color, province, city, district, created_at, updated_at) VALUES (2407, N'越秀区', N'越秀区', N'string', 1, 7, NULL, N'广东省', N'广州市', N'越秀区', '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+INSERT INTO sys_di_address_distri_a4210592 (id, label, value, value_type, status, sort, tag_color, province, city, district, created_at, updated_at) VALUES (2408, N'番禺区', N'番禺区', N'string', 1, 8, NULL, N'广东省', N'广州市', N'番禺区', '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+INSERT INTO sys_di_address_distri_a4210592 (id, label, value, value_type, status, sort, tag_color, province, city, district, created_at, updated_at) VALUES (2409, N'海珠区', N'海珠区', N'string', 1, 9, NULL, N'广东省', N'广州市', N'海珠区', '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+INSERT INTO sys_di_address_distri_a4210592 (id, label, value, value_type, status, sort, tag_color, province, city, district, created_at, updated_at) VALUES (2410, N'白云区', N'白云区', N'string', 1, 10, NULL, N'广东省', N'广州市', N'白云区', '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+INSERT INTO sys_di_address_distri_a4210592 (id, label, value, value_type, status, sort, tag_color, province, city, district, created_at, updated_at) VALUES (2411, N'黄浦区', N'黄浦区', N'string', 1, 11, NULL, N'上海市', N'上海市', N'黄浦区', '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+INSERT INTO sys_di_address_distri_a4210592 (id, label, value, value_type, status, sort, tag_color, province, city, district, created_at, updated_at) VALUES (2412, N'徐汇区', N'徐汇区', N'string', 1, 12, NULL, N'上海市', N'上海市', N'徐汇区', '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+INSERT INTO sys_di_address_distri_a4210592 (id, label, value, value_type, status, sort, tag_color, province, city, district, created_at, updated_at) VALUES (2413, N'长宁区', N'长宁区', N'string', 1, 13, NULL, N'上海市', N'上海市', N'长宁区', '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+INSERT INTO sys_di_address_distri_a4210592 (id, label, value, value_type, status, sort, tag_color, province, city, district, created_at, updated_at) VALUES (2414, N'静安区', N'静安区', N'string', 1, 14, NULL, N'上海市', N'上海市', N'静安区', '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+INSERT INTO sys_di_address_distri_a4210592 (id, label, value, value_type, status, sort, tag_color, province, city, district, created_at, updated_at) VALUES (2415, N'浦东新区', N'浦东新区', N'string', 1, 15, NULL, N'上海市', N'上海市', N'浦东新区', '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+INSERT INTO sys_di_address_distri_a4210592 (id, label, value, value_type, status, sort, tag_color, province, city, district, created_at, updated_at) VALUES (2416, N'东城区', N'东城区', N'string', 1, 16, NULL, N'北京市', N'北京市', N'东城区', '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+INSERT INTO sys_di_address_distri_a4210592 (id, label, value, value_type, status, sort, tag_color, province, city, district, created_at, updated_at) VALUES (2417, N'西城区', N'西城区', N'string', 1, 17, NULL, N'北京市', N'北京市', N'西城区', '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+INSERT INTO sys_di_address_distri_a4210592 (id, label, value, value_type, status, sort, tag_color, province, city, district, created_at, updated_at) VALUES (2418, N'朝阳区', N'朝阳区', N'string', 1, 18, NULL, N'北京市', N'北京市', N'朝阳区', '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+INSERT INTO sys_di_address_distri_a4210592 (id, label, value, value_type, status, sort, tag_color, province, city, district, created_at, updated_at) VALUES (2419, N'海淀区', N'海淀区', N'string', 1, 19, NULL, N'北京市', N'北京市', N'海淀区', '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+INSERT INTO sys_di_address_distri_a4210592 (id, label, value, value_type, status, sort, tag_color, province, city, district, created_at, updated_at) VALUES (2420, N'西湖区', N'西湖区', N'string', 1, 20, NULL, N'浙江省', N'杭州市', N'西湖区', '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+INSERT INTO sys_di_address_distri_a4210592 (id, label, value, value_type, status, sort, tag_color, province, city, district, created_at, updated_at) VALUES (2421, N'上城区', N'上城区', N'string', 1, 21, NULL, N'浙江省', N'杭州市', N'上城区', '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+INSERT INTO sys_di_address_distri_a4210592 (id, label, value, value_type, status, sort, tag_color, province, city, district, created_at, updated_at) VALUES (2422, N'下城区', N'下城区', N'string', 1, 22, NULL, N'浙江省', N'杭州市', N'下城区', '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+INSERT INTO sys_di_address_distri_a4210592 (id, label, value, value_type, status, sort, tag_color, province, city, district, created_at, updated_at) VALUES (2423, N'江干区', N'江干区', N'string', 1, 23, NULL, N'浙江省', N'杭州市', N'江干区', '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+GO
+CREATE TABLE sys_di_announcement_t_de30e733 (
+  id BIGINT NOT NULL PRIMARY KEY,
+  sort INT NOT NULL DEFAULT 0,
+  label NVARCHAR(64) NOT NULL,
+  value NVARCHAR(128) NOT NULL UNIQUE,
+  value_type NVARCHAR(16) NOT NULL DEFAULT 'string',
+  status SMALLINT NOT NULL DEFAULT 1,
+  tag_color NVARCHAR(32) NULL,
+  created_at DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+  updated_at DATETIME2 NOT NULL DEFAULT SYSDATETIME()
+);
+GO
+INSERT INTO sys_di_announcement_t_de30e733 (id, label, value, value_type, status, sort, tag_color, created_at, updated_at) VALUES (2501, N'公告', N'announcement', N'string', 1, 1, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+GO
+
+CREATE TABLE sys_di_announcement_p_ef193e74 (
+  id BIGINT NOT NULL PRIMARY KEY,
+  sort INT NOT NULL DEFAULT 0,
+  label NVARCHAR(64) NOT NULL,
+  value NVARCHAR(128) NOT NULL UNIQUE,
+  value_type NVARCHAR(16) NOT NULL DEFAULT 'string',
+  status SMALLINT NOT NULL DEFAULT 1,
+  tag_color NVARCHAR(32) NULL,
+  created_at DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+  updated_at DATETIME2 NOT NULL DEFAULT SYSDATETIME()
+);
+GO
+INSERT INTO sys_di_announcement_p_ef193e74 (id, label, value, value_type, status, sort, tag_color, created_at, updated_at) VALUES (2511, N'高', N'high', N'string', 1, 1, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+INSERT INTO sys_di_announcement_p_ef193e74 (id, label, value, value_type, status, sort, tag_color, created_at, updated_at) VALUES (2512, N'中', N'middle', N'string', 1, 2, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+INSERT INTO sys_di_announcement_p_ef193e74 (id, label, value, value_type, status, sort, tag_color, created_at, updated_at) VALUES (2513, N'低', N'low', N'string', 1, 3, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+GO
+
+CREATE TABLE sys_di_announcement_s_f91c61fe (
+  id BIGINT NOT NULL PRIMARY KEY,
+  sort INT NOT NULL DEFAULT 0,
+  label NVARCHAR(64) NOT NULL,
+  value NVARCHAR(128) NOT NULL UNIQUE,
+  value_type NVARCHAR(16) NOT NULL DEFAULT 'string',
+  status SMALLINT NOT NULL DEFAULT 1,
+  tag_color NVARCHAR(32) NULL,
+  created_at DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+  updated_at DATETIME2 NOT NULL DEFAULT SYSDATETIME()
+);
+GO
+INSERT INTO sys_di_announcement_s_f91c61fe (id, label, value, value_type, status, sort, tag_color, created_at, updated_at) VALUES (2521, N'草稿', N'draft', N'string', 1, 1, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+INSERT INTO sys_di_announcement_s_f91c61fe (id, label, value, value_type, status, sort, tag_color, created_at, updated_at) VALUES (2522, N'已发布', N'published', N'string', 1, 2, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+INSERT INTO sys_di_announcement_s_f91c61fe (id, label, value, value_type, status, sort, tag_color, created_at, updated_at) VALUES (2523, N'已撤回', N'withdrawn', N'string', 1, 3, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+GO
+
+CREATE TABLE sys_di_notification_t_301379fe (
+  id BIGINT NOT NULL PRIMARY KEY,
+  sort INT NOT NULL DEFAULT 0,
+  label NVARCHAR(64) NOT NULL,
+  value NVARCHAR(128) NOT NULL UNIQUE,
+  value_type NVARCHAR(16) NOT NULL DEFAULT 'string',
+  status SMALLINT NOT NULL DEFAULT 1,
+  tag_color NVARCHAR(32) NULL,
+  created_at DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+  updated_at DATETIME2 NOT NULL DEFAULT SYSDATETIME()
+);
+GO
+INSERT INTO sys_di_notification_t_301379fe (id, label, value, value_type, status, sort, tag_color, created_at, updated_at) VALUES (2601, N'通知', N'notification', N'string', 1, 1, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+GO
+
+CREATE TABLE sys_di_notification_p_d682ffca (
+  id BIGINT NOT NULL PRIMARY KEY,
+  sort INT NOT NULL DEFAULT 0,
+  label NVARCHAR(64) NOT NULL,
+  value NVARCHAR(128) NOT NULL UNIQUE,
+  value_type NVARCHAR(16) NOT NULL DEFAULT 'string',
+  status SMALLINT NOT NULL DEFAULT 1,
+  tag_color NVARCHAR(32) NULL,
+  created_at DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+  updated_at DATETIME2 NOT NULL DEFAULT SYSDATETIME()
+);
+GO
+INSERT INTO sys_di_notification_p_d682ffca (id, label, value, value_type, status, sort, tag_color, created_at, updated_at) VALUES (2611, N'高', N'high', N'string', 1, 1, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+INSERT INTO sys_di_notification_p_d682ffca (id, label, value, value_type, status, sort, tag_color, created_at, updated_at) VALUES (2612, N'中', N'middle', N'string', 1, 2, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+INSERT INTO sys_di_notification_p_d682ffca (id, label, value, value_type, status, sort, tag_color, created_at, updated_at) VALUES (2613, N'低', N'low', N'string', 1, 3, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+GO
+
+CREATE TABLE sys_di_notification_s_32716fa4 (
+  id BIGINT NOT NULL PRIMARY KEY,
+  sort INT NOT NULL DEFAULT 0,
+  label NVARCHAR(64) NOT NULL,
+  value NVARCHAR(128) NOT NULL UNIQUE,
+  value_type NVARCHAR(16) NOT NULL DEFAULT 'string',
+  status SMALLINT NOT NULL DEFAULT 1,
+  tag_color NVARCHAR(32) NULL,
+  created_at DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+  updated_at DATETIME2 NOT NULL DEFAULT SYSDATETIME()
+);
+GO
+INSERT INTO sys_di_notification_s_32716fa4 (id, label, value, value_type, status, sort, tag_color, created_at, updated_at) VALUES (2621, N'草稿', N'draft', N'string', 1, 1, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+INSERT INTO sys_di_notification_s_32716fa4 (id, label, value, value_type, status, sort, tag_color, created_at, updated_at) VALUES (2622, N'已发布', N'published', N'string', 1, 2, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+INSERT INTO sys_di_notification_s_32716fa4 (id, label, value, value_type, status, sort, tag_color, created_at, updated_at) VALUES (2623, N'已撤回', N'withdrawn', N'string', 1, 3, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+GO
+
+CREATE TABLE sys_di_message_qualit_6ab11001 (
+  id BIGINT NOT NULL PRIMARY KEY,
+  sort INT NOT NULL DEFAULT 0,
+  label NVARCHAR(64) NOT NULL,
+  value NVARCHAR(128) NOT NULL UNIQUE,
+  value_type NVARCHAR(16) NOT NULL DEFAULT 'string',
+  status SMALLINT NOT NULL DEFAULT 1,
+  tag_color NVARCHAR(32) NULL,
+  created_at DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+  updated_at DATETIME2 NOT NULL DEFAULT SYSDATETIME()
+);
+GO
+INSERT INTO sys_di_message_qualit_6ab11001 (id, label, value, value_type, status, sort, tag_color, created_at, updated_at) VALUES (2701, N'高', N'high', N'string', 1, 1, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+INSERT INTO sys_di_message_qualit_6ab11001 (id, label, value, value_type, status, sort, tag_color, created_at, updated_at) VALUES (2702, N'中', N'middle', N'string', 1, 2, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+INSERT INTO sys_di_message_qualit_6ab11001 (id, label, value, value_type, status, sort, tag_color, created_at, updated_at) VALUES (2703, N'低', N'low', N'string', 1, 3, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+GO
+
+CREATE TABLE sys_di_log_action_8705ceac (
+  id BIGINT NOT NULL PRIMARY KEY,
+  sort INT NOT NULL DEFAULT 0,
+  label NVARCHAR(64) NOT NULL,
+  value NVARCHAR(128) NOT NULL UNIQUE,
+  value_type NVARCHAR(16) NOT NULL DEFAULT 'string',
+  status SMALLINT NOT NULL DEFAULT 1,
+  tag_color NVARCHAR(32) NULL,
+  created_at DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+  updated_at DATETIME2 NOT NULL DEFAULT SYSDATETIME()
+);
+GO
+INSERT INTO sys_di_log_action_8705ceac (id, label, value, value_type, status, sort, tag_color, created_at, updated_at) VALUES (2801, N'登录', N'LOGIN', N'string', 1, 1, N'primary', '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+INSERT INTO sys_di_log_action_8705ceac (id, label, value, value_type, status, sort, tag_color, created_at, updated_at) VALUES (2802, N'新增', N'CREATE', N'string', 1, 2, N'success', '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+INSERT INTO sys_di_log_action_8705ceac (id, label, value, value_type, status, sort, tag_color, created_at, updated_at) VALUES (2803, N'修改', N'UPDATE', N'string', 1, 3, N'warning', '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+INSERT INTO sys_di_log_action_8705ceac (id, label, value, value_type, status, sort, tag_color, created_at, updated_at) VALUES (2804, N'删除', N'DELETE', N'string', 1, 4, N'danger', '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+GO
+
+CREATE TABLE sys_di_user_status_e4abeb4f (
+  id BIGINT NOT NULL PRIMARY KEY,
+  sort INT NOT NULL DEFAULT 0,
+  label NVARCHAR(64) NOT NULL,
+  value NVARCHAR(128) NOT NULL UNIQUE,
+  value_type NVARCHAR(16) NOT NULL DEFAULT 'string',
+  status SMALLINT NOT NULL DEFAULT 1,
+  tag_color NVARCHAR(32) NULL,
+  created_at DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+  updated_at DATETIME2 NOT NULL DEFAULT SYSDATETIME()
+);
+GO
+INSERT INTO sys_di_user_status_e4abeb4f (id, label, value, value_type, status, sort, tag_color, created_at, updated_at) VALUES (2901, N'正常', N'1', N'number', 1, 1, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+INSERT INTO sys_di_user_status_e4abeb4f (id, label, value, value_type, status, sort, tag_color, created_at, updated_at) VALUES (2902, N'停用', N'0', N'number', 1, 2, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+GO
+
+CREATE TABLE sys_di_org_type_5a06609e (
+  id BIGINT NOT NULL PRIMARY KEY,
+  sort INT NOT NULL DEFAULT 0,
+  label NVARCHAR(64) NOT NULL,
+  value NVARCHAR(128) NOT NULL UNIQUE,
+  value_type NVARCHAR(16) NOT NULL DEFAULT 'string',
+  status SMALLINT NOT NULL DEFAULT 1,
+  tag_color NVARCHAR(32) NULL,
+  created_at DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+  updated_at DATETIME2 NOT NULL DEFAULT SYSDATETIME()
+);
+GO
+INSERT INTO sys_di_org_type_5a06609e (id, label, value, value_type, status, sort, tag_color, created_at, updated_at) VALUES (3001, N'单位', N'UNIT', N'string', 1, 1, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+INSERT INTO sys_di_org_type_5a06609e (id, label, value, value_type, status, sort, tag_color, created_at, updated_at) VALUES (3002, N'部门', N'DEPARTMENT', N'string', 1, 2, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+INSERT INTO sys_di_org_type_5a06609e (id, label, value, value_type, status, sort, tag_color, created_at, updated_at) VALUES (3003, N'科室', N'SECTION', N'string', 1, 3, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+INSERT INTO sys_di_org_type_5a06609e (id, label, value, value_type, status, sort, tag_color, created_at, updated_at) VALUES (3004, N'班组', N'TEAM', N'string', 1, 4, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+INSERT INTO sys_di_org_type_5a06609e (id, label, value, value_type, status, sort, tag_color, created_at, updated_at) VALUES (3005, N'用户', N'USER', N'string', 1, 5, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+GO
+
+CREATE TABLE sys_di_org_status_adc56f2a (
+  id BIGINT NOT NULL PRIMARY KEY,
+  sort INT NOT NULL DEFAULT 0,
+  label NVARCHAR(64) NOT NULL,
+  value NVARCHAR(128) NOT NULL UNIQUE,
+  value_type NVARCHAR(16) NOT NULL DEFAULT 'string',
+  status SMALLINT NOT NULL DEFAULT 1,
+  tag_color NVARCHAR(32) NULL,
+  created_at DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+  updated_at DATETIME2 NOT NULL DEFAULT SYSDATETIME()
+);
+GO
+INSERT INTO sys_di_org_status_adc56f2a (id, label, value, value_type, status, sort, tag_color, created_at, updated_at) VALUES (3011, N'正常', N'1', N'number', 1, 1, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+INSERT INTO sys_di_org_status_adc56f2a (id, label, value, value_type, status, sort, tag_color, created_at, updated_at) VALUES (3012, N'停用', N'0', N'number', 1, 2, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+GO
+
+CREATE TABLE sys_di_menu_node_type_83d1630e (
+  id BIGINT NOT NULL PRIMARY KEY,
+  sort INT NOT NULL DEFAULT 0,
+  label NVARCHAR(64) NOT NULL,
+  value NVARCHAR(128) NOT NULL UNIQUE,
+  value_type NVARCHAR(16) NOT NULL DEFAULT 'string',
+  status SMALLINT NOT NULL DEFAULT 1,
+  tag_color NVARCHAR(32) NULL,
+  created_at DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+  updated_at DATETIME2 NOT NULL DEFAULT SYSDATETIME()
+);
+GO
+INSERT INTO sys_di_menu_node_type_83d1630e (id, label, value, value_type, status, sort, tag_color, created_at, updated_at) VALUES (3101, N'目录', N'DIR', N'string', 1, 1, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+INSERT INTO sys_di_menu_node_type_83d1630e (id, label, value, value_type, status, sort, tag_color, created_at, updated_at) VALUES (3102, N'页面', N'PAGE', N'string', 1, 2, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+INSERT INTO sys_di_menu_node_type_83d1630e (id, label, value, value_type, status, sort, tag_color, created_at, updated_at) VALUES (3103, N'按钮', N'BTN', N'string', 1, 3, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+GO
+
+CREATE TABLE sys_di_menu_action_6118cb39 (
+  id BIGINT NOT NULL PRIMARY KEY,
+  sort INT NOT NULL DEFAULT 0,
+  label NVARCHAR(64) NOT NULL,
+  value NVARCHAR(128) NOT NULL UNIQUE,
+  value_type NVARCHAR(16) NOT NULL DEFAULT 'string',
+  status SMALLINT NOT NULL DEFAULT 1,
+  tag_color NVARCHAR(32) NULL,
+  created_at DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+  updated_at DATETIME2 NOT NULL DEFAULT SYSDATETIME()
+);
+GO
+INSERT INTO sys_di_menu_action_6118cb39 (id, label, value, value_type, status, sort, tag_color, created_at, updated_at) VALUES (3201, N'查询', N'query', N'string', 1, 1, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+INSERT INTO sys_di_menu_action_6118cb39 (id, label, value, value_type, status, sort, tag_color, created_at, updated_at) VALUES (3202, N'新增', N'create', N'string', 1, 2, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+INSERT INTO sys_di_menu_action_6118cb39 (id, label, value, value_type, status, sort, tag_color, created_at, updated_at) VALUES (3203, N'修改', N'update', N'string', 1, 3, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+INSERT INTO sys_di_menu_action_6118cb39 (id, label, value, value_type, status, sort, tag_color, created_at, updated_at) VALUES (3204, N'删除', N'delete', N'string', 1, 4, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+GO
+
+CREATE TABLE sys_di_storage_provid_f9bb387a (
+  id BIGINT NOT NULL PRIMARY KEY,
+  sort INT NOT NULL DEFAULT 0,
+  label NVARCHAR(64) NOT NULL,
+  value NVARCHAR(128) NOT NULL UNIQUE,
+  value_type NVARCHAR(16) NOT NULL DEFAULT 'string',
+  status SMALLINT NOT NULL DEFAULT 1,
+  tag_color NVARCHAR(32) NULL,
+  created_at DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+  updated_at DATETIME2 NOT NULL DEFAULT SYSDATETIME()
+);
+GO
+INSERT INTO sys_di_storage_provid_f9bb387a (id, label, value, value_type, status, sort, tag_color, created_at, updated_at) VALUES (3301, N'本地存储', N'LOCAL', N'string', 1, 1, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+INSERT INTO sys_di_storage_provid_f9bb387a (id, label, value, value_type, status, sort, tag_color, created_at, updated_at) VALUES (3302, N'阿里云 OSS', N'ALIYUN', N'string', 1, 2, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+INSERT INTO sys_di_storage_provid_f9bb387a (id, label, value, value_type, status, sort, tag_color, created_at, updated_at) VALUES (3303, N'腾讯云 COS', N'TENCENT', N'string', 1, 3, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+GO
+
+CREATE TABLE sys_di_sms_provider_d65c9878 (
+  id BIGINT NOT NULL PRIMARY KEY,
+  sort INT NOT NULL DEFAULT 0,
+  label NVARCHAR(64) NOT NULL,
+  value NVARCHAR(128) NOT NULL UNIQUE,
+  value_type NVARCHAR(16) NOT NULL DEFAULT 'string',
+  status SMALLINT NOT NULL DEFAULT 1,
+  tag_color NVARCHAR(32) NULL,
+  created_at DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+  updated_at DATETIME2 NOT NULL DEFAULT SYSDATETIME()
+);
+GO
+INSERT INTO sys_di_sms_provider_d65c9878 (id, label, value, value_type, status, sort, tag_color, created_at, updated_at) VALUES (3401, N'阿里云短信服务', N'aliyun', N'string', 1, 1, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+INSERT INTO sys_di_sms_provider_d65c9878 (id, label, value, value_type, status, sort, tag_color, created_at, updated_at) VALUES (3402, N'腾讯云短信服务', N'tencent', N'string', 1, 2, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+GO
+
+CREATE TABLE sys_di_ai_vendor_f0a49eba (
+  id BIGINT NOT NULL PRIMARY KEY,
+  sort INT NOT NULL DEFAULT 0,
+  label NVARCHAR(64) NOT NULL,
+  value NVARCHAR(128) NOT NULL UNIQUE,
+  value_type NVARCHAR(16) NOT NULL DEFAULT 'string',
+  status SMALLINT NOT NULL DEFAULT 1,
+  tag_color NVARCHAR(32) NULL,
+  created_at DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+  updated_at DATETIME2 NOT NULL DEFAULT SYSDATETIME()
+);
+GO
+INSERT INTO sys_di_ai_vendor_f0a49eba (id, label, value, value_type, status, sort, tag_color, created_at, updated_at) VALUES (3501, N'OpenAI / 兼容', N'OPENAI', N'string', 1, 1, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+INSERT INTO sys_di_ai_vendor_f0a49eba (id, label, value, value_type, status, sort, tag_color, created_at, updated_at) VALUES (3502, N'Azure OpenAI', N'AZURE_OPENAI', N'string', 1, 2, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+INSERT INTO sys_di_ai_vendor_f0a49eba (id, label, value, value_type, status, sort, tag_color, created_at, updated_at) VALUES (3503, N'DeepSeek', N'DEEPSEEK', N'string', 1, 3, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+INSERT INTO sys_di_ai_vendor_f0a49eba (id, label, value, value_type, status, sort, tag_color, created_at, updated_at) VALUES (3504, N'月之暗面 / Moonshot', N'MOONSHOT', N'string', 1, 4, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+INSERT INTO sys_di_ai_vendor_f0a49eba (id, label, value, value_type, status, sort, tag_color, created_at, updated_at) VALUES (3505, N'通义千问 (兼容模式)', N'QWEN', N'string', 1, 5, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+INSERT INTO sys_di_ai_vendor_f0a49eba (id, label, value, value_type, status, sort, tag_color, created_at, updated_at) VALUES (3506, N'Ollama 本地部署', N'OLLAMA', N'string', 1, 6, NULL, '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+GO
+
+
+
+GO
 -- ----------------------------
 -- ----------------------------
 GO
