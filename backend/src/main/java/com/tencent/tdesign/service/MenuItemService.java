@@ -917,6 +917,26 @@ public class MenuItemService {
       );
       list.add(
         new SeedNode(
+          "users",
+          null,
+          "PAGE",
+          "team",
+          "SystemTeam",
+          "/system/team/index",
+          null,
+          "团队管理",
+          "Teams",
+          "usergroup",
+          false,
+          null,
+          false,
+          true,
+          3,
+          "create,update,delete,query"
+        )
+      );
+      list.add(
+        new SeedNode(
           "system",
           null,
           "PAGE",

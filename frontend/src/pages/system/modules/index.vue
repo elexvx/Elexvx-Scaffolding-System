@@ -12,13 +12,6 @@
               {{ stateLabel(row.installState) }}
             </t-tag>
           </template>
-          <template #enabled="{ row }">
-            <t-switch
-              v-model="row.enabled"
-              :disabled="!isInstalled(row.installState) || isActionLoading(row.moduleKey, 'toggle')"
-              @change="(value) => toggleModule(row, Boolean(value))"
-            />
-          </template>
           <template #installedAt="{ row }">
             <span>{{ formatDate(row.installedAt) }}</span>
           </template>
@@ -58,7 +51,7 @@ import { MessagePlugin } from 'tdesign-vue-next';
 import { onMounted, ref } from 'vue';
 
 import type { ModuleRegistryItem } from '@/api/system/module';
-import { disableModule, enableModule, fetchModules, installModule, uninstallModule } from '@/api/system/module';
+import { fetchModules, installModule, uninstallModule } from '@/api/system/module';
 
 const loading = ref(false);
 const modules = ref<ModuleRegistryItem[]>([]);
@@ -75,7 +68,6 @@ const columns: PrimaryTableCol[] = [
   { colKey: 'moduleKey', title: '模块标识', width: 160 },
   { colKey: 'version', title: '版本', width: 110 },
   { colKey: 'installState', title: '安装状态', width: 120 },
-  { colKey: 'enabled', title: '启用', width: 100 },
   { colKey: 'installedAt', title: '安装时间', width: 180 },
   { colKey: 'op', title: '操作', width: 200, fixed: 'right' },
 ];
@@ -122,24 +114,6 @@ const loadModules = async () => {
     MessagePlugin.error(error?.message || '模块加载失败');
   } finally {
     loading.value = false;
-  }
-};
-
-const toggleModule = async (row: ModuleRegistryItem, enabled: boolean) => {
-  setActionLoading(row.moduleKey, 'toggle', true);
-  try {
-    if (enabled) {
-      await enableModule(row.moduleKey);
-      MessagePlugin.success('模块已启用');
-    } else {
-      await disableModule(row.moduleKey);
-      MessagePlugin.success('模块已禁用');
-    }
-  } catch (error: any) {
-    MessagePlugin.error(error?.message || '操作失败');
-  } finally {
-    setActionLoading(row.moduleKey, 'toggle', false);
-    await loadModules();
   }
 };
 
