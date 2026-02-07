@@ -1,11 +1,11 @@
-﻿# Elexvx ® Inc 脚手架系统
+# Elexvx ® Inc 脚手架系统
 
 Elexvx 脚手架系统 是由 Elexvx ® Inc 推出的一套面向企业后台的脚手架/管理系统，涵盖用户与权限管理、系统配置、消息公告、文件与对象存储、短信/邮箱验证等基础能力，帮助快速搭建业务后台。
 
 ## 技术栈
 
 - 前端：Vue 3、TypeScript、Vite、Pinia、Vue Router、TDesign Vue Next、ECharts、Axios
-- 后端：Spring Boot 3.3、MyBatis、Sa-Token、Druid、MySQL、Redis（可选）、Spring Mail、SpringDoc OpenAPI
+- 后端：Spring Boot 3.3、Spring Security（Token）、MyBatis、Druid、MySQL（默认，亦支持 PostgreSQL/Oracle/SQLServer）、Redis（Token 会话/运维能力）、Spring Mail（可选）、SpringDoc OpenAPI
 - 其他：Flyway（当前默认关闭）、AJ Captcha
 
 ## 快速开始
@@ -32,7 +32,7 @@ mvn spring-boot:run
 - 默认端口：`8080`
 - 上下文路径：`/api`
 - 数据库配置：`backend/src/main/resources/application.yml`
-- 可用环境变量覆盖：`MYSQL_URL`、`MYSQL_USER`、`MYSQL_PASSWORD`
+- 可用环境变量覆盖：`TDESIGN_DB_URL`、`TDESIGN_DB_USER`、`TDESIGN_DB_PASSWORD`（也可使用 `TDESIGN_DB_DRIVER`、`TDESIGN_DB_TYPE` 等进行多数据库切换）
 
 ### 启动前端
 
@@ -65,3 +65,9 @@ mvn -DskipTests package
 
 为避免系统更新覆盖业务代码，建议将业务代码放在独立目录中，并通过配置或接口联动。  
 详细说明请参考：`docs/UPDATE_GUIDE.md`。
+
+## 文档
+
+- 项目概述：`docs/PROJECT_OVERVIEW.md`
+- 架构说明：`docs/ARCHITECTURE.md`
+- 类图/时序图：`docs/DIAGRAMS.md`

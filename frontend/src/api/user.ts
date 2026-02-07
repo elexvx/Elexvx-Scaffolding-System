@@ -7,7 +7,10 @@ export interface UserProfile {
   mobile: string;
   phone: string;
   email: string;
+  idType?: string;
   idCard: string;
+  idValidFrom?: string;
+  idValidTo?: string;
   seat: string;
   entity: string;
   leader: string;
@@ -27,6 +30,10 @@ export interface UserProfile {
   introduction: string;
   avatar: string;
   tags: string;
+  completenessScore?: number;
+  basicInfoScore?: number;
+  documentInfoScore?: number;
+  incompleteItems?: string[];
   roles?: string[];
   orgUnitNames?: string[];
 }
@@ -36,7 +43,10 @@ export interface UserProfileUpdate {
   mobile?: string;
   phone?: string;
   email?: string;
+  idType?: string;
   idCard?: string;
+  idValidFrom?: string;
+  idValidTo?: string;
   seat?: string;
   entity?: string;
   leader?: string;

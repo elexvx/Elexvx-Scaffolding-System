@@ -9,7 +9,7 @@ spring:
     log-startup-info: false # 是否打印启动信息日志
   datasource:
     # 数据库连接 URL（可通过 TDESIGN_DB_URL 覆盖）
-    url: ${TDESIGN_DB_URL:jdbc:mysql://localhost:3306/tdesign?createDatabaseIfNotExist=true&useSSL=false&characterEncoding=utf8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true}
+    url: ${TDESIGN_DB_URL:jdbc:mysql://localhost:3306/tdesign?createDatabaseIfNotExist=true&useSSL=false&useUnicode=true&characterEncoding=UTF-8&connectionCollation=utf8mb4_0900_ai_ci&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true}
     # 数据库用户名（可通过 TDESIGN_DB_USER 覆盖）
     username: ${TDESIGN_DB_USER:root}
     # 数据库密码（可通过 TDESIGN_DB_PASSWORD 覆盖）
@@ -47,7 +47,7 @@ tdesign:
     # 连接模板（按需替换 spring.datasource.*）
     templates:
       mysql:
-        url: jdbc:mysql://localhost:3306/tdesign?createDatabaseIfNotExist=true&useSSL=false&characterEncoding=utf8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+        url: jdbc:mysql://localhost:3306/tdesign?createDatabaseIfNotExist=true&useSSL=false&useUnicode=true&characterEncoding=UTF-8&connectionCollation=utf8mb4_0900_ai_ci&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
         driver-class-name: com.mysql.cj.jdbc.Driver
         dialect: mysql
       postgresql:
