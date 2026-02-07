@@ -116,16 +116,13 @@ public class ModuleRegistryService {
     if (!STATE_INSTALLED.equalsIgnoreCase(normalizeState(registry.getInstallState()))) {
       throw new IllegalArgumentException("模块未安装: " + moduleKey);
     }
-    if (!Boolean.TRUE.equals(registry.getEnabled())) {
-      throw new IllegalArgumentException("模块未启用: " + moduleKey);
-    }
   }
 
   public boolean isModuleAvailable(String moduleKey) {
     ModuleRegistry registry = registryMapper.selectByKey(normalizeKey(moduleKey));
     if (registry == null) return false;
     if (!STATE_INSTALLED.equalsIgnoreCase(normalizeState(registry.getInstallState()))) return false;
-    return Boolean.TRUE.equals(registry.getEnabled());
+    return true;
   }
 
   @Transactional
@@ -151,9 +148,7 @@ public class ModuleRegistryService {
       definition.initialize(context);
       registry.setInstallState(STATE_INSTALLED);
       registry.setInstalledAt(LocalDateTime.now());
-      if (registry.getEnabled() == null) {
-        registry.setEnabled(true);
-      }
+      registry.setEnabled(true);
       registryMapper.update(registry);
       return ModuleRegistryResponse.from(registry);
     } catch (Exception ex) {
@@ -189,7 +184,6 @@ public class ModuleRegistryService {
       ModuleRegistry registry = getOrCreateRegistry(definition);
       String state = normalizeState(registry.getInstallState());
       if (STATE_INSTALLED.equalsIgnoreCase(state)) continue;
-      if (Boolean.FALSE.equals(registry.getEnabled())) continue;
       if (!definition.isEnabledByDefault() && (state == null || STATE_PENDING.equalsIgnoreCase(state))) {
         continue;
       }
@@ -197,7 +191,7 @@ public class ModuleRegistryService {
         ModuleInstallationContext context = new ModuleInstallationContext(dataSource, resourceLoader);
         definition.initialize(context);
         registry.setInstallState(STATE_INSTALLED);
-        if (registry.getEnabled() == null) registry.setEnabled(true);
+        registry.setEnabled(true);
         registry.setInstalledAt(LocalDateTime.now());
         registryMapper.update(registry);
       } catch (Exception ex) {

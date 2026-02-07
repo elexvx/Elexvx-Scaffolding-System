@@ -98,7 +98,7 @@
       </t-form>
     </t-card>
 
-    <t-drawer v-model:visible="formVisible" :footer="false" :close-btn="true" size="760px" header="配置提供商">
+    <confirm-drawer v-model:visible="formVisible" :close-btn="true" size="760px" header="配置提供商">
       <t-form
         class="drawer-form--single"
         layout="vertical"
@@ -179,16 +179,17 @@
             </t-form-item>
           </t-col>
         </t-row>
-
+      </t-form>
+      <template #footer>
         <div class="drawer-actions">
-          <t-space>
+          <t-space class="tdesign-starter-action-bar">
             <t-button :loading="testing" variant="outline" @click="handleTestForm">连接测试</t-button>
-            <t-button :loading="saving" theme="primary" type="submit">保存</t-button>
+            <t-button :loading="saving" theme="primary" @click="submitForm">保存</t-button>
           </t-space>
           <div v-if="formTestResult" class="test-tip">{{ formTestResult }}</div>
         </div>
-      </t-form>
-    </t-drawer>
+      </template>
+    </confirm-drawer>
   </div>
 </template>
 <script setup lang="ts">
@@ -198,6 +199,7 @@ import { computed, onMounted, reactive, ref } from 'vue';
 
 import type { AiProvider, AiProviderPayload } from '@/api/system/ai';
 import { deleteAiProvider, fetchAiProviders, saveAiProvider, testAiProvider, testSavedProvider } from '@/api/system/ai';
+import ConfirmDrawer from '@/components/ConfirmDrawer.vue';
 import { useDictionary } from '@/hooks/useDictionary';
 import { buildDictOptions, resolveLabel } from '@/utils/dict';
 import { request } from '@/utils/request';
@@ -421,7 +423,6 @@ onMounted(() => {
 }
 
 .drawer-actions {
-  margin-top: 32px;
   display: flex;
   align-items: center;
   justify-content: space-between;

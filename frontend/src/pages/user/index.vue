@@ -79,13 +79,7 @@
         </t-card>
 
         <!-- 编辑抽屉 -->
-        <t-drawer
-          v-model:visible="editProfileVisible"
-          header="编辑个人信息"
-          :size="drawerSize"
-          :close-on-overlay-click="true"
-          :footer="false"
-        >
+        <confirm-drawer v-model:visible="editProfileVisible" header="编辑个人信息" :size="drawerSize">
           <t-form
             ref="profileFormRef"
             class="drawer-form--single"
@@ -147,8 +141,8 @@
                   <t-cascader
                     v-model="areaValue"
                     :options="areaOptions"
-                    :lazy="true"
-                    :load="loadAreaChildren"
+                    :lazy="areaLazy"
+                    :load="areaLazy ? loadAreaChildren : undefined"
                     :loading="areaLoading"
                     value-type="full"
                     :show-all-levels="true"
@@ -179,12 +173,14 @@
                 </t-form-item>
               </t-col>
             </t-row>
-            <t-form-item class="form-submit">
-              <t-button theme="primary" :loading="updatingProfile" type="submit">保存</t-button>
-              <t-button variant="outline" style="margin-left: 12px" @click="editProfileVisible = false">取消</t-button>
-            </t-form-item>
           </t-form>
-        </t-drawer>
+          <template #footer>
+            <t-space class="tdesign-starter-action-bar">
+              <t-button variant="outline" @click="editProfileVisible = false">取消</t-button>
+              <t-button theme="primary" :loading="updatingProfile" @click="profileFormRef?.submit()">保存</t-button>
+            </t-space>
+          </template>
+        </confirm-drawer>
 
         <!-- 更改密码 -->
         <t-card title="更改密码" :bordered="false" class="user-setting-card" style="margin-top: 24px">
@@ -243,9 +239,10 @@ import type { AreaNodeResponse, AreaPathNode } from '@/api/system/area';
 import { fetchAreaChildren, fetchAreaPath, resolveAreaPath } from '@/api/system/area';
 import type { ChangePasswordRequest, UserProfile } from '@/api/user';
 import { changePassword, getMyProfile, updateMyProfile } from '@/api/user';
+import ConfirmDrawer from '@/components/ConfirmDrawer.vue';
 import { useDictionary } from '@/hooks/useDictionary';
 import { useUserStore } from '@/store';
-import { buildDictOptions } from '@/utils/dict';
+import { buildDictOptions, parseDictValue } from '@/utils/dict';
 import { request } from '@/utils/request';
 
 // 基础状态
@@ -326,6 +323,9 @@ const profileForm = reactive({
 });
 
 const genderDict = useDictionary('gender');
+const provinceDict = useDictionary('address_province');
+const cityDict = useDictionary('address_city');
+const districtDict = useDictionary('address_district');
 
 const fallbackGenderOptions = [
   { label: '?', value: 'male' },
@@ -337,15 +337,22 @@ const genderOptions = computed(() => buildDictOptions(genderDict.items.value, fa
 
 interface AreaOption {
   label: string;
-  value: number;
+  value: number | string;
   level?: number;
   zipCode?: string | null;
   children?: AreaOption[] | boolean;
 }
 
 const areaOptions = ref<AreaOption[]>([]);
-const areaValue = ref<number[]>([]);
-const areaLoading = ref(false);
+const areaValue = ref<Array<number | string>>([]);
+const areaLoadingState = ref(false);
+const areaLoading = computed(
+  () => areaLoadingState.value || provinceDict.loading.value || cityDict.loading.value || districtDict.loading.value,
+);
+const useDictArea = computed(
+  () => provinceDict.items.value.length > 0 || cityDict.items.value.length > 0 || districtDict.items.value.length > 0,
+);
+const areaLazy = computed(() => !useDictArea.value);
 
 const showAreaError = (error: any) => {
   const raw = error?.response?.data?.message || error?.message || error?.response?.statusText || '';
@@ -363,9 +370,135 @@ const toAreaOption = (row: AreaNodeResponse): AreaOption => ({
   children: row.level >= 3 ? [] : row.hasChildren ? true : [],
 });
 
+const resolveDictPathParts = (raw: string) => {
+  const text = raw.trim();
+  if (!text) return [];
+  return text
+    .split(/[>|/]/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+};
+
+const parseDictAreaMeta = (item: any) => {
+  const raw = String(item?.value ?? item?.label ?? '').trim();
+  let province;
+  let city;
+  let district;
+  let zipCode;
+  if (raw.startsWith('{') && raw.endsWith('}')) {
+    try {
+      const parsed = JSON.parse(raw);
+      province = parsed.province ?? parsed.p;
+      city = parsed.city ?? parsed.c;
+      district = parsed.district ?? parsed.d;
+      zipCode = parsed.zipCode ?? parsed.zip;
+    } catch (error) {
+      console.warn('Parse area dict json failed:', error);
+    }
+  }
+  if (!province && !city && !district) {
+    const parts = resolveDictPathParts(raw);
+    if (parts.length === 2) {
+      [province, city] = parts;
+    } else if (parts.length >= 3) {
+      [province, city, district] = parts;
+    }
+  }
+  return {
+    province,
+    city,
+    district,
+    zipCode,
+  };
+};
+
+const createDictAreaOptions = () => {
+  const provinceItems = provinceDict.items.value;
+  const cityItems = cityDict.items.value;
+  const districtItems = districtDict.items.value;
+
+  const districtEntries = districtItems.map((item) => {
+    const meta = parseDictAreaMeta(item);
+    return {
+      label: item.label,
+      value: parseDictValue(item),
+      province: meta.province,
+      city: meta.city,
+      zipCode: meta.zipCode,
+    };
+  });
+
+  const cityEntries = cityItems.map((item) => {
+    const meta = parseDictAreaMeta(item);
+    return {
+      label: item.label,
+      value: parseDictValue(item),
+      province: meta.province,
+      city: meta.city,
+    };
+  });
+
+  const allDistrictOptions = districtEntries.map((entry) => ({
+    label: entry.label,
+    value: entry.value,
+    level: 3,
+    zipCode: entry.zipCode ?? null,
+    children: [],
+  }));
+
+  const buildDistrictOptions = (province?: string, city?: string) => {
+    const filtered = districtEntries.filter((entry) => {
+      if (entry.city) return entry.city === city;
+      if (entry.province) return entry.province === province;
+      return true;
+    });
+    const source = filtered.length > 0 ? filtered : districtEntries;
+    return source.map((entry) => ({
+      label: entry.label,
+      value: entry.value,
+      level: 3,
+      zipCode: entry.zipCode ?? null,
+      children: [],
+    }));
+  };
+
+  const buildCityOptions = (province?: string) => {
+    const filtered = cityEntries.filter((entry) => !entry.province || entry.province === province);
+    const source = filtered.length > 0 ? filtered : cityEntries;
+    return source.map((entry) => ({
+      label: entry.label,
+      value: entry.value,
+      level: 2,
+      children: buildDistrictOptions(province, entry.city || entry.label),
+    }));
+  };
+
+  const provinces =
+    provinceItems.length > 0
+      ? provinceItems
+      : [
+          {
+            label: '默认省份',
+            value: 'default',
+            status: 1,
+          },
+        ];
+
+  return provinces.map((item) => ({
+    label: item.label,
+    value: parseDictValue(item),
+    level: 1,
+    children: buildCityOptions(item.label),
+  }));
+};
+
 const loadRootAreas = async () => {
+  if (useDictArea.value) {
+    areaOptions.value = createDictAreaOptions();
+    return;
+  }
   if (areaOptions.value.length > 0) return;
-  areaLoading.value = true;
+  areaLoadingState.value = true;
   try {
     const rows = await fetchAreaChildren(0);
     areaOptions.value = rows.map(toAreaOption);
@@ -373,11 +506,12 @@ const loadRootAreas = async () => {
     console.error('Load area root failed:', error);
     showAreaError(error);
   } finally {
-    areaLoading.value = false;
+    areaLoadingState.value = false;
   }
 };
 
 const loadAreaChildren = async (node: any) => {
+  if (useDictArea.value) return [];
   if (node?.data?.level >= 3) return [];
   const parentId = Number(node?.value || 0);
   try {
@@ -401,6 +535,8 @@ const resetAreaFields = () => {
   profileForm.zipCode = '';
 };
 
+const toNumericId = (value: unknown) => (typeof value === 'number' && Number.isFinite(value) ? value : null);
+
 const applyAreaPath = (path: AreaPathNode[]) => {
   if (!path || path.length === 0) {
     resetAreaFields();
@@ -410,9 +546,9 @@ const applyAreaPath = (path: AreaPathNode[]) => {
   const ids = trimmedPath.map((node) => node.id);
   const names = trimmedPath.map((node) => node.name || '');
   areaValue.value = ids;
-  profileForm.provinceId = ids[0] ?? null;
-  profileForm.cityId = ids[1] ?? null;
-  profileForm.districtId = ids[2] ?? null;
+  profileForm.provinceId = toNumericId(ids[0]);
+  profileForm.cityId = toNumericId(ids[1]);
+  profileForm.districtId = toNumericId(ids[2]);
   profileForm.province = names[0] ?? '';
   profileForm.city = names[1] ?? '';
   profileForm.district = names[2] ?? '';
@@ -453,6 +589,49 @@ const ensureAreaPathOptions = async (path: AreaPathNode[]) => {
 };
 
 const syncAreaFromProfile = async (data: UserProfile) => {
+  if (useDictArea.value) {
+    await loadRootAreas();
+    const matchedProvince = areaOptions.value.find(
+      (option) => option.label === data.province || String(option.value) === data.province,
+    );
+    const provincesToScan = matchedProvince ? [matchedProvince] : areaOptions.value;
+    let matchedCity: AreaOption | undefined;
+    let matchedDistrict: AreaOption | undefined;
+
+    for (const province of provincesToScan) {
+      const cityChildren = Array.isArray(province.children) ? province.children : [];
+      matchedCity = cityChildren.find(
+        (option) => option.label === data.city || String(option.value) === data.city,
+      );
+      if (matchedCity) {
+        const districtChildren = Array.isArray(matchedCity.children) ? matchedCity.children : [];
+        matchedDistrict = districtChildren.find(
+          (option) => option.label === data.district || String(option.value) === data.district,
+        );
+      }
+      if (matchedCity || matchedDistrict) break;
+    }
+
+    const path: AreaOption[] = [];
+    if (matchedProvince) path.push(matchedProvince);
+    if (matchedCity) path.push(matchedCity);
+    if (matchedDistrict) path.push(matchedDistrict);
+
+    if (path.length > 0) {
+      areaValue.value = path.map((option) => option.value);
+      profileForm.provinceId = toNumericId(path[0]?.value);
+      profileForm.cityId = toNumericId(path[1]?.value);
+      profileForm.districtId = toNumericId(path[2]?.value);
+      profileForm.province = path[0]?.label || data.province || '';
+      profileForm.city = path[1]?.label || data.city || '';
+      profileForm.district = path[2]?.label || data.district || '';
+      profileForm.zipCode = path[path.length - 1]?.zipCode || data.zipCode || '';
+    } else if (!data.province && !data.city && !data.district) {
+      resetAreaFields();
+    }
+    return;
+  }
+
   const areaId = data.districtId || data.cityId || data.provinceId;
   const hasName = !!(data.province || data.city || data.district);
   let path: AreaPathNode[] = [];
@@ -491,10 +670,10 @@ const handleAreaChange = (_value: any, context: any) => {
   const ids = pathNodes.map((item: any) => Number(item.value));
   const names = pathNodes.map((item: any) => String(item.label || item.data?.label || item.data?.name || ''));
   const zipCode = pathNodes[pathNodes.length - 1]?.data?.zipCode || '';
-  areaValue.value = ids;
-  profileForm.provinceId = ids[0] ?? null;
-  profileForm.cityId = ids[1] ?? null;
-  profileForm.districtId = ids[2] ?? null;
+  areaValue.value = pathNodes.map((item: any) => item.value);
+  profileForm.provinceId = toNumericId(ids[0]);
+  profileForm.cityId = toNumericId(ids[1]);
+  profileForm.districtId = toNumericId(ids[2]);
   profileForm.province = names[0] ?? '';
   profileForm.city = names[1] ?? '';
   profileForm.district = names[2] ?? '';
@@ -556,7 +735,12 @@ const loginLogColumns: PrimaryTableCol[] = [
 ];
 
 const loadDictionaries = async (force = false) => {
-  await Promise.all([genderDict.load(force)]);
+  await Promise.all([
+    genderDict.load(force),
+    provinceDict.load(force),
+    cityDict.load(force),
+    districtDict.load(force),
+  ]);
 };
 
 const normalizeGender = (value?: string) => {

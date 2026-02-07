@@ -816,6 +816,7 @@ INSERT INTO `sys_dict` VALUES (2017, '菜单-权限动作', 'menu_action', 1, 17
 INSERT INTO `sys_dict` VALUES (2018, '存储-提供商', 'storage_provider', 1, 18, '存储提供商', '2026-01-18 21:21:03', '2026-01-18 21:21:03');
 INSERT INTO `sys_dict` VALUES (2019, '短信-通道', 'sms_provider', 1, 19, '短信通道', '2026-01-18 21:21:03', '2026-01-18 21:21:03');
 INSERT INTO `sys_dict` VALUES (2020, 'AI-厂商', 'ai_vendor', 1, 20, 'AI厂商', '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+INSERT INTO `sys_dict` VALUES (2021, '团队', 'team', 1, 21, '团队管理', '2026-01-18 21:21:03', '2026-01-18 21:21:03');
 
 -- ----------------------------
 -- Records of sys_dict_items
