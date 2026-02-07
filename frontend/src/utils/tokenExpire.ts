@@ -10,8 +10,24 @@ import { clearTokenStorage } from '@/utils/secureToken';
 
 /** Token 过期通知标记 */
 let tokenExpireNotified = false;
+let tokenExpireWarnTimer: number | null = null;
+let tokenExpireHardTimer: number | null = null;
 const authPages = new Set(['/login', '/register', '/forgot']);
 const isAuthPage = (path?: string) => Boolean(path && authPages.has(path));
+const UNAUTHORIZED_NOTICE_KEY = 'tdesign.auth.invalid.notice';
+const TOKEN_EXPIRED_NOTICE = '当前登录状态失效，请重新登录';
+
+const saveUnauthorizedNotice = (message: string) => {
+  try {
+    sessionStorage.setItem(UNAUTHORIZED_NOTICE_KEY, message);
+  } catch {}
+};
+
+const buildHardLoginHref = (redirect?: string) => {
+  const query: Record<string, string> = { _t: String(Date.now()) };
+  if (redirect) query.redirect = redirect;
+  return router.resolve({ path: '/login', query }).href;
+};
 
 /**
  * 设置 token 过期时间
@@ -27,16 +43,13 @@ export function setTokenExpireTimer(token: string, expiresIn: number) {
     return;
   }
 
-  // 提前 5 分钟提示用户
   const notifyTime = Math.max((expiresIn - 300) * 1000, 1000);
-
-  // 设置过期提示定时器
-  const timerId = setTimeout(() => {
+  tokenExpireWarnTimer = window.setTimeout(() => {
     notifyTokenExpire();
   }, notifyTime);
-
-  // 保存定时器 ID 用于后续清除
-  sessionStorage.setItem('tokenExpireTimerId', String(timerId));
+  tokenExpireHardTimer = window.setTimeout(() => {
+    handleTokenExpired();
+  }, Math.max(expiresIn * 1000, 1000));
 }
 
 /**
@@ -57,11 +70,6 @@ function notifyTokenExpire() {
     content: '您的登录状态即将过期，请及时刷新或重新登录',
     duration: 3000,
   });
-
-  // 1.5 秒后自动跳转登录页
-  setTimeout(() => {
-    handleTokenExpired();
-  }, 1500);
 }
 
 /**
@@ -69,38 +77,39 @@ function notifyTokenExpire() {
  */
 export function handleTokenExpired() {
   const userStore = useUserStore();
-  const currentPath = router.currentRoute.value?.path;
+  const currentRoute = router.currentRoute.value;
+  const currentPath = currentRoute?.path;
 
   // 避免重复处理和在登录页处理
   if (isAuthPage(currentPath)) {
     return;
   }
 
+  clearTokenExpireTimer();
+
   // 清除 token 和用户信息
   userStore.token = '';
+  userStore.refreshToken = '';
   userStore.tokenExpiresAt = null;
   userStore.userInfoLoaded = false;
   clearTokenStorage();
   useNotificationStore().stopSocket();
-
-  // 显示提示信息
-  MessagePlugin.warning('登录状态已过期，请重新登录');
-
-  // 跳转到登录页
-  router.replace({
-    path: '/login',
-    query: { redirect: currentPath },
-  });
+  saveUnauthorizedNotice(TOKEN_EXPIRED_NOTICE);
+  const hardHref = buildHardLoginHref(currentRoute?.fullPath || currentPath);
+  window.location.replace(hardHref);
 }
 
 /**
  * 清除 token 过期定时器
  */
 export function clearTokenExpireTimer() {
-  const timerId = sessionStorage.getItem('tokenExpireTimerId');
-  if (timerId) {
-    clearTimeout(Number(timerId));
-    sessionStorage.removeItem('tokenExpireTimerId');
+  if (tokenExpireWarnTimer) {
+    clearTimeout(tokenExpireWarnTimer);
+    tokenExpireWarnTimer = null;
+  }
+  if (tokenExpireHardTimer) {
+    clearTimeout(tokenExpireHardTimer);
+    tokenExpireHardTimer = null;
   }
 }
 

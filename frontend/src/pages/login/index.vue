@@ -26,7 +26,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { DialogPlugin } from 'tdesign-vue-next';
+import { DialogPlugin, MessagePlugin } from 'tdesign-vue-next';
 import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
@@ -45,6 +45,7 @@ defineOptions({
 });
 const route = useRoute();
 const router = useRouter();
+const UNAUTHORIZED_NOTICE_KEY = 'tdesign.auth.invalid.notice';
 const type = computed(() => {
   if (route.path === '/register') return 'register';
   if (route.path === '/forgot') return 'forgot';
@@ -66,6 +67,12 @@ const copyrightText = computed(() => {
 });
 
 onMounted(async () => {
+  const unauthorizedNotice = sessionStorage.getItem(UNAUTHORIZED_NOTICE_KEY);
+  if (unauthorizedNotice) {
+    sessionStorage.removeItem(UNAUTHORIZED_NOTICE_KEY);
+    MessagePlugin.warning(unauthorizedNotice);
+  }
+
   await settingStore.loadUiSetting();
   if (settingStore.maintenanceEnabled && !maintenanceDialogShown.value) {
     maintenanceDialogShown.value = true;

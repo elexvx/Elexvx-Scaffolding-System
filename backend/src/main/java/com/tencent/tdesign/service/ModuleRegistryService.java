@@ -8,7 +8,6 @@ import com.tencent.tdesign.module.ModuleInstallationContext;
 import com.tencent.tdesign.vo.ModuleDescriptor;
 import com.tencent.tdesign.vo.ModuleRegistryResponse;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -49,60 +48,14 @@ public class ModuleRegistryService {
   }
 
   public List<ModuleDescriptor> listModules() {
-    List<ModuleDescriptor> modules = new ArrayList<>();
-    modules.add(buildModule(
-      "sms-aliyun",
-      "短信模块（阿里云）",
-      "Aliyun Dysmsapi SDK",
-      LICENSE_APACHE,
-      "2.2.1",
-      isSmsEnabled() && isClassPresent("com.aliyuncs.DefaultAcsClient")
-    ));
-    modules.add(buildModule(
-      "sms-tencent",
-      "短信模块（腾讯云）",
-      "TencentCloud SMS SDK",
-      LICENSE_APACHE,
-      "3.1.1100",
-      isSmsEnabled() && isClassPresent("com.tencentcloudapi.sms.v20210111.SmsClient")
-    ));
-    modules.add(buildModule(
-      "email-smtp",
-      "邮箱模块（SMTP）",
-      "Spring Boot Mail Starter",
-      LICENSE_APACHE,
-      "3.3.5",
-      isEmailEnabled() && isClassPresent("org.springframework.mail.javamail.JavaMailSenderImpl")
-    ));
-    modules.add(buildModule(
-      "captcha-aj",
-      "验证码模块（AJ Captcha）",
-      "AJ Captcha",
-      LICENSE_APACHE,
-      "1.4.0",
-      isCaptchaEnabled() && isClassPresent("com.anji.captcha.service.CaptchaService")
-    ));
-    return modules;
+    return buildRegistryMap().values().stream()
+        .sorted(Comparator.comparing(ModuleRegistry::getModuleKey, Comparator.nullsLast(String::compareToIgnoreCase)))
+        .map(this::toDescriptor)
+        .toList();
   }
 
   public List<ModuleRegistryResponse> listRegistries() {
-    List<ModuleRegistry> registries = registryMapper.selectAll();
-    Map<String, ModuleRegistry> map = new LinkedHashMap<>();
-    if (registries != null) {
-      for (ModuleRegistry registry : registries) {
-        if (registry == null || registry.getModuleKey() == null) continue;
-        map.put(normalizeKey(registry.getModuleKey()), registry);
-      }
-    }
-    for (ModuleDefinition definition : definitionRegistry.getDefinitions().values()) {
-      if (definition == null || definition.getKey() == null) continue;
-      String key = normalizeKey(definition.getKey());
-      if (!map.containsKey(key)) {
-        ModuleRegistry registry = buildRegistry(definition);
-        map.put(key, registry);
-      }
-    }
-    return map.values().stream()
+    return buildRegistryMap().values().stream()
         .sorted(Comparator.comparing(ModuleRegistry::getModuleKey, Comparator.nullsLast(String::compareToIgnoreCase)))
         .map(ModuleRegistryResponse::from)
         .toList();
@@ -219,17 +172,6 @@ public class ModuleRegistryService {
     return descriptor;
   }
 
-  private boolean isSmsEnabled() {
-    return getFlag("tdesign.modules.sms.enabled", true);
-  }
-
-  private boolean isEmailEnabled() {
-    return getFlag("tdesign.modules.email.enabled", true);
-  }
-
-  private boolean isCaptchaEnabled() {
-    return getFlag("tdesign.modules.captcha.enabled", true);
-  }
 
   private ModuleDefinition requireDefinition(String moduleKey) {
     ModuleDefinition definition = definitionRegistry.getDefinition(moduleKey);
@@ -273,6 +215,63 @@ public class ModuleRegistryService {
     return Boolean.parseBoolean(raw);
   }
 
+
+  private Map<String, ModuleRegistry> buildRegistryMap() {
+    List<ModuleRegistry> registries = registryMapper.selectAll();
+    Map<String, ModuleRegistry> map = new LinkedHashMap<>();
+    if (registries != null) {
+      for (ModuleRegistry registry : registries) {
+        if (registry == null || registry.getModuleKey() == null) continue;
+        map.put(normalizeKey(registry.getModuleKey()), registry);
+      }
+    }
+    for (ModuleDefinition definition : definitionRegistry.getDefinitions().values()) {
+      if (definition == null || definition.getKey() == null) continue;
+      String key = normalizeKey(definition.getKey());
+      if (map.containsKey(key)) continue;
+      map.put(key, buildRegistry(definition));
+    }
+    return map;
+  }
+
+  private ModuleDescriptor toDescriptor(ModuleRegistry registry) {
+    String key = normalizeKey(registry.getModuleKey());
+    boolean enabled =
+      STATE_INSTALLED.equalsIgnoreCase(normalizeState(registry.getInstallState()))
+      && Boolean.TRUE.equals(registry.getEnabled())
+      && isRuntimeDependencyAvailable(key);
+    return buildModule(
+      key,
+      registry.getName(),
+      resolveSource(key),
+      LICENSE_APACHE,
+      registry.getVersion(),
+      enabled
+    );
+  }
+
+  private String resolveSource(String key) {
+    if ("sms".equals(key)) {
+      return "Aliyun Dysmsapi SDK / TencentCloud SMS SDK";
+    }
+    if ("email".equals(key)) {
+      return "Spring Boot Mail Starter";
+    }
+    return "Built-in Module";
+  }
+
+  private boolean isRuntimeDependencyAvailable(String key) {
+    if ("sms".equals(key)) {
+      if (!getFlag("tdesign.modules.sms.enabled", true)) return false;
+      return isClassPresent("com.aliyuncs.DefaultAcsClient")
+        || isClassPresent("com.tencentcloudapi.sms.v20210111.SmsClient");
+    }
+    if ("email".equals(key)) {
+      if (!getFlag("tdesign.modules.email.enabled", true)) return false;
+      return isClassPresent("org.springframework.mail.javamail.JavaMailSenderImpl");
+    }
+    return true;
+  }
   private String normalizeKey(String moduleKey) {
     if (moduleKey == null) return "";
     return moduleKey.trim().toLowerCase();
@@ -287,3 +286,4 @@ public class ModuleRegistryService {
     return ClassUtils.isPresent(className, getClass().getClassLoader());
   }
 }
+

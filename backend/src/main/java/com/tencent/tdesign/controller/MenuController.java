@@ -18,6 +18,7 @@ public class MenuController {
   @GetMapping("/get-menu-list-i18n")
   public ApiResponse<MenuListResult> getMenuList() {
     try {
+      try { menuItemService.ensureOrgManagementMenuSeeded(); } catch (Exception ignored) {}
       // 清理已合并的旧页面路由
       try { menuItemService.removeObsoleteWatermarkRoute(); } catch (Exception ignored) {}
       if (menuItemService.isConfigured()) {

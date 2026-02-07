@@ -2,6 +2,7 @@ package com.tencent.tdesign.service;
 
 import com.tencent.tdesign.vo.ConcurrentLoginDecisionEvent;
 import com.tencent.tdesign.vo.ConcurrentLoginEvent;
+import jakarta.annotation.PreDestroy;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -9,16 +10,32 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @Service
 public class ConcurrentLoginService {
   private static final long PENDING_TTL_MS = 2 * 60 * 1000L;
+  private static final long LOGIN_HEARTBEAT_INTERVAL_SECONDS = 15L;
   private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
   private final Map<Long, CopyOnWriteArrayList<SseEmitter>> loginEmitters = new ConcurrentHashMap<>();
+  private final Map<SseEmitter, ScheduledFuture<?>> loginHeartbeatTasks = new ConcurrentHashMap<>();
   private final Map<String, PendingLogin> pendingLogins = new ConcurrentHashMap<>();
+  private final ScheduledExecutorService heartbeatExecutor = Executors.newSingleThreadScheduledExecutor(r -> {
+    Thread thread = new Thread(r, "concurrent-login-sse-heartbeat");
+    thread.setDaemon(true);
+    return thread;
+  });
+
+  @PreDestroy
+  public void shutdownHeartbeatExecutor() {
+    heartbeatExecutor.shutdownNow();
+  }
 
   public SseEmitter subscribeLoginNotice(long loginId) {
     SseEmitter emitter = new SseEmitter(0L);
@@ -26,12 +43,29 @@ public class ConcurrentLoginService {
     emitter.onCompletion(() -> removeLoginEmitter(loginId, emitter));
     emitter.onTimeout(() -> removeLoginEmitter(loginId, emitter));
     emitter.onError((ex) -> removeLoginEmitter(loginId, emitter));
+    startLoginHeartbeat(loginId, emitter);
+    sendConnectedEvent(loginId, emitter);
     return emitter;
   }
 
   public boolean hasActiveSubscriber(long loginId) {
     List<SseEmitter> emitters = loginEmitters.get(loginId);
     return emitters != null && !emitters.isEmpty();
+  }
+
+  public void publishForceLogout(long loginId, String message) {
+    List<SseEmitter> emitters = loginEmitters.get(loginId);
+    if (emitters == null || emitters.isEmpty()) return;
+    String text = (message == null || message.isBlank()) ? "当前登录状态失效，请重新登录" : message;
+    for (SseEmitter emitter : emitters) {
+      try {
+        emitter.send(SseEmitter.event().name("force-logout").data(Map.of("message", text)));
+        removeLoginEmitter(loginId, emitter);
+        emitter.complete();
+      } catch (Exception ex) {
+        removeLoginEmitter(loginId, emitter);
+      }
+    }
   }
 
   public PendingLogin createPending(
@@ -80,10 +114,10 @@ public class ConcurrentLoginService {
     pending.decisionEmitters.add(emitter);
     emitter.onCompletion(() -> pending.decisionEmitters.remove(emitter));
     emitter.onTimeout(() -> pending.decisionEmitters.remove(emitter));
+    emitter.onError((ex) -> pending.decisionEmitters.remove(emitter));
 
     if (pending.decision != Decision.PENDING) {
       sendDecisionEvent(emitter, pending.decision);
-      emitter.complete();
     }
     return emitter;
   }
@@ -142,10 +176,6 @@ public class ConcurrentLoginService {
         emitter.send(SseEmitter.event().name("concurrent-login").data(event));
       } catch (Exception ex) {
         removeLoginEmitter(loginId, emitter);
-        try {
-          emitter.complete();
-        } catch (Exception ignored) {
-        }
       }
     }
   }
@@ -163,17 +193,48 @@ public class ConcurrentLoginService {
       String status = decision == Decision.APPROVED ? "approved" : "rejected";
       emitter.send(SseEmitter.event().name("decision").data(new ConcurrentLoginDecisionEvent(status)));
       emitter.complete();
-    } catch (Exception ex) {
-      emitter.complete();
-    }
+    } catch (Exception ignored) {}
   }
 
   private void removeLoginEmitter(long loginId, SseEmitter emitter) {
+    cancelLoginHeartbeat(emitter);
     CopyOnWriteArrayList<SseEmitter> list = loginEmitters.get(loginId);
     if (list == null) return;
     list.remove(emitter);
     if (list.isEmpty()) {
       loginEmitters.remove(loginId);
+    }
+  }
+
+  private void sendConnectedEvent(long loginId, SseEmitter emitter) {
+    try {
+      emitter.send(SseEmitter.event().name("connected").data(Map.of("ts", System.currentTimeMillis())));
+    } catch (Exception ex) {
+      removeLoginEmitter(loginId, emitter);
+    }
+  }
+
+  private void startLoginHeartbeat(long loginId, SseEmitter emitter) {
+    cancelLoginHeartbeat(emitter);
+    ScheduledFuture<?> task = heartbeatExecutor.scheduleAtFixedRate(
+      () -> {
+        try {
+          emitter.send(SseEmitter.event().name("ping").data(Map.of("ts", System.currentTimeMillis())));
+        } catch (Exception ex) {
+          removeLoginEmitter(loginId, emitter);
+        }
+      },
+      LOGIN_HEARTBEAT_INTERVAL_SECONDS,
+      LOGIN_HEARTBEAT_INTERVAL_SECONDS,
+      TimeUnit.SECONDS
+    );
+    loginHeartbeatTasks.put(emitter, task);
+  }
+
+  private void cancelLoginHeartbeat(SseEmitter emitter) {
+    ScheduledFuture<?> task = loginHeartbeatTasks.remove(emitter);
+    if (task != null) {
+      task.cancel(true);
     }
   }
 

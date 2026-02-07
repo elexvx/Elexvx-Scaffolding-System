@@ -53,8 +53,13 @@ import { onMounted, ref } from 'vue';
 import type { ModuleRegistryItem } from '@/api/system/module';
 import { fetchModules, installModule, uninstallModule } from '@/api/system/module';
 
+interface ModuleTableRow extends ModuleRegistryItem {
+  source?: string;
+  license?: string;
+}
+
 const loading = ref(false);
-const modules = ref<ModuleRegistryItem[]>([]);
+const modules = ref<ModuleTableRow[]>([]);
 const actionLoading = ref<Record<string, boolean>>({});
 
 const columns: PrimaryTableCol[] = [
@@ -66,6 +71,8 @@ const columns: PrimaryTableCol[] = [
   },
   { colKey: 'name', title: '模块名称', minWidth: 160 },
   { colKey: 'moduleKey', title: '模块标识', width: 160 },
+  { colKey: 'source', title: '来源/SDK', minWidth: 220, ellipsis: true },
+  { colKey: 'license', title: '许可', width: 120 },
   { colKey: 'version', title: '版本', width: 110 },
   { colKey: 'installState', title: '安装状态', width: 120 },
   { colKey: 'installedAt', title: '安装时间', width: 180 },
@@ -77,6 +84,18 @@ const normalizeInstallState = (state?: string) =>
     .trim()
     .toUpperCase();
 const isInstalled = (state?: string) => normalizeInstallState(state) === 'INSTALLED';
+
+const normalizeKey = (key?: string) =>
+  String(key || '')
+    .trim()
+    .toLowerCase();
+
+const fallbackSource = (key: string) => {
+  if (key === 'sms') return 'Aliyun Dysmsapi SDK / TencentCloud SMS SDK';
+  if (key === 'email') return 'Spring Boot Mail Starter';
+  if (key === 'captcha') return 'AJ Captcha';
+  return 'Built-in Module';
+};
 
 const stateLabel = (state?: string) => {
   const normalized = normalizeInstallState(state);
@@ -94,7 +113,7 @@ const stateTheme = (state?: string) => {
   return 'warning';
 };
 
-const formatDate = (value?: string) => {
+const formatDate = (value?: string | null) => {
   if (!value) return '-';
   return dayjs(value).format('YYYY-MM-DD HH:mm');
 };
@@ -108,8 +127,13 @@ const isActionLoading = (key: string, action: string) => !!actionLoading.value[`
 const loadModules = async () => {
   loading.value = true;
   try {
-    const data = await fetchModules();
-    modules.value = data;
+    const registries = await fetchModules();
+    const rows: ModuleTableRow[] = registries.map((registry) => ({
+      ...registry,
+      source: fallbackSource(normalizeKey(registry.moduleKey)),
+      license: 'Apache-2.0',
+    }));
+    modules.value = rows.sort((a, b) => normalizeKey(a.moduleKey).localeCompare(normalizeKey(b.moduleKey)));
   } catch (error: any) {
     MessagePlugin.error(error?.message || '模块加载失败');
   } finally {
@@ -117,7 +141,29 @@ const loadModules = async () => {
   }
 };
 
+<<<<<<< Updated upstream
 const install = async (row: ModuleRegistryItem) => {
+=======
+const toggleModule = async (row: ModuleTableRow, enabled: boolean) => {
+  setActionLoading(row.moduleKey, 'toggle', true);
+  try {
+    if (enabled) {
+      await enableModule(row.moduleKey);
+      MessagePlugin.success('模块已启用');
+    } else {
+      await disableModule(row.moduleKey);
+      MessagePlugin.success('模块已禁用');
+    }
+  } catch (error: any) {
+    MessagePlugin.error(error?.message || '操作失败');
+  } finally {
+    setActionLoading(row.moduleKey, 'toggle', false);
+    await loadModules();
+  }
+};
+
+const install = async (row: ModuleTableRow) => {
+>>>>>>> Stashed changes
   setActionLoading(row.moduleKey, 'install', true);
   try {
     await installModule(row.moduleKey);
@@ -130,7 +176,7 @@ const install = async (row: ModuleRegistryItem) => {
   }
 };
 
-const uninstall = async (row: ModuleRegistryItem) => {
+const uninstall = async (row: ModuleTableRow) => {
   setActionLoading(row.moduleKey, 'uninstall', true);
   try {
     await uninstallModule(row.moduleKey);

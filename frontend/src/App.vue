@@ -1,7 +1,7 @@
 <template>
   <t-config-provider :global-config="globalConfig">
     <watermark-overlay />
-    <concurrent-login-listener />
+    <session-kickout-listener />
     <route-loading :visible="isRouteLoading" />
     <router-view :key="locale" :class="[mode]" />
   </t-config-provider>
@@ -11,8 +11,8 @@ import { computed, h, onMounted, onUnmounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 import emptyImage from '@/assets/assets-empty.svg?url';
-import ConcurrentLoginListener from '@/components/ConcurrentLoginListener.vue';
 import RouteLoading from '@/components/RouteLoading.vue';
+import SessionKickoutListener from '@/components/SessionKickoutListener.vue';
 import WatermarkOverlay from '@/components/WatermarkOverlay.vue';
 import { t } from '@/locales';
 import { useLocale } from '@/locales/useLocale';

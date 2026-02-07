@@ -19,13 +19,18 @@ import org.springframework.security.authentication.AuthenticationCredentialsNotF
 import org.springframework.validation.BindException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.context.request.async.AsyncRequestTimeoutException;
+import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
+import java.io.EOFException;
+import java.io.IOException;
+import java.net.SocketException;
 import java.time.format.DateTimeParseException;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 @RestControllerAdvice
@@ -144,6 +149,34 @@ public class GlobalExceptionHandler {
     return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
   }
 
+  @ExceptionHandler(AsyncRequestNotUsableException.class)
+  public Object handleAsyncRequestNotUsableException(AsyncRequestNotUsableException e, HttpServletRequest request) {
+    log.debug("Async response is not usable, likely client disconnected: {}", e.getMessage());
+    if (isSseRequest(request)) {
+      return ResponseEntity.status(HttpStatus.NO_CONTENT).contentType(SSE_MEDIA_TYPE).body("");
+    }
+    return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+  }
+
+  @ExceptionHandler(IOException.class)
+  public Object handleIOException(IOException e, HttpServletRequest request) {
+    if (isClientDisconnected(e)) {
+      log.debug("Client disconnected during async response write: {}", e.getMessage());
+      if (isSseRequest(request)) {
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).contentType(SSE_MEDIA_TYPE).body("");
+      }
+      return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
+    log.error("IO exception", e);
+    if (isSseRequest(request)) {
+      String payload = "event: error\ndata: server io error\n\n";
+      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+        .contentType(SSE_MEDIA_TYPE)
+        .body(payload);
+    }
+    return ApiResponse.failure(500, "鏈嶅姟鍣ㄥ唴閮ㄩ敊璇紝璇疯仈绯荤鐞嗗憳");
+  }
+
   @ExceptionHandler(NoResourceFoundException.class)
   public ResponseEntity<Void> handleNoResourceFoundException(NoResourceFoundException e) {
     log.debug("静态资源不存在: {}", e.getMessage());
@@ -166,16 +199,21 @@ public class GlobalExceptionHandler {
     if (permission == null || permission.isBlank()) {
       return "权限不足，请联系管理员开通权限后再试";
     }
-    String[] parts = permission.trim().split(":");
-    if (parts.length != 3) {
-      return "权限不足，缺少权限: " + permission + "，请联系管理员开通权限后再试";
+    String text = permission.trim();
+    // Keep plain access-denied messages unchanged to avoid duplicated "missing permission" wrappers.
+    if (!text.contains(":")) {
+      return text;
+    }
+    String[] parts = text.split(":");
+    if (parts.length != 3 || !"system".equalsIgnoreCase(parts[0])) {
+      return "权限不足，请联系管理员开通权限后再试";
     }
     String resource = parts[1];
     String action = parts[2];
     String pageName = resolvePageTitle(resource);
     String actionLabel = resolveActionLabel(action);
     String suffix = (actionLabel == null || actionLabel.isBlank()) ? "" : "的" + actionLabel + "操作";
-    return "权限不足：页面[" + pageName + "] 权限[" + permission + "]未开通" + suffix + "，请联系管理员开通权限后再试";
+    return "权限不足：页面[" + pageName + "] 权限[" + text + "]未开通" + suffix + "，请联系管理员开通权限后再试";
   }
 
   private String resolvePageTitle(String resource) {
@@ -200,8 +238,44 @@ public class GlobalExceptionHandler {
   }
 
   private boolean isSseRequest(HttpServletRequest request) {
+    if (request == null) return false;
     String accept = request.getHeader("Accept");
-    return accept != null && accept.contains(MediaType.TEXT_EVENT_STREAM_VALUE);
+    if (accept != null && accept.contains(MediaType.TEXT_EVENT_STREAM_VALUE)) {
+      return true;
+    }
+    String uri = request.getRequestURI();
+    if (uri == null || uri.isBlank()) {
+      Object errorUri = request.getAttribute("jakarta.servlet.error.request_uri");
+      if (errorUri instanceof String) uri = (String) errorUri;
+    }
+    if (uri == null) return false;
+    return uri.endsWith("/auth/concurrent/stream")
+      || uri.endsWith("/auth/login/pending/stream")
+      || uri.endsWith("/ai/chat/sse");
+  }
+
+  private boolean isClientDisconnected(Throwable throwable) {
+    Throwable cursor = throwable;
+    while (cursor != null) {
+      if (cursor instanceof AsyncRequestNotUsableException || cursor instanceof EOFException || cursor instanceof SocketException) {
+        return true;
+      }
+      String message = cursor.getMessage();
+      if (message != null) {
+        String lower = message.toLowerCase(Locale.ROOT);
+        if (
+          lower.contains("broken pipe")
+            || lower.contains("connection reset")
+            || lower.contains("connection aborted")
+            || lower.contains("response not usable")
+            || lower.contains("你的主机中的软件中止了一个已建立的连接")
+        ) {
+          return true;
+        }
+      }
+      cursor = cursor.getCause();
+    }
+    return false;
   }
 
   private String escapeSseData(String data) {

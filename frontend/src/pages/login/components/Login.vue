@@ -141,7 +141,7 @@
 </template>
 <script setup lang="ts">
 import type { FormInstanceFunctions, FormRule, SubmitContext } from 'tdesign-vue-next';
-import { DialogPlugin, MessagePlugin } from 'tdesign-vue-next';
+import { MessagePlugin } from 'tdesign-vue-next';
 import { computed, nextTick, onActivated, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
@@ -150,7 +150,6 @@ import { useCounter } from '@/hooks';
 import { t } from '@/locales';
 import { useSettingStore, useUserStore } from '@/store';
 import { request } from '@/utils/request';
-import { buildSseUrl } from '@/utils/sse';
 import { setTokenExpireTimer } from '@/utils/tokenExpire';
 
 import AgreementCheck from './AgreementCheck.vue';
@@ -428,85 +427,8 @@ onActivated(() => {
   if (type.value === 'password') loadCaptcha();
 });
 onBeforeUnmount(() => {
-  closePending();
   clearCaptchaRefreshTimer();
 });
-
-let pendingDialog: ReturnType<typeof DialogPlugin.confirm> | null = null;
-let pendingSource: EventSource | null = null;
-
-const closePending = () => {
-  if (pendingSource) {
-    pendingSource.close();
-    pendingSource = null;
-  }
-  if (pendingDialog) {
-    pendingDialog.hide();
-    pendingDialog = null;
-  }
-};
-
-const waitForDecision = (requestId: string, requestKey: string) => {
-  closePending();
-  pendingDialog = DialogPlugin.confirm({
-    header: t('pages.login.waitingConfirmation'),
-    body: t('pages.login.waitingConfirmationBody'),
-    confirmBtn: t('pages.login.cancelWaiting'),
-    cancelBtn: null,
-    closeOnOverlayClick: false,
-    closeOnEscKeydown: false,
-    onConfirm: () => {
-      closePending();
-    },
-    onClose: () => {
-      closePending();
-    },
-  });
-
-  pendingSource = new EventSource(buildSseUrl('/auth/login/pending/stream', { requestId, requestKey }));
-  pendingSource.addEventListener('decision', async (event: MessageEvent) => {
-    let status = '';
-    try {
-      const data = JSON.parse(event.data || '{}');
-      status = data?.status || '';
-    } catch {}
-
-    if (status === 'approved') {
-      closePending();
-      try {
-        const confirmRes = await userStore.confirmLogin(requestId, requestKey);
-        if (confirmRes?.status === 'ok') {
-          // 设置 token 过期定时器
-          if (confirmRes.token && confirmRes.expiresIn) {
-            setTokenExpireTimer(confirmRes.token, confirmRes.expiresIn);
-          }
-          await settingStore.loadUiSetting();
-          MessagePlugin.success(t('pages.login.loginSuccess'));
-          const redirectUrl = resolveLoginRedirect(route.query.redirect as string);
-          router.push(redirectUrl);
-          return;
-        }
-        throw new Error(t('pages.login.loginFailed'));
-      } catch (err: any) {
-        MessagePlugin.error(String(err?.message || t('pages.login.loginFailed')));
-        loadCaptcha();
-      }
-      return;
-    }
-
-    if (status === 'rejected') {
-      closePending();
-      MessagePlugin.warning(t('pages.login.loginRejected'));
-      loadCaptcha();
-    }
-  });
-
-  pendingSource.onerror = () => {
-    MessagePlugin.error(t('pages.login.waitingFailed'));
-    closePending();
-    loadCaptcha();
-  };
-};
 
 const onSubmit = async (ctx: SubmitContext) => {
   if (ctx.validateResult !== true) {
@@ -527,10 +449,6 @@ const onSubmit = async (ctx: SubmitContext) => {
         router.push(redirectUrl);
         return;
       }
-      if (res?.status === 'pending' && res.requestId && res.requestKey) {
-        waitForDecision(res.requestId, res.requestKey);
-        return;
-      }
       throw new Error(t('pages.login.loginFailed'));
     }
 
@@ -545,10 +463,6 @@ const onSubmit = async (ctx: SubmitContext) => {
         MessagePlugin.success(t('pages.login.loginSuccess'));
         const redirectUrl = resolveLoginRedirect(route.query.redirect as string);
         router.push(redirectUrl);
-        return;
-      }
-      if (res?.status === 'pending' && res.requestId && res.requestKey) {
-        waitForDecision(res.requestId, res.requestKey);
         return;
       }
       throw new Error(t('pages.login.loginFailed'));
@@ -575,10 +489,6 @@ const onSubmit = async (ctx: SubmitContext) => {
       }
       const redirectUrl = resolveLoginRedirect(route.query.redirect as string);
       router.push(redirectUrl);
-      return;
-    }
-    if (res?.status === 'pending' && res.requestId && res.requestKey) {
-      waitForDecision(res.requestId, res.requestKey);
       return;
     }
     throw new Error(t('pages.login.loginFailed'));

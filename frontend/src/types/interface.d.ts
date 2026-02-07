@@ -28,13 +28,11 @@ export interface UserInfo {
 }
 
 export interface LoginResponse {
-  status: 'ok' | 'pending';
+  status: 'ok';
   token?: string;
   accessToken?: string;
   refreshToken?: string;
-  expiresIn?: number; // token 过期时间（秒）
-  requestId?: string;
-  requestKey?: string;
+  expiresIn?: number;
 }
 
 export interface NotificationItem {

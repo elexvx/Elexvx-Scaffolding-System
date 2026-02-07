@@ -32,6 +32,7 @@ public class SystemMenuController {
   @GetMapping("/tree")
   public ApiResponse<List<MenuItemTreeNode>> tree() {
     PermissionUtil.check("system:SystemMenu:query");
+    try { menuItemService.ensureOrgManagementMenuSeeded(); } catch (Exception ignored) {}
     try { menuItemService.removeObsoleteNotificationRoute(); } catch (Exception ignored) {}
     try { menuItemService.removeObsoletePrintRoute(); } catch (Exception ignored) {}
     return ApiResponse.success(menuItemService.getAdminTree());

@@ -3,15 +3,16 @@ package com.tencent.tdesign.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tencent.tdesign.security.AuthTokenFilter;
 import com.tencent.tdesign.vo.ApiResponse;
+import jakarta.servlet.DispatcherType;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
@@ -32,6 +33,7 @@ public class SecurityConfig {
       .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()))
       .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
       .authorizeHttpRequests(auth -> auth
+        .dispatcherTypeMatchers(DispatcherType.ASYNC, DispatcherType.ERROR).permitAll()
         .requestMatchers(
           "/auth/login",
           "/auth/login/sms",
@@ -60,16 +62,24 @@ public class SecurityConfig {
         .anyRequest().authenticated()
       )
       .exceptionHandling(ex -> ex
-        .authenticationEntryPoint((request, response, authException) -> writeError(response, HttpStatus.UNAUTHORIZED))
-        .accessDeniedHandler((request, response, accessDeniedException) -> writeError(response, HttpStatus.FORBIDDEN))
+        .authenticationEntryPoint((request, response, authException) -> {
+          if (response.isCommitted()) return;
+          writeError(response, HttpStatus.UNAUTHORIZED);
+        })
+        .accessDeniedHandler((request, response, accessDeniedException) -> {
+          if (response.isCommitted()) return;
+          writeError(response, HttpStatus.FORBIDDEN);
+        })
       )
-      .httpBasic(Customizer.withDefaults());
+      .httpBasic(AbstractHttpConfigurer::disable)
+      .formLogin(AbstractHttpConfigurer::disable);
 
     http.addFilterBefore(authTokenFilter, UsernamePasswordAuthenticationFilter.class);
     return http.build();
   }
 
   private void writeError(HttpServletResponse response, HttpStatus status) throws IOException {
+    if (response.isCommitted()) return;
     response.setStatus(status.value());
     response.setContentType(MediaType.APPLICATION_JSON_VALUE);
     ApiResponse<Void> body = ApiResponse.failure(status.value(), status == HttpStatus.UNAUTHORIZED

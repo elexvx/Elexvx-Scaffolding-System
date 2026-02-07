@@ -98,3 +98,5 @@ aj:
     slip-offset: 5 # 滑块误差偏移
     aes-status: true # 是否启用 AES 加密
     interference-options: 2 # 干扰项强度
+
+tdesign.security.field-secret: ${TDESIGN_SECURITY_FIELD_SECRET:tdesign-field-secret-change-me}

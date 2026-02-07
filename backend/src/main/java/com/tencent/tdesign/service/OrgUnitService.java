@@ -134,7 +134,7 @@ public class OrgUnitService {
   }
 
   private void apply(OrgUnitEntity entity, OrgUnitUpsertRequest req) {
-    if (req.getParentId() != null) entity.setParentId(req.getParentId());
+    entity.setParentId(req.getParentId());
     entity.setName(req.getName());
     entity.setShortName(req.getShortName());
     OrgUnitType type = OrgUnitType.fromValue(req.getType());

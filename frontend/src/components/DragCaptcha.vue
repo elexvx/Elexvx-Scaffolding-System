@@ -113,6 +113,7 @@ const transitionWidth = ref('');
 const startLeft = ref(0);
 const barAreaRef = ref<HTMLDivElement | null>(null);
 const backImageWidth = ref(310);
+const blockImageWidth = ref(47);
 
 const width = computed(() => props.width);
 const height = computed(() => props.height);
@@ -141,6 +142,16 @@ const updateBackImageSize = (base64: string) => {
   const img = new Image();
   img.onload = () => {
     backImageWidth.value = img.naturalWidth || backImageWidth.value;
+  };
+  img.src = dataUrl;
+};
+
+const updateBlockImageSize = (base64: string) => {
+  if (!base64) return;
+  const dataUrl = base64.startsWith('data:') ? base64 : `data:image/png;base64,${base64}`;
+  const img = new Image();
+  img.onload = () => {
+    blockImageWidth.value = img.naturalWidth || blockImageWidth.value;
   };
   img.src = dataUrl;
 };
@@ -188,6 +199,7 @@ const getPicture = async () => {
       secretKey.value = res.repData.secretKey || '';
       tipWords.value = '';
       updateBackImageSize(backImgBase.value);
+      updateBlockImageSize(blockBackImgBase.value);
       return;
     }
 
@@ -240,11 +252,11 @@ const end = async () => {
   status.value = false;
 
   const barWidth = barAreaRef.value?.clientWidth || width.value;
-  const maxLeft = Math.max(barWidth - barHeight.value, 1);
   const baseWidth = backImageWidth.value || 310;
-  const blockBaseWidth = Math.round((blockWidth.value / Math.max(width.value, 1)) * baseWidth);
-  const maxRange = Math.max(baseWidth - blockBaseWidth, 1);
-  const moveLeftDistance = Math.round((moveBlockLeft.value / maxLeft) * maxRange);
+  const baseBlockWidth = blockImageWidth.value || Math.round((blockWidth.value / Math.max(width.value, 1)) * baseWidth);
+  const maxCaptchaX = Math.max(baseWidth - baseBlockWidth, 0);
+  const mappedX = Math.round((moveBlockLeft.value / Math.max(barWidth, 1)) * baseWidth);
+  const moveLeftDistance = Math.min(Math.max(mappedX, 0), maxCaptchaX);
   const point = { x: moveLeftDistance, y: 5.0 };
   const pointJson = secretKey.value ? aesEncrypt(JSON.stringify(point), secretKey.value) : JSON.stringify(point);
 
@@ -357,7 +369,7 @@ watch(
     width: 100%;
     height: 100%;
     display: block;
-    object-fit: cover;
+    object-fit: fill;
   }
 }
 

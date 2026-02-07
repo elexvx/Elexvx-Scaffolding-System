@@ -49,28 +49,6 @@ export const useUserStore = defineStore('user', {
       }
       return res;
     },
-    async confirmLogin(requestId: string, requestKey: string): Promise<LoginResponse> {
-      const { request } = await import('@/utils/request');
-      const res = await request.post<LoginResponse>(
-        { url: '/auth/login/confirm', data: { requestId, requestKey } },
-        { withToken: false },
-      );
-      const accessToken = res?.token || res?.accessToken;
-      if (res?.status === 'ok' && accessToken) {
-        this.token = accessToken;
-        this.refreshToken = res?.refreshToken || '';
-        this.tokenExpiresAt = res.expiresIn ? Date.now() + res.expiresIn * 1000 : null;
-        this.userInfoLoaded = false;
-        await saveToken(accessToken);
-        await saveRefreshToken(this.refreshToken);
-        const { useTabsRouterStore } = await import('@/store/modules/tabs-router');
-        if (typeof window !== 'undefined') {
-          window.localStorage.removeItem('tabsRouter');
-        }
-        useTabsRouterStore().$reset();
-      }
-      return res;
-    },
     async loginBySms(payload: { phone: string; code: string; force?: boolean }): Promise<LoginResponse> {
       const { request } = await import('@/utils/request');
       const res = await request.post<LoginResponse>({ url: '/auth/login/sms', data: payload }, { withToken: false });

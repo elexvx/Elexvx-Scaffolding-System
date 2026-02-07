@@ -352,6 +352,20 @@ const normalizeRegisterErrorMessage = (message: string) => {
     .replace(/\s*\[\d{3}\]\s*$/, '')
     .trim();
   if (!cleaned) return '';
+  const lower = cleaned.toLowerCase();
+  if (
+    lower.includes('account already exists')
+    || cleaned.includes('账号已存在')
+    || cleaned.includes('数据唯一性冲突')
+    || (lower.includes('duplicate entry') && lower.includes('account'))
+    || (lower.includes('duplicate key') && lower.includes('account'))
+    || (lower.includes('unique constraint') && lower.includes('account'))
+  ) {
+    return '账号已存在，请更换后重试';
+  }
+  if (lower.includes('register failed, please retry') || cleaned.includes('注册失败，请稍后重试')) {
+    return '注册失败，请稍后重试';
+  }
   if (!/^参数校验失败[:：]/.test(cleaned)) return cleaned;
   const raw = cleaned.replace(/^参数校验失败[:：]\s*/, '');
   const parts = raw

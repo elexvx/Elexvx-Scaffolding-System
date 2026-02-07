@@ -61,13 +61,21 @@ public class AuthTokenFilter extends OncePerRequestFilter {
     if (StringUtils.hasText(header)) {
       return header.startsWith("Bearer ") ? header.substring(7) : header;
     }
+    String uri = request.getRequestURI();
+    boolean isConcurrentStream = uri != null && uri.endsWith("/auth/concurrent/stream");
     boolean allowUrlTokenParam = Boolean.TRUE.equals(
       securitySettingService.getOrCreate().getAllowUrlTokenParam()
     );
-    if (!allowUrlTokenParam) {
+    if (!allowUrlTokenParam && !isConcurrentStream) {
       return null;
     }
     String token = request.getParameter("token");
+    if (!StringUtils.hasText(token)) {
+      token = request.getParameter(HttpHeaders.AUTHORIZATION);
+    }
+    if (StringUtils.hasText(token) && token.startsWith("Bearer ")) {
+      token = token.substring(7);
+    }
     return StringUtils.hasText(token) ? token : null;
   }
 }

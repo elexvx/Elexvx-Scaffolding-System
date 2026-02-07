@@ -250,6 +250,14 @@ public class MenuItemService {
   }
 
   @Transactional
+  public boolean ensureOrgManagementMenuSeeded() {
+    if (menuItemMapper.count() == 0) return false;
+    if (menuItemMapper.selectByRouteName("SystemOrg") != null) return false;
+    seedDefaultSidebarMenus(false);
+    return true;
+  }
+
+  @Transactional
   public boolean reorder(MenuItemReorderRequest req) {
     List<MenuItemReorderRequest.Item> items = req.getItems();
     Set<Long> ids = new HashSet<>();

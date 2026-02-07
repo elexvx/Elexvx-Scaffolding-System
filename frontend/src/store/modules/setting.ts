@@ -117,8 +117,22 @@ export const useSettingStore = defineStore('setting', {
       const { useUserStore } = await import('@/store');
       const userStore = useUserStore();
       try {
+        const fetchUiSetting = async (endpoint: string, withToken: boolean) =>
+          request.get<any>({ url: endpoint }, { withToken });
+
         const endpoint = userStore.token ? '/system/ui' : '/system/ui/public';
-        const s = await request.get<any>({ url: endpoint }, { withToken: !!userStore.token });
+        let s: any;
+        try {
+          s = await fetchUiSetting(endpoint, !!userStore.token);
+        } catch (error: any) {
+          const msg = String(error?.message || '');
+          // Logged-in users without system-setting permission should transparently fall back to public settings.
+          if (userStore.token && (msg.includes('[403]') || msg.includes('[401]'))) {
+            s = await fetchUiSetting('/system/ui/public', false);
+          } else {
+            throw error;
+          }
+        }
         if (!s) {
           this.ensureOfflineAssetFallbacks();
           return;

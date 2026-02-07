@@ -130,7 +130,7 @@ public class UiSettingService {
 
   public boolean isMultiDeviceLoginAllowed() {
     UiLoginSetting setting = loginMapper.selectTop();
-    return setting == null || setting.getAllowMultiDeviceLogin() == null || Boolean.TRUE.equals(setting.getAllowMultiDeviceLogin());
+    return setting != null && Boolean.TRUE.equals(setting.getAllowMultiDeviceLogin());
   }
 
   public Integer getLogRetentionDays() {
