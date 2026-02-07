@@ -13,6 +13,9 @@ CREATE TABLE IF NOT EXISTS users (
   phone VARCHAR(20),
   email VARCHAR(100),
   id_card VARCHAR(32),
+  id_type VARCHAR(32),
+  id_valid_from DATE,
+  id_valid_to DATE,
   seat VARCHAR(50),
   entity VARCHAR(100),
   leader VARCHAR(64),
@@ -359,6 +362,7 @@ CREATE TABLE IF NOT EXISTS sensitive_settings (
 -- ----------------------------
 INSERT INTO sys_dict (id, name, code, status, sort, remark, created_at, updated_at) VALUES
   (2001, '性别', 'gender', 1, 1, '性别选项', TIMESTAMP '2026-01-18 21:21:03', TIMESTAMP '2026-01-18 21:21:03'),
+  (2002, '证件-类型', 'id_document_type', 1, 2, '证件类型', TIMESTAMP '2026-01-18 21:21:03', TIMESTAMP '2026-01-18 21:21:03'),
   (2004, '地址-区', 'address_district', 1, 4, '地址区县', TIMESTAMP '2026-01-18 21:21:03', TIMESTAMP '2026-01-18 21:21:03'),
   (2005, '公告-类型', 'announcement_type', 1, 5, '公告类型', TIMESTAMP '2026-01-18 21:21:03', TIMESTAMP '2026-01-18 21:21:03'),
   (2006, '公告-优先级', 'announcement_priority', 1, 6, '公告优先级', TIMESTAMP '2026-01-18 21:21:03', TIMESTAMP '2026-01-18 21:21:03'),
@@ -393,6 +397,20 @@ CREATE TABLE IF NOT EXISTS sys_di_gender_de9feaea (
 INSERT INTO sys_di_gender_de9feaea (id, label, value, value_type, status, sort, tag_color, created_at, updated_at) VALUES (2101, '男', 'male', 'string', 1, 1, 'success', TIMESTAMP '2026-01-18 21:21:03', TIMESTAMP '2026-01-18 21:21:03');
 INSERT INTO sys_di_gender_de9feaea (id, label, value, value_type, status, sort, tag_color, created_at, updated_at) VALUES (2102, '女', 'female', 'string', 1, 2, 'danger', TIMESTAMP '2026-01-18 21:21:03', TIMESTAMP '2026-01-18 21:21:03');
 INSERT INTO sys_di_gender_de9feaea (id, label, value, value_type, status, sort, tag_color, created_at, updated_at) VALUES (2103, '未知', 'unknown', 'string', 1, 3, 'warning', TIMESTAMP '2026-01-18 21:21:03', TIMESTAMP '2026-01-18 21:21:03');
+
+CREATE TABLE IF NOT EXISTS sys_di_id_document_ty_e77fcd76 (
+  id BIGINT PRIMARY KEY,
+  sort INTEGER NOT NULL DEFAULT 0,
+  label VARCHAR(64) NOT NULL,
+  value VARCHAR(128) NOT NULL UNIQUE,
+  value_type VARCHAR(16) NOT NULL DEFAULT 'string',
+  status SMALLINT NOT NULL DEFAULT 1,
+  tag_color VARCHAR(32),
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+INSERT INTO sys_di_id_document_ty_e77fcd76 (id, label, value, value_type, status, sort, tag_color, created_at, updated_at) VALUES (2201, '居民身份证', 'resident_id_card', 'string', 1, 1, 'success', TIMESTAMP '2026-01-18 21:21:03', TIMESTAMP '2026-01-18 21:21:03');
+INSERT INTO sys_di_id_document_ty_e77fcd76 (id, label, value, value_type, status, sort, tag_color, created_at, updated_at) VALUES (2202, '护照', 'passport', 'string', 1, 2, 'warning', TIMESTAMP '2026-01-18 21:21:03', TIMESTAMP '2026-01-18 21:21:03');
 
 CREATE TABLE IF NOT EXISTS sys_di_address_distri_a4210592 (
   id BIGINT PRIMARY KEY,

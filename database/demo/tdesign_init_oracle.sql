@@ -12,6 +12,9 @@ CREATE TABLE users (
   phone VARCHAR2(20),
   email VARCHAR2(100),
   id_card VARCHAR2(32),
+  id_type VARCHAR2(32),
+  id_valid_from DATE,
+  id_valid_to DATE,
   seat VARCHAR2(50),
   entity VARCHAR2(100),
   leader VARCHAR2(64),
@@ -358,6 +361,7 @@ CREATE TABLE sensitive_settings (
 -- Records of sys_dict
 -- ----------------------------
 INSERT INTO sys_dict (id, name, code, status, sort, remark, created_at, updated_at) VALUES (2001, '性别', 'gender', 1, 1, '性别选项', TIMESTAMP '2026-01-18 21:21:03', TIMESTAMP '2026-01-18 21:21:03');
+INSERT INTO sys_dict (id, name, code, status, sort, remark, created_at, updated_at) VALUES (2002, '证件-类型', 'id_document_type', 1, 2, '证件类型', TIMESTAMP '2026-01-18 21:21:03', TIMESTAMP '2026-01-18 21:21:03');
 INSERT INTO sys_dict (id, name, code, status, sort, remark, created_at, updated_at) VALUES (2004, '地址-区', 'address_district', 1, 4, '地址区县', TIMESTAMP '2026-01-18 21:21:03', TIMESTAMP '2026-01-18 21:21:03');
 INSERT INTO sys_dict (id, name, code, status, sort, remark, created_at, updated_at) VALUES (2005, '公告-类型', 'announcement_type', 1, 5, '公告类型', TIMESTAMP '2026-01-18 21:21:03', TIMESTAMP '2026-01-18 21:21:03');
 INSERT INTO sys_dict (id, name, code, status, sort, remark, created_at, updated_at) VALUES (2006, '公告-优先级', 'announcement_priority', 1, 6, '公告优先级', TIMESTAMP '2026-01-18 21:21:03', TIMESTAMP '2026-01-18 21:21:03');
@@ -392,6 +396,20 @@ CREATE TABLE sys_di_gender_de9feaea (
 INSERT INTO sys_di_gender_de9feaea (id, label, value, value_type, status, sort, tag_color, created_at, updated_at) VALUES (2101, '男', 'male', 'string', 1, 1, 'success', TIMESTAMP '2026-01-18 21:21:03', TIMESTAMP '2026-01-18 21:21:03');
 INSERT INTO sys_di_gender_de9feaea (id, label, value, value_type, status, sort, tag_color, created_at, updated_at) VALUES (2102, '女', 'female', 'string', 1, 2, 'danger', TIMESTAMP '2026-01-18 21:21:03', TIMESTAMP '2026-01-18 21:21:03');
 INSERT INTO sys_di_gender_de9feaea (id, label, value, value_type, status, sort, tag_color, created_at, updated_at) VALUES (2103, '未知', 'unknown', 'string', 1, 3, 'warning', TIMESTAMP '2026-01-18 21:21:03', TIMESTAMP '2026-01-18 21:21:03');
+
+CREATE TABLE sys_di_id_document_ty_e77fcd76 (
+  id NUMBER(19) PRIMARY KEY,
+  sort NUMBER(10) DEFAULT 0 NOT NULL,
+  label VARCHAR2(64) NOT NULL,
+  value VARCHAR2(128) NOT NULL UNIQUE,
+  value_type VARCHAR2(16) DEFAULT 'string' NOT NULL,
+  status NUMBER(3) DEFAULT 1 NOT NULL,
+  tag_color VARCHAR2(32),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+INSERT INTO sys_di_id_document_ty_e77fcd76 (id, label, value, value_type, status, sort, tag_color, created_at, updated_at) VALUES (2201, '居民身份证', 'resident_id_card', 'string', 1, 1, 'success', TIMESTAMP '2026-01-18 21:21:03', TIMESTAMP '2026-01-18 21:21:03');
+INSERT INTO sys_di_id_document_ty_e77fcd76 (id, label, value, value_type, status, sort, tag_color, created_at, updated_at) VALUES (2202, '护照', 'passport', 'string', 1, 2, 'warning', TIMESTAMP '2026-01-18 21:21:03', TIMESTAMP '2026-01-18 21:21:03');
 
 CREATE TABLE sys_di_address_distri_a4210592 (
   id NUMBER(19) PRIMARY KEY,

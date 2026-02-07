@@ -27,9 +27,12 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.bcrypt.BCrypt;
@@ -41,6 +44,13 @@ public class AuthService {
   private static final String MSG_ACCOUNT_REQUIRED = "请输入账号";
   private static final String MSG_ACCOUNT_EXISTS = "账号已存在，请更换后重试";
   private static final String MSG_REGISTER_RETRY = "注册失败，请稍后重试";
+  private static final String DOC_TYPE_RESIDENT_ID_CARD = "resident_id_card";
+  private static final String DOC_TYPE_PASSPORT = "passport";
+  private static final Set<String> DOC_TYPE_RESIDENT_ID_CARD_ALIASES =
+      Set.of("resident_id_card", "id_card", "identity_card", "china_id_card", "居民身份证");
+  private static final Set<String> DOC_TYPE_PASSPORT_ALIASES = Set.of("passport", "护照");
+  private static final int[] RESIDENT_ID_CARD_WEIGHTS = {7, 9, 10, 5, 8, 4, 2, 1, 6, 3, 7, 9, 10, 5, 8, 4, 2};
+  private static final char[] RESIDENT_ID_CARD_CHECKSUM_CODES = {'1', '0', 'X', '9', '8', '7', '6', '5', '4', '3', '2'};
 
   private final UserMapper userMapper;
   private final OrgUnitMapper orgUnitMapper;
@@ -369,6 +379,128 @@ public class AuthService {
     return idCard.trim().toUpperCase();
   }
 
+  private String normalizeDocumentType(String idType) {
+    if (idType == null) return null;
+    String normalized = idType.trim();
+    if (normalized.isEmpty()) return null;
+    String lower = normalized.toLowerCase(Locale.ROOT);
+    if (DOC_TYPE_RESIDENT_ID_CARD_ALIASES.contains(lower) || DOC_TYPE_RESIDENT_ID_CARD_ALIASES.contains(normalized)) {
+      return DOC_TYPE_RESIDENT_ID_CARD;
+    }
+    if (DOC_TYPE_PASSPORT_ALIASES.contains(lower) || DOC_TYPE_PASSPORT_ALIASES.contains(normalized)) {
+      return DOC_TYPE_PASSPORT;
+    }
+    return lower;
+  }
+
+  private boolean hasText(String value) {
+    return value != null && !value.trim().isEmpty();
+  }
+
+  private int percent(int complete, int total) {
+    if (total <= 0) return 0;
+    return Math.round((complete * 100f) / total);
+  }
+
+  private void validateDocumentInfo(UserEntity user) {
+    String idType = normalizeDocumentType(user.getIdType());
+    String idCard = normalizeIdCard(user.getIdCard());
+    user.setIdType(idType);
+    user.setIdCard(idCard.isBlank() ? null : idCard);
+
+    if (idType == null && !idCard.isBlank()) {
+      throw new IllegalArgumentException("证件号码已填写，请先选择证件类型");
+    }
+
+    if (!idCard.isBlank()) {
+      switch (idType) {
+        case DOC_TYPE_RESIDENT_ID_CARD -> validateResidentIdCard(idCard);
+        case DOC_TYPE_PASSPORT -> validatePassport(idCard);
+        default -> throw new IllegalArgumentException("不支持的证件类型: " + idType);
+      }
+    }
+
+    LocalDate validFrom = user.getIdValidFrom();
+    LocalDate validTo = user.getIdValidTo();
+    if (validFrom != null && validTo != null && validTo.isBefore(validFrom)) {
+      throw new IllegalArgumentException("证件有效期止不能早于证件有效期起");
+    }
+  }
+
+  private void validateResidentIdCard(String idCard) {
+    if (!idCard.matches("^[1-9]\\d{16}[0-9X]$")) {
+      throw new IllegalArgumentException("居民身份证号码格式不正确");
+    }
+    String birth = idCard.substring(6, 14);
+    try {
+      LocalDate.parse(birth, java.time.format.DateTimeFormatter.BASIC_ISO_DATE);
+    } catch (Exception ex) {
+      throw new IllegalArgumentException("居民身份证号码中的出生日期不合法");
+    }
+    if (!isValidResidentIdCardChecksum(idCard)) {
+      throw new IllegalArgumentException("居民身份证号码校验位不正确");
+    }
+  }
+
+  private boolean isValidResidentIdCardChecksum(String idCard) {
+    int sum = 0;
+    for (int i = 0; i < 17; i++) {
+      char ch = idCard.charAt(i);
+      if (ch < '0' || ch > '9') return false;
+      sum += (ch - '0') * RESIDENT_ID_CARD_WEIGHTS[i];
+    }
+    char expected = RESIDENT_ID_CARD_CHECKSUM_CODES[sum % 11];
+    return expected == idCard.charAt(17);
+  }
+
+  private void validatePassport(String passportNo) {
+    if (!passportNo.matches("^[A-Z0-9]{5,17}$")) {
+      throw new IllegalArgumentException("护照号码格式不正确");
+    }
+  }
+
+  private void fillProfileCompleteness(UserProfileResponse profile) {
+    int basicDone = 0;
+    int documentDone = 0;
+    List<String> incompleteItems = new ArrayList<>();
+
+    if (hasText(profile.getName())) basicDone += 1;
+    else incompleteItems.add("name");
+
+    if (hasText(profile.getGender())) basicDone += 1;
+    else incompleteItems.add("gender");
+
+    if (hasText(profile.getMobile())) basicDone += 1;
+    else incompleteItems.add("mobile");
+
+    if (hasText(profile.getEmail())) basicDone += 1;
+    else incompleteItems.add("email");
+
+    boolean hasAddress = hasText(profile.getAddress())
+      || hasText(profile.getProvince())
+      || hasText(profile.getCity())
+      || hasText(profile.getDistrict());
+    if (hasAddress) basicDone += 1;
+    else incompleteItems.add("address");
+
+    if (hasText(profile.getIdType())) documentDone += 1;
+    else incompleteItems.add("idType");
+
+    if (hasText(profile.getIdCard())) documentDone += 1;
+    else incompleteItems.add("idCard");
+
+    if (profile.getIdValidFrom() != null) documentDone += 1;
+    else incompleteItems.add("idValidFrom");
+
+    if (profile.getIdValidTo() != null) documentDone += 1;
+    else incompleteItems.add("idValidTo");
+
+    profile.setBasicInfoScore(percent(basicDone, 5));
+    profile.setDocumentInfoScore(percent(documentDone, 4));
+    profile.setCompletenessScore(percent(basicDone + documentDone, 9));
+    profile.setIncompleteItems(incompleteItems);
+  }
+
   private UserEntity findUserByPhone(String phone) {
     String normalized = normalizePhone(phone);
     if (normalized.isBlank())
@@ -602,6 +734,7 @@ public class AuthService {
     UserEntity u = Optional.ofNullable(userMapper.selectById(userId))
         .orElseThrow(() -> new IllegalArgumentException("User not found"));
     String oldAvatar = u.getAvatar();
+    boolean documentFieldsTouched = false;
     if (req.getName() != null)
       u.setName(req.getName());
     if (req.getMobile() != null && !SensitiveMaskUtil.isMasked(req.getMobile()))
@@ -610,8 +743,22 @@ public class AuthService {
       u.setPhone(req.getPhone());
     if (req.getEmail() != null && !SensitiveMaskUtil.isMasked(req.getEmail()))
       u.setEmail(req.getEmail());
-    if (req.getIdCard() != null && !SensitiveMaskUtil.isMasked(req.getIdCard()))
+    if (req.getIdCard() != null && !SensitiveMaskUtil.isMasked(req.getIdCard())) {
       u.setIdCard(req.getIdCard());
+      documentFieldsTouched = true;
+    }
+    if (req.getIdType() != null) {
+      u.setIdType(req.getIdType());
+      documentFieldsTouched = true;
+    }
+    if (req.getIdValidFrom() != null) {
+      u.setIdValidFrom(req.getIdValidFrom());
+      documentFieldsTouched = true;
+    }
+    if (req.getIdValidTo() != null) {
+      u.setIdValidTo(req.getIdValidTo());
+      documentFieldsTouched = true;
+    }
     if (req.getSeat() != null)
       u.setSeat(req.getSeat());
     if (req.getEntity() != null)
@@ -658,6 +805,9 @@ public class AuthService {
       u.setAvatar(req.getAvatar());
     if (req.getTags() != null)
       u.setTags(req.getTags());
+    if (documentFieldsTouched) {
+      validateDocumentInfo(u);
+    }
     ensureUserGuid(u);
     saveUser(u);
 
@@ -685,6 +835,9 @@ public class AuthService {
     r.setPhone(u.getPhone());
     r.setEmail(u.getEmail());
     r.setIdCard(u.getIdCard());
+    r.setIdType(u.getIdType());
+    r.setIdValidFrom(u.getIdValidFrom());
+    r.setIdValidTo(u.getIdValidTo());
     r.setSeat(u.getSeat());
     r.setEntity(u.getEntity());
     r.setLeader(u.getLeader());
@@ -708,6 +861,7 @@ public class AuthService {
     r.setIntroduction(u.getIntroduction());
     r.setAvatar(normalizeAvatar(u.getAvatar()));
     r.setTags(u.getTags());
+    fillProfileCompleteness(r);
     return r;
   }
 

@@ -741,6 +741,7 @@ CREATE TABLE `sys_dict`  (
 -- ----------------------------
 INSERT INTO `sys_dict` (`id`, `sort`, `name`, `code`, `status`, `remark`, `created_at`, `updated_at`) VALUES
   (2001, 1, '鎬у埆', 'gender', 1, '鎬у埆閫夐」', '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
+  (2002, 2, '证件-类型', 'id_document_type', 1, '证件类型', '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
   (2004, 4, '鍦板潃-鍖?, 'address_district', 1, '鍦板潃鍖哄幙', '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
   (2005, 5, '鍏憡-绫诲瀷', 'announcement_type', 1, '鍏憡绫诲瀷', '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
   (2006, 6, '鍏憡-浼樺厛绾?, 'announcement_priority', 1, '鍏憡浼樺厛绾?, '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
@@ -780,6 +781,27 @@ INSERT INTO `sys_di_gender_de9feaea` (`id`, `sort`, `label`, `value`, `value_typ
   (2101, 1, '鐢?, 'male', 'string', 1, 'success', '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
   (2102, 2, '濂?, 'female', 'string', 1, 'danger', '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
   (2103, 3, '鏈煡', 'unknown', 'string', 1, 'warning', '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+
+-- ----------------------------
+-- Table structure for sys_di_id_document_ty_e77fcd76
+-- ----------------------------
+DROP TABLE IF EXISTS `sys_di_id_document_ty_e77fcd76`;
+CREATE TABLE `sys_di_id_document_ty_e77fcd76`  (
+  `id` bigint NOT NULL,
+  `sort` int NOT NULL DEFAULT 0,
+  `label` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  `value` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  `value_type` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT 'string',
+  `status` tinyint NOT NULL DEFAULT 1,
+  `tag_color` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE INDEX `uk_sys_di_id_document_ty_value`(`value` ASC) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
+INSERT INTO `sys_di_id_document_ty_e77fcd76` (`id`, `sort`, `label`, `value`, `value_type`, `status`, `tag_color`, `created_at`, `updated_at`) VALUES
+  (2201, 1, '居民身份证', 'resident_id_card', 'string', 1, 'success', '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
+  (2202, 2, '护照', 'passport', 'string', 1, 'warning', '2026-01-18 21:21:03', '2026-01-18 21:21:03');
 
 -- ----------------------------
 -- Table structure for sys_di_address_distri_a4210592
@@ -1191,6 +1213,9 @@ CREATE TABLE `users`  (
   `avatar` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
   `tags` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
   `id_card` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
+  `id_type` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
+  `id_valid_from` date NULL DEFAULT NULL,
+  `id_valid_to` date NULL DEFAULT NULL,
   `guid` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
   `status` tinyint NOT NULL DEFAULT 1,
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -1202,8 +1227,9 @@ CREATE TABLE `users`  (
 -- ----------------------------
 -- Records of users
 -- ----------------------------
-INSERT INTO `users` VALUES (1, 'admin', '寮犱笁', '$2a$10$BbVSQCIChdR.4gfwiG1OduJiKE/KpUTbhBXd.7Sr.uwi8eggDpYeu', '+86 13800000000', '0000', 'admin@qq.com', 'T32F 001', '鑵捐闆嗗洟', 'CEO', '绯荤粺绠＄悊鍛?, '2018-01-01', '鑵捐/鑵捐鍏徃/绠＄悊灞?绯荤粺绠＄悊缁?, 'male', '寮犱笁鐨勬樀绉?, NULL, '', NULL, '', NULL, '', NULL, NULL, NULL, NULL, NULL, '', '寮犱笁鐨勭畝浠?, '/api/uploads/business/b27eeb829cd64ccaab15123e70678c24.jpg', '', '', 'e59c3cd1-3b52-47c7-bf88-fad5b2281827', 1, NOW(), NOW());
-INSERT INTO `users` VALUES (3, 'bob', 'Bob', '$2a$10$BbVSQCIChdR.4gfwiG1OduJiKE/KpUTbhBXd.7Sr.uwi8eggDpYeu', '+86 13923456789', '8889', 'bob@tencent.com', 'T32F 012', '鑵捐闆嗗洟', 'Sarah Li', '鍚庣寮€鍙戝伐绋嬪笀', '2020-07-01', '鑵捐/鑵捐鍏徃/CSIG浜嬩笟缇?浜戣绠楅儴/鍚庣鏋舵瀯缁?, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '700e0805-c571-4e6a-873b-00899a32ede2', 1, NOW(), NOW());
+INSERT INTO `users` (`id`, `account`, `name`, `password_hash`, `mobile`, `phone`, `email`, `guid`, `status`, `created_at`, `updated_at`) VALUES
+  (1, 'admin', '管理员', '$2a$10$BbVSQCIChdR.4gfwiG1OduJiKE/KpUTbhBXd.7Sr.uwi8eggDpYeu', '+86 13800000000', '0000', 'admin@qq.com', 'e59c3cd1-3b52-47c7-bf88-fad5b2281827', 1, NOW(), NOW()),
+  (3, 'bob', 'Bob', '$2a$10$BbVSQCIChdR.4gfwiG1OduJiKE/KpUTbhBXd.7Sr.uwi8eggDpYeu', '+86 13923456789', '8889', 'bob@tencent.com', '700e0805-c571-4e6a-873b-00899a32ede2', 1, NOW(), NOW());
 
 -- ----------------------------
 -- Table structure for areas
@@ -1572,6 +1598,9 @@ ALTER TABLE `users` MODIFY COLUMN `introduction` text CHARACTER SET utf8mb4 COLL
 ALTER TABLE `users` MODIFY COLUMN `avatar` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'avatar';
 ALTER TABLE `users` MODIFY COLUMN `tags` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'tags';
 ALTER TABLE `users` MODIFY COLUMN `id_card` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'id_card';
+ALTER TABLE `users` MODIFY COLUMN `id_type` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'id_type';
+ALTER TABLE `users` MODIFY COLUMN `id_valid_from` date NULL DEFAULT NULL COMMENT 'id_valid_from';
+ALTER TABLE `users` MODIFY COLUMN `id_valid_to` date NULL DEFAULT NULL COMMENT 'id_valid_to';
 ALTER TABLE `users` MODIFY COLUMN `guid` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'guid';
 ALTER TABLE `users` MODIFY COLUMN `status` tinyint NOT NULL DEFAULT 1 COMMENT 'status';
 ALTER TABLE `users` MODIFY COLUMN `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'created_at';

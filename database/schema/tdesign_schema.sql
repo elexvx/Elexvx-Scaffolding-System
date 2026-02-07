@@ -575,6 +575,9 @@ CREATE TABLE `users`  (
   `avatar` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
   `tags` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
   `id_card` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
+  `id_type` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
+  `id_valid_from` date NULL DEFAULT NULL,
+  `id_valid_to` date NULL DEFAULT NULL,
   `guid` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
   `status` tinyint NOT NULL DEFAULT 1,
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -951,6 +954,9 @@ ALTER TABLE `users` MODIFY COLUMN `introduction` text CHARACTER SET utf8mb4 COLL
 ALTER TABLE `users` MODIFY COLUMN `avatar` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'avatar';
 ALTER TABLE `users` MODIFY COLUMN `tags` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'tags';
 ALTER TABLE `users` MODIFY COLUMN `id_card` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'id_card';
+ALTER TABLE `users` MODIFY COLUMN `id_type` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'id_type';
+ALTER TABLE `users` MODIFY COLUMN `id_valid_from` date NULL DEFAULT NULL COMMENT 'id_valid_from';
+ALTER TABLE `users` MODIFY COLUMN `id_valid_to` date NULL DEFAULT NULL COMMENT 'id_valid_to';
 ALTER TABLE `users` MODIFY COLUMN `guid` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'guid';
 ALTER TABLE `users` MODIFY COLUMN `status` tinyint NOT NULL DEFAULT 1 COMMENT 'status';
 ALTER TABLE `users` MODIFY COLUMN `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'created_at';

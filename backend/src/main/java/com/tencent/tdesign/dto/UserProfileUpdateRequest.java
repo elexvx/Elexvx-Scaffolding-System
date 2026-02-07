@@ -8,6 +8,9 @@ public class UserProfileUpdateRequest {
   private String phone;
   private String email;
   private String idCard;
+  private String idType;
+  private LocalDate idValidFrom;
+  private LocalDate idValidTo;
   private String seat;
   private String entity;
   private String leader;
@@ -70,6 +73,30 @@ public class UserProfileUpdateRequest {
 
   public void setIdCard(String idCard) {
     this.idCard = idCard;
+  }
+
+  public String getIdType() {
+    return idType;
+  }
+
+  public void setIdType(String idType) {
+    this.idType = idType;
+  }
+
+  public LocalDate getIdValidFrom() {
+    return idValidFrom;
+  }
+
+  public void setIdValidFrom(LocalDate idValidFrom) {
+    this.idValidFrom = idValidFrom;
+  }
+
+  public LocalDate getIdValidTo() {
+    return idValidTo;
+  }
+
+  public void setIdValidTo(LocalDate idValidTo) {
+    this.idValidTo = idValidTo;
   }
 
   public String getSeat() {

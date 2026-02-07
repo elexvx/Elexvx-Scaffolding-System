@@ -12,6 +12,9 @@ CREATE TABLE users (
   phone NVARCHAR(20),
   email NVARCHAR(100),
   id_card NVARCHAR(32),
+  id_type NVARCHAR(32),
+  id_valid_from DATE,
+  id_valid_to DATE,
   seat NVARCHAR(50),
   entity NVARCHAR(100),
   leader NVARCHAR(64),
@@ -392,6 +395,7 @@ GO
 SET IDENTITY_INSERT sys_dict ON;
 INSERT INTO sys_dict (id, name, code, status, sort, remark, created_at, updated_at) VALUES
   (2001, N'性别', N'gender', 1, 1, N'性别选项', '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
+  (2002, N'证件-类型', N'id_document_type', 1, 2, N'证件类型', '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
   (2004, N'地址-区', N'address_district', 1, 4, N'地址区县', '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
   (2005, N'公告-类型', N'announcement_type', 1, 5, N'公告类型', '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
   (2006, N'公告-优先级', N'announcement_priority', 1, 6, N'公告优先级', '2026-01-18 21:21:03', '2026-01-18 21:21:03'),
@@ -430,6 +434,22 @@ GO
 INSERT INTO sys_di_gender_de9feaea (id, label, value, value_type, status, sort, tag_color, created_at, updated_at) VALUES (2101, N'男', N'male', N'string', 1, 1, N'success', '2026-01-18 21:21:03', '2026-01-18 21:21:03');
 INSERT INTO sys_di_gender_de9feaea (id, label, value, value_type, status, sort, tag_color, created_at, updated_at) VALUES (2102, N'女', N'female', N'string', 1, 2, N'danger', '2026-01-18 21:21:03', '2026-01-18 21:21:03');
 INSERT INTO sys_di_gender_de9feaea (id, label, value, value_type, status, sort, tag_color, created_at, updated_at) VALUES (2103, N'未知', N'unknown', N'string', 1, 3, N'warning', '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+GO
+
+CREATE TABLE sys_di_id_document_ty_e77fcd76 (
+  id BIGINT NOT NULL PRIMARY KEY,
+  sort INT NOT NULL DEFAULT 0,
+  label NVARCHAR(64) NOT NULL,
+  value NVARCHAR(128) NOT NULL UNIQUE,
+  value_type NVARCHAR(16) NOT NULL DEFAULT 'string',
+  status SMALLINT NOT NULL DEFAULT 1,
+  tag_color NVARCHAR(32) NULL,
+  created_at DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+  updated_at DATETIME2 NOT NULL DEFAULT SYSDATETIME()
+);
+GO
+INSERT INTO sys_di_id_document_ty_e77fcd76 (id, label, value, value_type, status, sort, tag_color, created_at, updated_at) VALUES (2201, N'居民身份证', N'resident_id_card', N'string', 1, 1, N'success', '2026-01-18 21:21:03', '2026-01-18 21:21:03');
+INSERT INTO sys_di_id_document_ty_e77fcd76 (id, label, value, value_type, status, sort, tag_color, created_at, updated_at) VALUES (2202, N'护照', N'passport', N'string', 1, 2, N'warning', '2026-01-18 21:21:03', '2026-01-18 21:21:03');
 GO
 
 CREATE TABLE sys_di_address_distri_a4210592 (

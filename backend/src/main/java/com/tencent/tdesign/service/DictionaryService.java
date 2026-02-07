@@ -42,6 +42,7 @@ public class DictionaryService {
   private static final String OBSOLETE_TEAM_CODE = "team";
   private static final List<BuiltinDictSpec> BUILTIN_DICT_SPECS = List.of(
     new BuiltinDictSpec("gender", "\u6027\u522b", "\u6027\u522b\u9009\u9879", 1),
+    new BuiltinDictSpec("id_document_type", "\u8bc1\u4ef6-\u7c7b\u578b", "\u8bc1\u4ef6\u7c7b\u578b", 2),
     new BuiltinDictSpec("address_district", "\u5730\u5740-\u533a", "\u5730\u5740\u533a\u53bf", 4),
     new BuiltinDictSpec("announcement_type", "\u516c\u544a-\u7c7b\u578b", "\u516c\u544a\u7c7b\u578b", 5),
     new BuiltinDictSpec("announcement_priority", "\u516c\u544a-\u4f18\u5148\u7ea7", "\u516c\u544a\u4f18\u5148\u7ea7", 6),

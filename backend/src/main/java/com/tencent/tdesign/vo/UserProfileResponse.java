@@ -10,6 +10,9 @@ public class UserProfileResponse {
   private String phone;
   private String email;
   private String idCard;
+  private String idType;
+  private LocalDate idValidFrom;
+  private LocalDate idValidTo;
   private String seat;
   private String entity;
   private String leader;
@@ -33,6 +36,10 @@ public class UserProfileResponse {
   private String introduction;
   private String avatar;
   private String tags;
+  private Integer completenessScore;
+  private Integer basicInfoScore;
+  private Integer documentInfoScore;
+  private java.util.List<String> incompleteItems;
   private java.util.List<String> roles;
   private java.util.List<String> orgUnitNames;
 
@@ -90,6 +97,30 @@ public class UserProfileResponse {
 
   public void setIdCard(String idCard) {
     this.idCard = idCard;
+  }
+
+  public String getIdType() {
+    return idType;
+  }
+
+  public void setIdType(String idType) {
+    this.idType = idType;
+  }
+
+  public LocalDate getIdValidFrom() {
+    return idValidFrom;
+  }
+
+  public void setIdValidFrom(LocalDate idValidFrom) {
+    this.idValidFrom = idValidFrom;
+  }
+
+  public LocalDate getIdValidTo() {
+    return idValidTo;
+  }
+
+  public void setIdValidTo(LocalDate idValidTo) {
+    this.idValidTo = idValidTo;
   }
 
   public String getSeat() {
@@ -274,6 +305,38 @@ public class UserProfileResponse {
 
   public void setTags(String tags) {
     this.tags = tags;
+  }
+
+  public Integer getCompletenessScore() {
+    return completenessScore;
+  }
+
+  public void setCompletenessScore(Integer completenessScore) {
+    this.completenessScore = completenessScore;
+  }
+
+  public Integer getBasicInfoScore() {
+    return basicInfoScore;
+  }
+
+  public void setBasicInfoScore(Integer basicInfoScore) {
+    this.basicInfoScore = basicInfoScore;
+  }
+
+  public Integer getDocumentInfoScore() {
+    return documentInfoScore;
+  }
+
+  public void setDocumentInfoScore(Integer documentInfoScore) {
+    this.documentInfoScore = documentInfoScore;
+  }
+
+  public java.util.List<String> getIncompleteItems() {
+    return incompleteItems;
+  }
+
+  public void setIncompleteItems(java.util.List<String> incompleteItems) {
+    this.incompleteItems = incompleteItems;
   }
 
   public java.util.List<String> getRoles() {

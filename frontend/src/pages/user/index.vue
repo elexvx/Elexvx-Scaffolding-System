@@ -201,7 +201,7 @@
             <t-form-item label="确认新密码" name="confirmPassword">
               <t-input v-model="passwordForm.confirmPassword" type="password" placeholder="请再次输入新密码" />
             </t-form-item>
-            <t-form-item class="form-submit">
+            <t-form-item class="form-submit" label-width="0">
               <t-button theme="primary" type="submit" :loading="changingPassword">修改密码</t-button>
             </t-form-item>
           </t-form>
@@ -882,9 +882,12 @@ onUnmounted(() => {
     }
 
     .form-submit {
-      display: flex;
-      justify-content: flex-end;
       padding-top: 16px;
+
+      :deep(.t-form__controls-content) {
+        display: flex;
+        justify-content: flex-end;
+      }
     }
 
     .password-form {
@@ -962,7 +965,9 @@ onUnmounted(() => {
       }
 
       .form-submit {
-        justify-content: flex-end;
+        :deep(.t-form__controls-content) {
+          justify-content: flex-end;
+        }
       }
 
       .password-form {
