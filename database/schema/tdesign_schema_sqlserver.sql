@@ -122,6 +122,7 @@ CREATE TABLE sys_menu_items (
   frame_src NVARCHAR(512),
   frame_blank TINYINT NOT NULL DEFAULT 0,
   enabled TINYINT NOT NULL DEFAULT 1,
+  required_modules NVARCHAR(255),
   order_no INT NOT NULL DEFAULT 0,
   actions NVARCHAR(128),
   version INT NOT NULL DEFAULT 0,

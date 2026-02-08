@@ -1,6 +1,7 @@
 package com.tencent.tdesign.service;
 
 import com.tencent.tdesign.entity.ModuleRegistry;
+import com.tencent.tdesign.exception.ModuleUnavailableException;
 import com.tencent.tdesign.mapper.ModuleRegistryMapper;
 import com.tencent.tdesign.module.ModuleDefinition;
 import com.tencent.tdesign.module.ModuleDefinitionRegistry;
@@ -32,19 +33,22 @@ public class ModuleRegistryService {
   private final ModuleDefinitionRegistry definitionRegistry;
   private final DataSource dataSource;
   private final ResourceLoader resourceLoader;
+  private final ModulePackageService modulePackageService;
 
   public ModuleRegistryService(
     Environment environment,
     ModuleRegistryMapper registryMapper,
     ModuleDefinitionRegistry definitionRegistry,
     DataSource dataSource,
-    ResourceLoader resourceLoader
+    ResourceLoader resourceLoader,
+    ModulePackageService modulePackageService
   ) {
     this.environment = environment;
     this.registryMapper = registryMapper;
     this.definitionRegistry = definitionRegistry;
     this.dataSource = dataSource;
     this.resourceLoader = resourceLoader;
+    this.modulePackageService = modulePackageService;
   }
 
   public List<ModuleDescriptor> listModules() {
@@ -65,16 +69,16 @@ public class ModuleRegistryService {
     String key = normalizeKey(moduleKey);
     ModuleRegistry registry = registryMapper.selectByKey(key);
     if (registry == null) {
-      throw new IllegalArgumentException("模块未安装: " + moduleKey);
+      throw new ModuleUnavailableException("模块未安装: " + moduleKey);
     }
     if (!STATE_INSTALLED.equalsIgnoreCase(normalizeState(registry.getInstallState()))) {
-      throw new IllegalArgumentException("模块未安装: " + moduleKey);
+      throw new ModuleUnavailableException("模块未安装: " + moduleKey);
     }
     if (!Boolean.TRUE.equals(registry.getEnabled())) {
-      throw new IllegalArgumentException("模块未启用: " + moduleKey);
+      throw new ModuleUnavailableException("模块未启用: " + moduleKey);
     }
     if (!isRuntimeDependencyAvailable(key)) {
-      throw new IllegalArgumentException("模块依赖未就绪: " + moduleKey);
+      throw new ModuleUnavailableException("模块依赖未就绪: " + moduleKey);
     }
   }
 
@@ -105,7 +109,7 @@ public class ModuleRegistryService {
     if (STATE_INSTALLED.equalsIgnoreCase(normalizeState(registry.getInstallState()))) {
       return ModuleRegistryResponse.from(registry);
     }
-    ModuleInstallationContext context = new ModuleInstallationContext(dataSource, resourceLoader);
+    ModuleInstallationContext context = new ModuleInstallationContext(dataSource, resourceLoader, modulePackageService.getExternalRoot());
     try {
       definition.initialize(context);
       registry.setInstallState(STATE_INSTALLED);
@@ -124,7 +128,7 @@ public class ModuleRegistryService {
   public ModuleRegistryResponse uninstallModule(String moduleKey) {
     ModuleDefinition definition = requireDefinition(moduleKey);
     ModuleRegistry registry = getOrCreateRegistry(definition);
-    ModuleInstallationContext context = new ModuleInstallationContext(dataSource, resourceLoader);
+    ModuleInstallationContext context = new ModuleInstallationContext(dataSource, resourceLoader, modulePackageService.getExternalRoot());
     try {
       definition.uninstall(context);
       registry.setInstallState(STATE_UNINSTALLED);
@@ -150,7 +154,7 @@ public class ModuleRegistryService {
         continue;
       }
       try {
-        ModuleInstallationContext context = new ModuleInstallationContext(dataSource, resourceLoader);
+        ModuleInstallationContext context = new ModuleInstallationContext(dataSource, resourceLoader, modulePackageService.getExternalRoot());
         definition.initialize(context);
         registry.setInstallState(STATE_INSTALLED);
         registry.setEnabled(true);

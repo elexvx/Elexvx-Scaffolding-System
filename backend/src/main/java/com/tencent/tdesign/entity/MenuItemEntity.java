@@ -31,6 +31,8 @@ public class MenuItemEntity {
 
   private Boolean enabled = true;
 
+  private String requiredModules;
+
   private Integer orderNo = 0;
 
   private String actions;
@@ -151,6 +153,14 @@ public class MenuItemEntity {
 
   public void setEnabled(Boolean enabled) {
     this.enabled = enabled;
+  }
+
+  public String getRequiredModules() {
+    return requiredModules;
+  }
+
+  public void setRequiredModules(String requiredModules) {
+    this.requiredModules = requiredModules;
   }
 
   public Integer getOrderNo() {

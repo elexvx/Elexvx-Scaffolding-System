@@ -113,6 +113,7 @@ CREATE TABLE IF NOT EXISTS sys_menu_items (
   frame_src VARCHAR(512),
   frame_blank SMALLINT NOT NULL DEFAULT 0,
   enabled SMALLINT NOT NULL DEFAULT 1,
+  required_modules VARCHAR(255),
   order_no INTEGER NOT NULL DEFAULT 0,
   actions VARCHAR(128),
   version INTEGER NOT NULL DEFAULT 0,

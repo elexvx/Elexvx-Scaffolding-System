@@ -37,19 +37,22 @@ public class MenuItemService {
   private final AuthQueryDao authDao;
   private final PermissionFacade permissionFacade;
   private final AuthContext authContext;
+  private final ModuleRegistryService moduleRegistryService;
 
   public MenuItemService(
     MenuItemMapper menuItemMapper,
     OperationLogService operationLogService,
     AuthQueryDao authDao,
     PermissionFacade permissionFacade,
-    AuthContext authContext
+    AuthContext authContext,
+    ModuleRegistryService moduleRegistryService
   ) {
     this.menuItemMapper = menuItemMapper;
     this.operationLogService = operationLogService;
     this.authDao = authDao;
     this.permissionFacade = permissionFacade;
     this.authContext = authContext;
+    this.moduleRegistryService = moduleRegistryService;
   }
 
   public boolean isConfigured() {
@@ -139,6 +142,7 @@ public class MenuItemService {
     e.setFrameSrc(blankToNull(req.getFrameSrc()));
     e.setFrameBlank(Boolean.TRUE.equals(req.getFrameBlank()));
     e.setEnabled(req.getEnabled() == null ? true : Boolean.TRUE.equals(req.getEnabled()));
+    e.setRequiredModules(blankToNull(req.getRequiredModules()));
     e.setActions(blankToNull(req.getActions()));
 
     Integer orderNo = req.getOrderNo();
@@ -177,6 +181,7 @@ public class MenuItemService {
     if (req.getFrameSrc() != null) e.setFrameSrc(blankToNull(req.getFrameSrc()));
     if (req.getFrameBlank() != null) e.setFrameBlank(Boolean.TRUE.equals(req.getFrameBlank()));
     if (req.getEnabled() != null) e.setEnabled(Boolean.TRUE.equals(req.getEnabled()));
+    if (req.getRequiredModules() != null) e.setRequiredModules(blankToNull(req.getRequiredModules()));
     if (req.getOrderNo() != null) e.setOrderNo(req.getOrderNo());
     if (req.getActions() != null) e.setActions(blankToNull(req.getActions()));
 
@@ -473,6 +478,7 @@ public class MenuItemService {
     Set<Long> visibleIds = new HashSet<>();
     for (MenuItemEntity e : items) {
       if (!Boolean.TRUE.equals(e.getEnabled())) continue;
+      if (!isModulesAvailable(e.getRequiredModules())) continue;
 
       // 检查角色配置 (只校验是否分配给了该用户，以 role_menus 为准)
       if (accessibleMenuIds.contains(e.getId())) {
@@ -484,6 +490,7 @@ public class MenuItemService {
           if (visibleIds.contains(pid)) break;
           MenuItemEntity p = idMap.get(pid);
           if (p == null || !Boolean.TRUE.equals(p.getEnabled())) break;
+          if (!isModulesAvailable(p.getRequiredModules())) break;
           visibleIds.add(pid);
           pid = p.getParentId();
         }
@@ -541,6 +548,7 @@ public class MenuItemService {
     meta.setFrameBlank(n.getFrameBlank());
     List<String> actions = parseActions(n.getActions());
     meta.setActions(actions);
+    meta.setRequiredModules(parseModules(n.getRequiredModules()));
     String resource = resolveResource(n);
     meta.setResource(resource);
     boolean isDir = "DIR".equalsIgnoreCase(String.valueOf(n.getNodeType()));
@@ -567,6 +575,26 @@ public class MenuItemService {
       ri.setChildren(children);
     }
     return ri;
+  }
+
+  private boolean isModulesAvailable(String requiredModules) {
+    List<String> modules = parseModules(requiredModules);
+    if (modules.isEmpty()) return true;
+    for (String key : modules) {
+      if (!moduleRegistryService.isModuleAvailable(key)) return false;
+    }
+    return true;
+  }
+
+  private List<String> parseModules(String requiredModules) {
+    if (requiredModules == null || requiredModules.isBlank()) return List.of();
+    String[] parts = requiredModules.split(",");
+    List<String> out = new ArrayList<>();
+    for (String p : parts) {
+      String v = p == null ? "" : p.trim();
+      if (!v.isEmpty()) out.add(v.toLowerCase(Locale.ROOT));
+    }
+    return out;
   }
 
   private List<String> parseActions(String actions) {
@@ -673,6 +701,7 @@ public class MenuItemService {
     n.setFrameSrc(e.getFrameSrc());
     n.setFrameBlank(e.getFrameBlank());
     n.setEnabled(e.getEnabled());
+    n.setRequiredModules(e.getRequiredModules());
     n.setOrderNo(e.getOrderNo());
     n.setActions(e.getActions());
     n.setVersion(e.getVersion());

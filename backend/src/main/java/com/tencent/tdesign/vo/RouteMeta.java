@@ -13,6 +13,7 @@ public class RouteMeta {
   private String resource;
   private List<String> actions;
   private List<String> requiredPermissions;
+  private List<String> requiredModules;
 
   public Map<String, String> getTitle() {
     return title;
@@ -84,5 +85,13 @@ public class RouteMeta {
 
   public void setRequiredPermissions(List<String> requiredPermissions) {
     this.requiredPermissions = requiredPermissions;
+  }
+
+  public List<String> getRequiredModules() {
+    return requiredModules;
+  }
+
+  public void setRequiredModules(List<String> requiredModules) {
+    this.requiredModules = requiredModules;
   }
 }

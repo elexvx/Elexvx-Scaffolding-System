@@ -1,5 +1,7 @@
 package com.tencent.tdesign.module;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
@@ -15,11 +17,13 @@ public class ModuleInstallationContext {
   private final DataSource dataSource;
   private final ResourceLoader resourceLoader;
   private final JdbcTemplate jdbcTemplate;
+  private final Path externalRoot;
 
-  public ModuleInstallationContext(DataSource dataSource, ResourceLoader resourceLoader) {
+  public ModuleInstallationContext(DataSource dataSource, ResourceLoader resourceLoader, Path externalRoot) {
     this.dataSource = dataSource;
     this.resourceLoader = resourceLoader;
     this.jdbcTemplate = new JdbcTemplate(dataSource);
+    this.externalRoot = externalRoot;
   }
 
   public DataSource getDataSource() {
@@ -86,7 +90,20 @@ public class ModuleInstallationContext {
 
   public String resolveModuleResource(String moduleKey, String action) {
     String databaseKey = resolveDatabaseKey();
-    return String.format("classpath:modules/%s/%s/%s.sql", moduleKey, databaseKey, action);
+    String key = moduleKey == null ? "" : moduleKey.trim().toLowerCase(Locale.ROOT);
+    if (externalRoot != null) {
+      Path file = externalRoot
+        .resolve("modules")
+        .resolve(key)
+        .resolve(databaseKey)
+        .resolve(action + ".sql")
+        .toAbsolutePath()
+        .normalize();
+      if (Files.exists(file)) {
+        return file.toUri().toString();
+      }
+    }
+    return String.format("classpath:modules/%s/%s/%s.sql", key, databaseKey, action);
   }
 
   private String normalizeDatabaseKey(String productName) {

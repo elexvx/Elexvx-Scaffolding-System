@@ -1,6 +1,7 @@
 package com.tencent.tdesign.config;
 
 import com.tencent.tdesign.exception.ConcurrentLoginException;
+import com.tencent.tdesign.exception.ModuleUnavailableException;
 import com.tencent.tdesign.exception.RepeatSubmitException;
 import com.tencent.tdesign.mapper.MenuItemMapper;
 import com.tencent.tdesign.entity.MenuItemEntity;
@@ -75,6 +76,13 @@ public class GlobalExceptionHandler {
     String message = buildPermissionMessage(e.getMessage());
     return ResponseEntity.status(HttpStatus.FORBIDDEN)
       .body(ApiResponse.failure(403, message));
+  }
+
+  @ExceptionHandler(ModuleUnavailableException.class)
+  public ResponseEntity<ApiResponse<Void>> handleModuleUnavailableException(ModuleUnavailableException e) {
+    String msg = e.getMessage() == null || e.getMessage().isBlank() ? "模块不可用" : e.getMessage();
+    return ResponseEntity.status(HttpStatus.FORBIDDEN)
+      .body(ApiResponse.failure(403, msg));
   }
 
   /**

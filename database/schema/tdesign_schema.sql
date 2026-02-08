@@ -349,6 +349,7 @@ CREATE TABLE `sys_menu_items`  (
   `frame_src` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
   `frame_blank` tinyint NOT NULL DEFAULT 0,
   `enabled` tinyint NOT NULL DEFAULT 1,
+  `required_modules` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
   `require_role` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
   `require_permission` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
   `order_no` int NOT NULL DEFAULT 0,

@@ -181,6 +181,19 @@ function extractTokenExpireTime(token: string): number | null {
 }
 
 /**
+ * 统一解析 token 的过期时间（优先从 JWT 解析）
+ */
+export function resolveTokenExpiresAt(token?: string, storedExpiresAt?: number | null): number | null {
+  if (token) {
+    const expiresAt = extractTokenExpireTime(token);
+    if (expiresAt != null) {
+      return expiresAt;
+    }
+  }
+  return storedExpiresAt ?? null;
+}
+
+/**
  * 检查 token 是否即将过期（5 分钟内）
  * @returns true 表示即将过期
  */

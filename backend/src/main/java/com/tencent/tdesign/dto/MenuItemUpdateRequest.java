@@ -22,6 +22,7 @@ public class MenuItemUpdateRequest {
   private String frameSrc;
   private Boolean frameBlank;
   private Boolean enabled;
+  private String requiredModules;
   private Integer orderNo;
   private String actions;
 
@@ -140,6 +141,14 @@ public class MenuItemUpdateRequest {
 
   public void setEnabled(Boolean enabled) {
     this.enabled = enabled;
+  }
+
+  public String getRequiredModules() {
+    return requiredModules;
+  }
+
+  public void setRequiredModules(String requiredModules) {
+    this.requiredModules = requiredModules;
   }
 
   public Integer getOrderNo() {

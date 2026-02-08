@@ -258,11 +258,11 @@ public class UiSettingController {
   @RepeatSubmit
   public ApiResponse<UiSettingResponse> save(@RequestBody UiSettingRequest req) {
     PermissionUtil.checkAny("system:SystemVerification:update", "system:SystemPersonalize:update", "system:SystemSecurity:update");
-    if (Boolean.TRUE.equals(req.getSmsEnabled()) && !moduleRegistryService.isModuleAvailable("sms")) {
-      throw new IllegalArgumentException("短信模块未安装或未启用");
+    if (Boolean.TRUE.equals(req.getSmsEnabled())) {
+      moduleRegistryService.assertModuleAvailable("sms");
     }
-    if (Boolean.TRUE.equals(req.getEmailEnabled()) && !moduleRegistryService.isModuleAvailable("email")) {
-      throw new IllegalArgumentException("邮箱模块未安装或未启用");
+    if (Boolean.TRUE.equals(req.getEmailEnabled())) {
+      moduleRegistryService.assertModuleAvailable("email");
     }
     uiSettingService.save(req);
     verificationSettingService.applyRequest(req);

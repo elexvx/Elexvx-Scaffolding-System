@@ -112,6 +112,7 @@ CREATE TABLE sys_menu_items (
   frame_src VARCHAR2(512),
   frame_blank NUMBER(3) DEFAULT 0 NOT NULL,
   enabled NUMBER(3) DEFAULT 1 NOT NULL,
+  required_modules VARCHAR2(255),
   order_no NUMBER(10) DEFAULT 0 NOT NULL,
   actions VARCHAR2(128),
   version NUMBER(10) DEFAULT 0 NOT NULL,

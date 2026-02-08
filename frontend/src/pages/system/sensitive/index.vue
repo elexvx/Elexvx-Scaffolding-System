@@ -156,6 +156,7 @@ import { DialogPlugin, MessagePlugin } from 'tdesign-vue-next';
 import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
+import { fetchModuleList } from '@/api/system/module';
 import type { SensitiveImportResult, SensitivePageSetting, SensitiveWord } from '@/api/system/sensitive';
 import {
   createSensitiveWord,
@@ -195,6 +196,40 @@ const uploadHeaders = computed(() => ({
 const route = useRoute();
 const router = useRouter();
 const activeTab = ref<'words' | 'pages'>((route.query.tab as 'words' | 'pages') || 'words');
+
+const resolveModuleRouteTarget = () => {
+  const preferredNames = ['SystemModule', 'systemModule', 'modules'];
+  for (const name of preferredNames) {
+    if (router.hasRoute(name)) {
+      return { name };
+    }
+  }
+
+  const matchedPath = router
+    .getRoutes()
+    .map((item) => String(item.path || ''))
+    .find((path) => path.includes('/system/modules'));
+  if (matchedPath) {
+    return { path: matchedPath };
+  }
+
+  return { path: '/system/modules/index' };
+};
+
+const goToModuleManagement = () => {
+  const target = resolveModuleRouteTarget();
+  router
+    .push({
+      ...target,
+      query: {
+        requiredModules: 'sensitive',
+        from: route.fullPath,
+      },
+    })
+    .catch(() => {
+      MessagePlugin.error('无法跳转到模块管理页，请从左侧菜单进入“模块管理”');
+    });
+};
 
 watch(activeTab, (val) => {
   router.replace({ query: { ...route.query, tab: val } });
@@ -609,8 +644,21 @@ const saveSettings = async () => {
 };
 
 onMounted(() => {
-  loadWords();
-  loadSettings();
+  fetchModuleList()
+    .then((modules) => modules.some((item) => item.key === 'sensitive' && Boolean(item.enabled)))
+    .then((enabled) => {
+      if (!enabled) {
+        MessagePlugin.warning('敏感词拦截模块未安装或未启用，请先在模块管理中安装并启用');
+        goToModuleManagement();
+        return;
+      }
+      loadWords();
+      loadSettings();
+    })
+    .catch(() => {
+      MessagePlugin.warning('无法确认敏感词模块状态，请先在模块管理中安装并启用');
+      goToModuleManagement();
+    });
 });
 </script>
 <style lang="less" scoped>

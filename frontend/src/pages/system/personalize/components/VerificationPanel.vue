@@ -271,8 +271,8 @@ import { MessagePlugin } from 'tdesign-vue-next';
 import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
-import type { ModuleRegistryItem } from '@/api/system/module';
-import { fetchModules } from '@/api/system/module';
+import type { ModuleDescriptor } from '@/api/system/module';
+import { fetchModuleList } from '@/api/system/module';
 import { useDictionary } from '@/hooks/useDictionary';
 import { useSettingStore } from '@/store';
 import { buildDictOptions } from '@/utils/dict';
@@ -319,18 +319,12 @@ const emailForm = reactive({
   emailTemplate: '',
 });
 
-const moduleRegistries = ref<ModuleRegistryItem[]>([]);
+const moduleDescriptors = ref<ModuleDescriptor[]>([]);
 
 const settingStore = useSettingStore();
-const smsInstalled = computed(() =>
-  moduleRegistries.value.some(
-    (item) => item.moduleKey === 'sms' && String(item.installState || '').toUpperCase() === 'INSTALLED',
-  ),
-);
+const smsInstalled = computed(() => moduleDescriptors.value.some((item) => item.key === 'sms' && Boolean(item.enabled)));
 const emailInstalled = computed(() =>
-  moduleRegistries.value.some(
-    (item) => item.moduleKey === 'email' && String(item.installState || '').toUpperCase() === 'INSTALLED',
-  ),
+  moduleDescriptors.value.some((item) => item.key === 'email' && Boolean(item.enabled)),
 );
 const availableTabs = computed(() => {
   const tabs: string[] = [];
@@ -458,9 +452,9 @@ const onSubmitEmail = async (ctx: any) => {
 
 const loadModuleRegistries = async () => {
   try {
-    moduleRegistries.value = await fetchModules();
+    moduleDescriptors.value = await fetchModuleList();
   } catch {
-    moduleRegistries.value = [];
+    moduleDescriptors.value = [];
   }
 };
 

@@ -21,6 +21,7 @@ public class FileTokenService {
   private static final Logger log = LoggerFactory.getLogger(FileTokenService.class);
   private static final byte TOKEN_VERSION = 1;
   private static final int IV_SIZE = 12;
+  private static final int KEY_SIZE_BYTES = 32;
 
   private final SecretKeySpec key;
   private final SecureRandom random = new SecureRandom();
@@ -32,10 +33,14 @@ public class FileTokenService {
   ) {
     String effective = (secret == null) ? "" : secret.trim();
     if (effective.isEmpty()) {
-      effective = "tdesign-file-token-secret";
-      log.warn("File token secret is empty; using default. Set tdesign.file.token-secret to override.");
+      byte[] generated = new byte[KEY_SIZE_BYTES];
+      random.nextBytes(generated);
+      this.key = new SecretKeySpec(generated, "AES");
+      log.warn("File token secret is empty; using ephemeral random key. "
+        + "Set tdesign.file.token-secret to keep links stable across restarts.");
+    } else {
+      this.key = new SecretKeySpec(sha256(effective), "AES");
     }
-    this.key = new SecretKeySpec(sha256(effective), "AES");
     String prefix = (contextPath == null) ? "" : contextPath.trim();
     if (prefix.isEmpty() || "/".equals(prefix)) {
       prefix = "";

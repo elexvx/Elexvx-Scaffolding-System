@@ -196,13 +196,52 @@
 import type { FormRule, PrimaryTableCol, SubmitContext } from 'tdesign-vue-next';
 import { MessagePlugin } from 'tdesign-vue-next';
 import { computed, onMounted, reactive, ref } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 
 import type { AiProvider, AiProviderPayload } from '@/api/system/ai';
+import { fetchModuleList } from '@/api/system/module';
 import { deleteAiProvider, fetchAiProviders, saveAiProvider, testAiProvider, testSavedProvider } from '@/api/system/ai';
 import ConfirmDrawer from '@/components/ConfirmDrawer.vue';
 import { useDictionary } from '@/hooks/useDictionary';
 import { buildDictOptions, resolveLabel } from '@/utils/dict';
 import { request } from '@/utils/request';
+
+const route = useRoute();
+const router = useRouter();
+
+const resolveModuleRouteTarget = () => {
+  const preferredNames = ['SystemModule', 'systemModule', 'modules'];
+  for (const name of preferredNames) {
+    if (router.hasRoute(name)) {
+      return { name };
+    }
+  }
+
+  const matchedPath = router
+    .getRoutes()
+    .map((item) => String(item.path || ''))
+    .find((path) => path.includes('/system/modules'));
+  if (matchedPath) {
+    return { path: matchedPath };
+  }
+
+  return { path: '/system/modules/index' };
+};
+
+const goToModuleManagement = () => {
+  const target = resolveModuleRouteTarget();
+  router
+    .push({
+      ...target,
+      query: {
+        requiredModules: 'ai',
+        from: route.fullPath,
+      },
+    })
+    .catch(() => {
+      MessagePlugin.error('无法跳转到模块管理页，请从左侧菜单进入“模块管理”');
+    });
+};
 
 const providers = ref<AiProvider[]>([]);
 const loading = ref(false);
@@ -411,8 +450,21 @@ const runDebug = async () => {
 };
 
 onMounted(() => {
-  void vendorDict.load();
-  loadProviders();
+  fetchModuleList()
+    .then((modules) => modules.some((item) => item.key === 'ai' && Boolean(item.enabled)))
+    .then((enabled) => {
+      if (!enabled) {
+        MessagePlugin.warning('AI 设置模块未安装或未启用，请先在模块管理中安装并启用');
+        goToModuleManagement();
+        return;
+      }
+      void vendorDict.load();
+      loadProviders();
+    })
+    .catch(() => {
+      MessagePlugin.warning('无法确认 AI 模块状态，请先在模块管理中安装并启用');
+      goToModuleManagement();
+    });
 });
 </script>
 <style scoped lang="less">

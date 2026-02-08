@@ -18,6 +18,7 @@ public class MenuItemTreeNode {
   private String frameSrc;
   private Boolean frameBlank;
   private Boolean enabled;
+  private String requiredModules;
   private Integer orderNo;
   private String actions;
   private Integer version;
@@ -133,6 +134,14 @@ public class MenuItemTreeNode {
 
   public void setEnabled(Boolean enabled) {
     this.enabled = enabled;
+  }
+
+  public String getRequiredModules() {
+    return requiredModules;
+  }
+
+  public void setRequiredModules(String requiredModules) {
+    this.requiredModules = requiredModules;
   }
 
   public Integer getOrderNo() {

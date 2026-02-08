@@ -8,7 +8,7 @@ import router from '@/router';
 import { getPermissionStore, useAppStore, useNotificationStore, useSettingStore, useUserStore } from '@/store';
 import { PAGE_NOT_FOUND_ROUTE } from '@/utils/route/constant';
 import { clearTokenStorage } from '@/utils/secureToken';
-import { handleTokenExpired, isLocalTokenExpired, setTokenExpireTimer } from '@/utils/tokenExpire';
+import { handleTokenExpired, isLocalTokenExpired, resolveTokenExpiresAt, setTokenExpireTimer } from '@/utils/tokenExpire';
 
 /**
  * 全局路由守卫（鉴权 / 动态路由 / 进度条 / 异常兜底）。
@@ -51,27 +51,8 @@ const bootstrapTokenState = async () => {
     }
     // 从本地存储的 token 重新配置过期定时器
     // 如果 token 中包含 exp 字段（JWT），会自动计算过期时间
-    const expiresAt = (() => {
-      try {
-        const parts = userStore.token.split('.');
-        if (parts.length === 3) {
-          const payload = parts[1];
-          const padded = payload + '='.repeat((4 - (payload.length % 4)) % 4);
-          const decoded = atob(padded);
-          const data = JSON.parse(decoded);
-          if (data.exp) {
-            return data.exp * 1000; // 转换为毫秒
-          }
-        }
-      } catch (error) {
-        console.error('Failed to extract token expire time:', error);
-      }
-      return null;
-    })();
-
-    const persistedExpiresAt = userStore.tokenExpiresAt;
-    const finalExpiresAt = expiresAt || persistedExpiresAt;
-    if (finalExpiresAt) {
+    const finalExpiresAt = resolveTokenExpiresAt(userStore.token, userStore.tokenExpiresAt);
+    if (finalExpiresAt != null) {
       const now = Date.now();
       const expiresIn = Math.max(Math.floor((finalExpiresAt - now) / 1000), 0);
       if (expiresIn > 0) {

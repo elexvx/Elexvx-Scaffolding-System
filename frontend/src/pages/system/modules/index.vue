@@ -12,6 +12,21 @@
 
         <t-space>
           <t-button variant="outline" :loading="loading" @click="loadModules">刷新</t-button>
+          <t-upload
+            v-model="installPackages"
+            action="/api/system/modules/package/install"
+            :headers="uploadHeaders"
+            theme="file"
+            :auto-upload="true"
+            :use-mock-progress="true"
+            :mock-progress-duration="80"
+            :max="1"
+            accept=".zip"
+            @success="handlePackageInstallSuccess"
+            @fail="handlePackageInstallFail"
+          >
+            <t-button theme="primary" variant="outline">上传 ZIP 安装</t-button>
+          </t-upload>
         </t-space>
 
         <t-table row-key="moduleKey" :data="modules" :columns="columns" :loading="loading">
@@ -32,6 +47,7 @@
           </template>
           <template #op="{ row }">
             <t-space>
+              <t-button size="small" variant="outline" @click="downloadPackage(row)">下载包</t-button>
               <t-button
                 size="small"
                 theme="primary"
@@ -68,6 +84,7 @@ import { useRoute } from 'vue-router';
 
 import type { ModuleRegistryItem } from '@/api/system/module';
 import { disableModule, enableModule, fetchModules, installModule, uninstallModule } from '@/api/system/module';
+import { useUserStore } from '@/store';
 
 interface ModuleTableRow extends ModuleRegistryItem {
   source?: string;
@@ -78,6 +95,11 @@ const loading = ref(false);
 const modules = ref<ModuleTableRow[]>([]);
 const actionLoading = ref<Record<string, boolean>>({});
 const route = useRoute();
+const userStore = useUserStore();
+const installPackages = ref<any[]>([]);
+const uploadHeaders = computed(() => ({
+  Authorization: userStore.token,
+}));
 
 const normalizeModuleKey = (value?: string | null) =>
   String(value || '')
@@ -204,6 +226,22 @@ const install = async (row: ModuleTableRow) => {
     setActionLoading(row.moduleKey, 'install', false);
     await loadModules();
   }
+};
+
+const downloadPackage = (row: ModuleTableRow) => {
+  const key = normalizeKey(row.moduleKey);
+  window.open(`/api/system/modules/${key}/package`, '_blank');
+};
+
+const handlePackageInstallSuccess = () => {
+  MessagePlugin.success('模块包已上传并开始安装');
+  void loadModules();
+};
+
+const handlePackageInstallFail = (context: any) => {
+  const msg = String(context?.response?.error || context?.response?.message || context?.error || '模块包安装失败');
+  MessagePlugin.error(msg);
+  void loadModules();
 };
 
 const toggleEnabled = async (row: ModuleTableRow, enabled: boolean) => {
