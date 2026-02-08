@@ -1,7 +1,14 @@
 <template>
   <div :class="prefixCls" :style="getWrapStyle">
     <t-loading :loading="loading" size="large" :style="getWrapStyle">
-      <iframe ref="frameRef" :src="resolvedFrameSrc" :class="`${prefixCls}__main`" @load="hideLoading"></iframe>
+      <iframe
+        ref="frameRef"
+        :src="resolvedFrameSrc"
+        :class="`${prefixCls}__main`"
+        :sandbox="iframeSandbox"
+        :referrerpolicy="iframeReferrerPolicy"
+        @load="hideLoading"
+      ></iframe>
     </t-loading>
   </div>
 </template>
@@ -39,6 +46,11 @@ function isLoopbackHostname(hostname: string) {
 }
 
 const resolvedFrameSrc = computed(() => normalizeFrameSrc(props.frameSrc));
+const isExternalFrame = computed(() => /^https?:\/\//i.test(String(props.frameSrc || '').trim()));
+const iframeSandbox = computed(() =>
+  isExternalFrame.value ? 'allow-forms allow-scripts allow-same-origin allow-popups' : undefined,
+);
+const iframeReferrerPolicy = computed(() => (isExternalFrame.value ? 'no-referrer' : 'strict-origin-when-cross-origin'));
 
 function normalizeFrameSrc(src: string) {
   const raw = String(src || '').trim();

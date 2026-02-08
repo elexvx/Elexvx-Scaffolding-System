@@ -1187,7 +1187,6 @@ CREATE TABLE `users`  (
   `name` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `password_hash` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `mobile` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
-  `phone` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
   `email` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
   `seat` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
   `entity` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
@@ -1227,9 +1226,9 @@ CREATE TABLE `users`  (
 -- ----------------------------
 -- Records of users
 -- ----------------------------
-INSERT INTO `users` (`id`, `account`, `name`, `password_hash`, `mobile`, `phone`, `email`, `guid`, `status`, `created_at`, `updated_at`) VALUES
-  (1, 'admin', '管理员', '$2a$10$BbVSQCIChdR.4gfwiG1OduJiKE/KpUTbhBXd.7Sr.uwi8eggDpYeu', '+86 13800000000', '0000', 'admin@qq.com', 'e59c3cd1-3b52-47c7-bf88-fad5b2281827', 1, NOW(), NOW()),
-  (3, 'bob', 'Bob', '$2a$10$BbVSQCIChdR.4gfwiG1OduJiKE/KpUTbhBXd.7Sr.uwi8eggDpYeu', '+86 13923456789', '8889', 'bob@tencent.com', '700e0805-c571-4e6a-873b-00899a32ede2', 1, NOW(), NOW());
+INSERT INTO `users` (`id`, `account`, `name`, `password_hash`, `mobile`, `email`, `guid`, `status`, `created_at`, `updated_at`) VALUES
+  (1, 'admin', '管理员', '$2a$10$BbVSQCIChdR.4gfwiG1OduJiKE/KpUTbhBXd.7Sr.uwi8eggDpYeu', '+86 13800000000', 'admin@qq.com', 'e59c3cd1-3b52-47c7-bf88-fad5b2281827', 1, NOW(), NOW()),
+  (3, 'bob', 'Bob', '$2a$10$BbVSQCIChdR.4gfwiG1OduJiKE/KpUTbhBXd.7Sr.uwi8eggDpYeu', '+86 13923456789', 'bob@tencent.com', '700e0805-c571-4e6a-873b-00899a32ede2', 1, NOW(), NOW());
 
 -- ----------------------------
 -- Table structure for areas
@@ -1580,7 +1579,6 @@ ALTER TABLE `users` MODIFY COLUMN `account` varchar(64) CHARACTER SET utf8mb4 CO
 ALTER TABLE `users` MODIFY COLUMN `name` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT 'name';
 ALTER TABLE `users` MODIFY COLUMN `password_hash` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT 'password_hash';
 ALTER TABLE `users` MODIFY COLUMN `mobile` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'mobile';
-ALTER TABLE `users` MODIFY COLUMN `phone` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'phone';
 ALTER TABLE `users` MODIFY COLUMN `email` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'email';
 ALTER TABLE `users` MODIFY COLUMN `seat` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'seat';
 ALTER TABLE `users` MODIFY COLUMN `entity` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'entity';

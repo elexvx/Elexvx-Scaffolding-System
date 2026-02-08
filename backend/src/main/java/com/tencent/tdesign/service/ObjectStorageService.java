@@ -162,7 +162,10 @@ public class ObjectStorageService {
   private String normalizeFolder(String raw) {
     String safe = (raw == null ? "" : raw.trim());
     safe = safe.replaceAll("[^a-zA-Z0-9_-]", "");
-    return safe.isEmpty() ? "business" : safe;
+    if (safe.isEmpty()) return "business";
+    if ("system".equalsIgnoreCase(safe)) return "system";
+    if ("business".equalsIgnoreCase(safe)) return "business";
+    return "business";
   }
 
   private String normalizePrefix(String raw) {

@@ -20,6 +20,13 @@
               {{ stateLabel(row.installState) }}
             </t-tag>
           </template>
+          <template #enabled="{ row }">
+            <t-switch
+              :value="isInstalled(row.installState) && Boolean(row.enabled)"
+              :disabled="!isInstalled(row.installState) || isActionLoading(row.moduleKey, 'enable') || isActionLoading(row.moduleKey, 'disable')"
+              @change="(val) => toggleEnabled(row, Boolean(val))"
+            />
+          </template>
           <template #installedAt="{ row }">
             <span>{{ formatDate(row.installedAt) }}</span>
           </template>
@@ -55,12 +62,12 @@
 <script setup lang="ts">
 import dayjs from 'dayjs';
 import type { PrimaryTableCol } from 'tdesign-vue-next';
-import { MessagePlugin } from 'tdesign-vue-next';
+import { DialogPlugin, MessagePlugin } from 'tdesign-vue-next';
 import { computed, onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 
 import type { ModuleRegistryItem } from '@/api/system/module';
-import { fetchModules, installModule, uninstallModule } from '@/api/system/module';
+import { disableModule, enableModule, fetchModules, installModule, uninstallModule } from '@/api/system/module';
 
 interface ModuleTableRow extends ModuleRegistryItem {
   source?: string;
@@ -81,6 +88,8 @@ const moduleNameMap: Record<string, string> = {
   sms: '短信模块',
   email: '邮箱模块',
   captcha: '验证码模块',
+  sensitive: '敏感词拦截模块',
+  ai: 'AI 设置模块',
 };
 
 const requiredModuleHints = computed(() => {
@@ -115,6 +124,7 @@ const columns: PrimaryTableCol[] = [
   { colKey: 'license', title: '许可', width: 120 },
   { colKey: 'version', title: '版本', width: 110 },
   { colKey: 'installState', title: '安装状态', width: 120 },
+  { colKey: 'enabled', title: '启用状态', width: 110 },
   { colKey: 'installedAt', title: '安装时间', width: 180 },
   { colKey: 'op', title: '操作', width: 200, fixed: 'right' },
 ];
@@ -134,6 +144,8 @@ const fallbackSource = (key: string) => {
   if (key === 'sms') return 'Aliyun Dysmsapi SDK / TencentCloud SMS SDK';
   if (key === 'email') return 'Spring Boot Mail Starter';
   if (key === 'captcha') return 'AJ Captcha';
+  if (key === 'sensitive') return 'Sensitive Word Filter';
+  if (key === 'ai') return 'AI Provider Settings';
   return 'Built-in Module';
 };
 
@@ -194,7 +206,26 @@ const install = async (row: ModuleTableRow) => {
   }
 };
 
-const uninstall = async (row: ModuleTableRow) => {
+const toggleEnabled = async (row: ModuleTableRow, enabled: boolean) => {
+  if (!isInstalled(row.installState)) return;
+  setActionLoading(row.moduleKey, enabled ? 'enable' : 'disable', true);
+  try {
+    if (enabled) {
+      await enableModule(row.moduleKey);
+      MessagePlugin.success('模块已启用');
+    } else {
+      await disableModule(row.moduleKey);
+      MessagePlugin.success('模块已禁用');
+    }
+  } catch (error: any) {
+    MessagePlugin.error(error?.message || '模块状态更新失败');
+  } finally {
+    setActionLoading(row.moduleKey, enabled ? 'enable' : 'disable', false);
+    await loadModules();
+  }
+};
+
+const performUninstall = async (row: ModuleTableRow) => {
   setActionLoading(row.moduleKey, 'uninstall', true);
   try {
     await uninstallModule(row.moduleKey);
@@ -205,6 +236,29 @@ const uninstall = async (row: ModuleTableRow) => {
     setActionLoading(row.moduleKey, 'uninstall', false);
     await loadModules();
   }
+};
+
+const uninstall = (row: ModuleTableRow) => {
+  const key = normalizeKey(row.moduleKey);
+  const first = DialogPlugin.confirm({
+    header: '卸载模块',
+    body: `确认卸载模块「${row.name || key}」？该操作会删除模块相关的数据库资源（如表结构/配置数据），且不可恢复。`,
+    theme: 'danger',
+    confirmBtn: '继续',
+    onConfirm: () => {
+      first.hide();
+      const second = DialogPlugin.confirm({
+        header: '再次确认',
+        body: `请再次确认卸载模块「${row.name || key}」(${key})。确定继续？`,
+        theme: 'danger',
+        confirmBtn: '确定卸载',
+        onConfirm: async () => {
+          second.hide();
+          await performUninstall(row);
+        },
+      });
+    },
+  });
 };
 
 onMounted(() => {

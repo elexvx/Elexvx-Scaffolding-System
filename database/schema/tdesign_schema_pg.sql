@@ -1,4 +1,4 @@
-﻿-- PostgreSQL initialization script for TDesign
+-- PostgreSQL initialization script for TDesign
 -- Use: psql -d tdesign -f database/demo/tdesign_init_pg.sql
 
 BEGIN;
@@ -10,7 +10,6 @@ CREATE TABLE IF NOT EXISTS users (
   name VARCHAR(64) NOT NULL,
   password_hash VARCHAR(100) NOT NULL,
   mobile VARCHAR(20),
-  phone VARCHAR(20),
   email VARCHAR(100),
   id_card VARCHAR(32),
   id_type VARCHAR(32),

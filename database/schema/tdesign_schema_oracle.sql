@@ -1,4 +1,4 @@
-﻿-- Oracle initialization script for TDesign
+-- Oracle initialization script for TDesign
 -- Use (SQL*Plus): @database/demo/tdesign_init_oracle.sql
 -- Note: run on an empty schema or drop existing tables first.
 
@@ -9,7 +9,6 @@ CREATE TABLE users (
   name VARCHAR2(64) NOT NULL,
   password_hash VARCHAR2(100) NOT NULL,
   mobile VARCHAR2(20),
-  phone VARCHAR2(20),
   email VARCHAR2(100),
   id_card VARCHAR2(32),
   id_type VARCHAR2(32),

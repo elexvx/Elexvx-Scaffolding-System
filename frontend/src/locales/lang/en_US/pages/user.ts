@@ -1,11 +1,10 @@
 export default {
-  markDay: 'Good afternoon, today marks your 100th day at the company',
+  markDay: 'Good afternoon, today marks your {0}th day at the company',
   personalInfo: {
     title: 'Personal Info',
     position: 'Employee of the Hong Kong and Macau Business Expansion team',
 
     desc: {
-      phone: 'Phone',
       mobile: 'Mobile',
       seat: 'Seat',
       email: 'Email',
@@ -13,7 +12,7 @@ export default {
       leader: 'Leader',
       entity: 'Entity',
       joinDay: 'Day of join',
-      group: 'Group',
+      team: 'Team',
     },
   },
   contentList: 'Content List',

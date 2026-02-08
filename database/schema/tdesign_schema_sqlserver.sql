@@ -1,4 +1,4 @@
-﻿-- SQL Server initialization script for TDesign
+-- SQL Server initialization script for TDesign
 -- Use: sqlcmd -d tdesign -i database/demo/tdesign_init_sqlserver.sql
 -- Note: run on an empty schema or drop existing tables first.
 
@@ -9,7 +9,6 @@ CREATE TABLE users (
   name NVARCHAR(64) NOT NULL,
   password_hash NVARCHAR(100) NOT NULL,
   mobile NVARCHAR(20),
-  phone NVARCHAR(20),
   email NVARCHAR(100),
   id_card NVARCHAR(32),
   id_type NVARCHAR(32),

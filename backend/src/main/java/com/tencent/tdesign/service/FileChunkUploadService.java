@@ -4,7 +4,9 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tencent.tdesign.dto.FileUploadInitRequest;
+import com.tencent.tdesign.security.AuthContext;
 import com.tencent.tdesign.vo.FileUploadSessionResponse;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -39,16 +41,30 @@ public class FileChunkUploadService {
   private static final int MAX_CHUNK_SIZE = 20 * 1024 * 1024;
   private static final String DEFAULT_FOLDER = "business";
   private static final String META_FILE = "session.json";
+  private static final int MAX_FINGERPRINT_LENGTH = 512;
 
   private final ObjectStorageService storageService;
   private final ObjectMapper objectMapper;
   private final Path chunkRoot;
   private final ConcurrentMap<String, Object> sessionLocks = new ConcurrentHashMap<>();
+  private final AuthContext authContext;
+  private final byte[] uploadIdSalt;
 
-  public FileChunkUploadService(ObjectStorageService storageService, ObjectMapper objectMapper) {
+  public FileChunkUploadService(
+    ObjectStorageService storageService,
+    ObjectMapper objectMapper,
+    AuthContext authContext,
+    @Value("${tdesign.file.token-secret:}") String secret
+  ) {
     this.storageService = storageService;
     this.objectMapper = objectMapper;
-    this.chunkRoot = Paths.get(System.getProperty("user.dir"), "uploads", "chunks").toAbsolutePath().normalize();
+    this.authContext = authContext;
+    String effective = secret == null ? "" : secret.trim();
+    if (effective.isEmpty()) {
+      effective = "tdesign-file-token-secret";
+    }
+    this.uploadIdSalt = effective.getBytes(StandardCharsets.UTF_8);
+    this.chunkRoot = Paths.get(System.getProperty("user.dir"), "runtime", "upload-chunks").toAbsolutePath().normalize();
     try {
       Files.createDirectories(chunkRoot);
     } catch (IOException e) {
@@ -57,7 +73,8 @@ public class FileChunkUploadService {
   }
 
   public FileUploadSessionResponse initSession(FileUploadInitRequest request) {
-    UploadSession session = ensureSession(request);
+    long userId = authContext.requireUserId();
+    UploadSession session = ensureSession(request, userId);
     return FileUploadSessionResponse.from(
       session.getUploadId(),
       session.getFileName(),
@@ -125,11 +142,15 @@ public class FileChunkUploadService {
     return deleted;
   }
 
-  private UploadSession ensureSession(FileUploadInitRequest request) {
+  private UploadSession ensureSession(FileUploadInitRequest request, long userId) {
     if (!StringUtils.hasText(request.getFingerprint())) {
       throw new IllegalArgumentException("文件指纹不能为空");
     }
-    String uploadId = buildUploadId(request.getFingerprint());
+    String fingerprint = request.getFingerprint().trim();
+    if (fingerprint.length() > MAX_FINGERPRINT_LENGTH) {
+      throw new IllegalArgumentException("文件指纹过长");
+    }
+    String uploadId = buildUploadId(userId, fingerprint);
     Path dir = sessionDir(uploadId);
     synchronized (lockFor(uploadId)) {
     UploadSession existing = loadSessionIfExists(dir);
@@ -270,10 +291,15 @@ public class FileChunkUploadService {
     }
   }
 
-  private String buildUploadId(String fingerprint) {
+  private String buildUploadId(long userId, String fingerprint) {
     try {
       MessageDigest digest = MessageDigest.getInstance("SHA-256");
-      byte[] hash = digest.digest(fingerprint.getBytes(StandardCharsets.UTF_8));
+      digest.update(uploadIdSalt);
+      digest.update((byte) ':');
+      digest.update(String.valueOf(userId).getBytes(StandardCharsets.UTF_8));
+      digest.update((byte) ':');
+      digest.update(fingerprint.getBytes(StandardCharsets.UTF_8));
+      byte[] hash = digest.digest();
       return Base64.getUrlEncoder().withoutPadding().encodeToString(hash);
     } catch (NoSuchAlgorithmException e) {
       throw new IllegalStateException("初始化上传 ID 失败", e);

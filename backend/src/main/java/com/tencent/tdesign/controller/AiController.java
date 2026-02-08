@@ -3,6 +3,7 @@ package com.tencent.tdesign.controller;
 import com.tencent.tdesign.dto.AiProviderRequest;
 import com.tencent.tdesign.service.AiProviderService;
 import com.tencent.tdesign.service.AiService;
+import com.tencent.tdesign.service.ModuleRegistryService;
 import com.tencent.tdesign.vo.AiChatResult;
 import com.tencent.tdesign.vo.AiProviderResponse;
 import com.tencent.tdesign.vo.AiTestResult;
@@ -33,46 +34,59 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 public class AiController {
   private final AiService aiService;
   private final AiProviderService providerService;
+  private final ModuleRegistryService moduleRegistryService;
   private final ExecutorService executor = Executors.newCachedThreadPool();
 
-  public AiController(AiService aiService, AiProviderService providerService) {
+  public AiController(AiService aiService, AiProviderService providerService, ModuleRegistryService moduleRegistryService) {
     this.aiService = aiService;
     this.providerService = providerService;
+    this.moduleRegistryService = moduleRegistryService;
+  }
+
+  private void requireModule() {
+    moduleRegistryService.assertModuleAvailable("ai");
   }
 
   @GetMapping("/tools")
   public ApiResponse<List<Map<String, Object>>> getTools() {
+    requireModule();
     return ApiResponse.success(aiService.getToolsSchema());
   }
 
   @GetMapping("/providers")
   public ApiResponse<List<AiProviderResponse>> providers() {
+    requireModule();
     return ApiResponse.success(providerService.list());
   }
 
   @PostMapping("/providers")
   public ApiResponse<AiProviderResponse> saveProvider(@RequestBody @Valid AiProviderRequest req) {
+    requireModule();
     return ApiResponse.success(providerService.save(req));
   }
 
   @PostMapping("/providers/test")
   public ApiResponse<AiTestResult> testProvider(@RequestBody @Valid AiProviderRequest req) {
+    requireModule();
     return ApiResponse.success(providerService.test(req));
   }
 
   @PostMapping("/providers/{id}/test")
   public ApiResponse<AiTestResult> testSavedProvider(@PathVariable Long id) {
+    requireModule();
     return ApiResponse.success(providerService.testSaved(id));
   }
 
   @DeleteMapping("/providers/{id}")
   public ApiResponse<Boolean> deleteProvider(@PathVariable Long id) {
+    requireModule();
     providerService.delete(id);
     return ApiResponse.success(true);
   }
 
   @PostMapping(value = "/chat/sse", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
   public SseEmitter chatSse(@RequestBody AiChatRequest request) {
+    requireModule();
     SseEmitter emitter = new SseEmitter(0L);
     executor.execute(() -> {
       try {
@@ -91,6 +105,7 @@ public class AiController {
 
   @PostMapping("/chat")
   public ApiResponse<AiChatResult> chat(@RequestBody AiChatRequest request) throws Exception {
+    requireModule();
     var provider = providerService.requireProvider(request.getProviderId());
     String systemPrompt = buildSystemPrompt(request.getSystemPrompt());
     AiChatResult result = providerService.chat(provider, systemPrompt, request.getMessage());
@@ -99,6 +114,7 @@ public class AiController {
 
   @PostMapping("/execute")
   public ApiResponse<Object> executeTool(@RequestBody AiExecuteRequest request) {
+    requireModule();
     try {
       Object result = aiService.executeTool(request.getToolName(), request.getArgs());
       return ApiResponse.success(result);

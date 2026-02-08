@@ -37,6 +37,22 @@ export const useTabsRouterStore = defineStore('tabsRouter', {
     setTabsLock(locked: boolean) {
       this.isLocked = locked;
     },
+    beginTabRefresh(path: string) {
+      const normalizedPath = normalizeTabPath(path);
+      this.isRefreshing = true;
+      const idx = this.tabRouterList.findIndex((tab) => normalizeTabPath(tab.path) === normalizedPath);
+      if (idx === -1) return;
+      const tab = this.tabRouterList[idx];
+      this.tabRouterList[idx] = { ...tab, isAlive: false };
+    },
+    endTabRefresh(path: string) {
+      const normalizedPath = normalizeTabPath(path);
+      this.isRefreshing = false;
+      const idx = this.tabRouterList.findIndex((tab) => normalizeTabPath(tab.path) === normalizedPath);
+      if (idx === -1) return;
+      const tab = this.tabRouterList[idx];
+      this.tabRouterList[idx] = { ...tab, isAlive: true };
+    },
     updateHomeTab(path: string, name?: string, title?: string) {
       const homeIdx = this.tabRouterList.findIndex((t) => t.isHome);
       if (homeIdx !== -1) {
@@ -76,11 +92,6 @@ export const useTabsRouterStore = defineStore('tabsRouter', {
       setTimeout(() => {
         this.isRefreshing = false;
       }, 200);
-    },
-    // 处理刷新
-    toggleTabRouterAlive(routeIdx: number) {
-      this.isRefreshing = !this.isRefreshing;
-      this.tabRouters[routeIdx].isAlive = !this.tabRouters[routeIdx].isAlive;
     },
     // 处理新增
     appendTabRouterList(newRoute: TRouterInfo) {
@@ -207,7 +218,9 @@ export const useTabsRouterStore = defineStore('tabsRouter', {
       newRoutes?.forEach((route: TRouterInfo) => this.appendTabRouterList(route));
     },
   },
-  persist: true,
+  persist: {
+    paths: ['tabRouterList'],
+  },
 });
 
 export function getTabsRouterStore() {

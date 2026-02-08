@@ -1,6 +1,7 @@
 package com.tencent.tdesign.controller;
 
 import com.tencent.tdesign.service.RedisService;
+import com.tencent.tdesign.util.PermissionUtil;
 import com.tencent.tdesign.vo.ApiResponse;
 import com.tencent.tdesign.vo.RedisInfoVO;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -21,6 +22,7 @@ public class RedisController {
 
   @GetMapping("/redis")
   public ApiResponse<RedisInfoVO> getRedisInfo() {
+    PermissionUtil.checkAdmin();
     return ApiResponse.success(redisService.getRedisInfo());
   }
 }

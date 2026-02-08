@@ -116,6 +116,10 @@ const getPath = (item: ListItemType) => {
 };
 
 const openHref = (url: string) => {
-  window.open(url);
+  try {
+    const target = new URL(String(url || ''));
+    if (target.protocol !== 'http:' && target.protocol !== 'https:') return;
+    window.open(target.toString(), '_blank', 'noopener,noreferrer');
+  } catch {}
 };
 </script>

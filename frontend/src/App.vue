@@ -34,6 +34,7 @@ const appStore = useAppStore();
 const route = useRoute();
 const router = useRouter();
 let uiSyncTimer: number | null = null;
+let authSyncing = false;
 const authPages = new Set(['/login', '/register', '/forgot']);
 const isAuthPage = (path: string) => authPages.has(path);
 
@@ -93,37 +94,49 @@ const handleStorageChange = async (event: StorageEvent) => {
   if (event.storageArea !== window.localStorage) return;
   const tokenKey = getTokenStorageKey();
   if (event.key !== 'user' && event.key !== tokenKey) return;
+  if (authSyncing) return;
+  authSyncing = true;
   const prevToken = userStore.token;
-  if (event.key === 'user') {
-    userStore.$hydrate({ runHooks: true });
-  }
-  if (event.key === tokenKey) {
-    await userStore.restoreTokenFromStorage();
-  }
-  const nextToken = userStore.token;
-  if (prevToken === nextToken) return;
+  try {
+    if (event.key === 'user') {
+      userStore.$hydrate({ runHooks: true });
+    }
+    if (event.key === tokenKey) {
+      await userStore.restoreTokenFromStorage();
+    }
+    const nextToken = userStore.token;
+    if (prevToken === nextToken) return;
 
-  if (nextToken && isAuthPage(route.path)) {
-    if (isLocalTokenExpired()) return;
-    const redirectValue = Array.isArray(route.query.redirect) ? route.query.redirect[0] : route.query.redirect;
-    redirectFromAuthPage(redirectValue as string | undefined, true);
-  } else if (nextToken && !prevToken && !isAuthPage(route.path)) {
-    if (isLocalTokenExpired()) return;
-    window.location.reload();
-  } else if (!nextToken && prevToken && !isAuthPage(route.path)) {
-    router.replace({ path: '/login', query: { redirect: route.fullPath } });
+    if (nextToken && isAuthPage(route.path)) {
+      if (isLocalTokenExpired()) return;
+      const redirectValue = Array.isArray(route.query.redirect) ? route.query.redirect[0] : route.query.redirect;
+      redirectFromAuthPage(redirectValue as string | undefined, true);
+    } else if (nextToken && !prevToken && !isAuthPage(route.path)) {
+      if (isLocalTokenExpired()) return;
+      window.location.reload();
+    } else if (!nextToken && prevToken && !isAuthPage(route.path)) {
+      router.replace({ path: '/login', query: { redirect: route.fullPath } });
+    }
+  } finally {
+    authSyncing = false;
   }
 };
 
 const syncAuthFromCache = async (forceReload = false) => {
+  if (authSyncing) return;
+  authSyncing = true;
   if (typeof (userStore as any).$hydrate === 'function') {
     (userStore as any).$hydrate({ runHooks: true });
   }
-  await userStore.restoreTokenFromStorage();
-  if (userStore.token && isAuthPage(route.path)) {
-    if (isLocalTokenExpired()) return;
-    const redirectValue = Array.isArray(route.query.redirect) ? route.query.redirect[0] : route.query.redirect;
-    redirectFromAuthPage(redirectValue as string | undefined, forceReload);
+  try {
+    await userStore.restoreTokenFromStorage();
+    if (userStore.token && isAuthPage(route.path)) {
+      if (isLocalTokenExpired()) return;
+      const redirectValue = Array.isArray(route.query.redirect) ? route.query.redirect[0] : route.query.redirect;
+      redirectFromAuthPage(redirectValue as string | undefined, forceReload);
+    }
+  } finally {
+    authSyncing = false;
   }
 };
 
@@ -142,17 +155,19 @@ const handleFormEnterSubmit = (event: KeyboardEvent) => {
   event.preventDefault();
 };
 
+const handleVisibilityChange = () => {
+  if (document.visibilityState === 'visible') {
+    syncAuthFromCache();
+  }
+};
+
 onMounted(async () => {
   await loadSystemSettings();
   store.initAutoTheme();
   window.addEventListener('storage', handleStorageChange);
   window.addEventListener('pageshow', handlePageShow);
   document.addEventListener('keydown', handleFormEnterSubmit);
-  document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') {
-      syncAuthFromCache();
-    }
-  });
+  document.addEventListener('visibilitychange', handleVisibilityChange);
   const probe = async () => {
     try {
       const { request } = await import('@/utils/request');
@@ -246,6 +261,7 @@ onUnmounted(() => {
   window.removeEventListener('storage', handleStorageChange);
   window.removeEventListener('pageshow', handlePageShow);
   document.removeEventListener('keydown', handleFormEnterSubmit);
+  document.removeEventListener('visibilitychange', handleVisibilityChange);
   if (uiSyncTimer) {
     clearInterval(uiSyncTimer);
     uiSyncTimer = null;

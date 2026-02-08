@@ -1,17 +1,67 @@
 package com.tencent.tdesign.util;
 
+import com.tencent.tdesign.security.AccessControlService;
+import com.tencent.tdesign.security.AuthContext;
+import com.tencent.tdesign.service.PermissionFacade;
+import java.util.List;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.stereotype.Component;
+
+@Component
 public final class PermissionUtil {
+  private static AccessControlService accessControlService;
+  private static PermissionFacade permissionFacade;
+  private static AuthContext authContext;
+
+  public PermissionUtil(
+    AccessControlService accessControlService,
+    PermissionFacade permissionFacade,
+    AuthContext authContext
+  ) {
+    PermissionUtil.accessControlService = accessControlService;
+    PermissionUtil.permissionFacade = permissionFacade;
+    PermissionUtil.authContext = authContext;
+  }
+
   private PermissionUtil() {}
 
   public static void check(String permission) {
-    // CRUD 级权限控制已移除，仅保留页面访问权限（菜单）控制。
+    ensureInitialized();
+    if (permission == null || permission.isBlank()) {
+      throw new IllegalArgumentException("permission 不能为空");
+    }
+    long userId = authContext.requireUserId();
+    if (permissionFacade.isAdminAccount(userId)) return;
+    accessControlService.checkPermission(permission);
   }
 
   public static void checkAny(String... permissions) {
-    // CRUD 级权限控制已移除，仅保留页面访问权限（菜单）控制。
+    ensureInitialized();
+    if (permissions == null || permissions.length == 0) {
+      throw new IllegalArgumentException("permissions 不能为空");
+    }
+    long userId = authContext.requireUserId();
+    if (permissionFacade.isAdminAccount(userId)) return;
+
+    List<String> effective = permissionFacade.getEffectivePermissions(userId);
+    for (String p : permissions) {
+      if (p == null || p.isBlank()) continue;
+      if (effective.contains(p)) return;
+    }
+    throw new AccessDeniedException("权限不足，请联系管理员开通");
   }
 
   public static void checkAdmin() {
-    // 仅保留页面访问权限（菜单）控制，不再做额外角色校验。
+    ensureInitialized();
+    long userId = authContext.requireUserId();
+    if (!permissionFacade.isAdminAccount(userId)) {
+      throw new AccessDeniedException("权限不足，请联系管理员开通");
+    }
+  }
+
+  private static void ensureInitialized() {
+    if (accessControlService == null || permissionFacade == null || authContext == null) {
+      throw new IllegalStateException("PermissionUtil not initialized");
+    }
   }
 }

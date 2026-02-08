@@ -13,7 +13,7 @@
     >
       <t-tab-panel
         v-for="(routeItem, index) in tabRouters"
-        :key="`${getTabValue(routeItem)}_${index}`"
+        :key="getTabValue(routeItem)"
         :value="getTabValue(routeItem)"
         :removable="!routeItem.isHome"
         :draggable="!routeItem.isHome"
@@ -94,6 +94,7 @@ const tabRouters = computed(() => tabsRouterStore.tabRouters);
 const activeTabPath = ref<string | null>(null);
 const routeChanging = ref(false);
 const suppressTabChange = ref(false);
+const tabNavigating = ref(false);
 
 const { locale } = useLocale();
 
@@ -162,6 +163,7 @@ const handleChangeCurrentTab = async (rawValue: string) => {
     console.warn('Tab sync in progress, ignoring tab change');
     return;
   }
+  if (tabNavigating.value) return;
   if (suppressTabChange.value) return;
   if (routeChanging.value) return;
 
@@ -188,10 +190,14 @@ const handleChangeCurrentTab = async (rawValue: string) => {
     if (import.meta.env.DEV) {
       console.debug('[tabs] navigate', { path, query: tab?.query });
     }
+    tabNavigating.value = true;
     await router.push({ path, query: tab?.query });
   } catch (error) {
     // 路由导航被拦截或其他异常，继续执行
     console.warn('Navigation error:', error);
+  } finally {
+    await nextTick();
+    tabNavigating.value = false;
   }
 };
 
@@ -209,10 +215,11 @@ const renderTitle = (title?: string | Record<string, string>) => {
   return resolveRouteTitle(title, locale.value, '');
 };
 const handleRefresh = (route: TRouterInfo, routeIdx: number) => {
-  tabsRouterStore.toggleTabRouterAlive(routeIdx);
+  const tabPath = getTabValue(route);
+  tabsRouterStore.beginTabRefresh(tabPath);
   nextTick(() => {
-    tabsRouterStore.toggleTabRouterAlive(routeIdx);
-    router.replace({ path: getTabValue(route), query: route.query });
+    tabsRouterStore.endTabRefresh(tabPath);
+    router.replace({ path: tabPath, query: route.query });
   });
   activeTabPath.value = null;
 };

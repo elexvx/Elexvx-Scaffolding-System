@@ -357,17 +357,30 @@ const handleBatchDelete = () => {
   });
 };
 
-const handleDownloadTemplate = () => {
-  const link = document.createElement('a');
-  link.href = '/api/system/sensitive/words/template';
-  link.setAttribute('download', 'sensitive_words_template.xlsx');
-  const token = userStore.token;
-  if (token) {
-    link.href = `/api/system/sensitive/words/template?token=${token}`;
+const handleDownloadTemplate = async () => {
+  try {
+    const res: any = await request.get(
+      {
+        url: '/system/sensitive/words/template',
+        responseType: 'blob',
+      } as any,
+      { isTransformResponse: false, isReturnNativeResponse: true },
+    );
+    const blob =
+      res?.data instanceof Blob
+        ? res.data
+        : new Blob([res?.data || ''], {
+            type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'sensitive_words_template.xlsx';
+    link.click();
+    window.URL.revokeObjectURL(url);
+  } catch (err: any) {
+    MessagePlugin.error(String(err?.message || '模板下载失败'));
   }
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
 };
 
 const handleImportProgress = (ctx: ProgressContext) => {

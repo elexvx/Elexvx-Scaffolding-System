@@ -143,8 +143,13 @@ router.beforeEach(async (to, from, next) => {
         if (redirectValue) {
           try {
             const decoded = decodeURIComponent(String(redirectValue));
-            target =
-              (decoded === '/' || decoded === '/user/index') && fallbackHome !== '/user/index' ? fallbackHome : decoded;
+            const normalized = decoded.replace(/[\r\n]/g, '').trim();
+            const isSafePath = normalized.startsWith('/') && !normalized.startsWith('//');
+            target = !isSafePath
+              ? fallbackHome
+              : (normalized === '/' || normalized === '/user/index') && fallbackHome !== '/user/index'
+                ? fallbackHome
+                : normalized;
           } catch {
             target = fallbackHome;
           }

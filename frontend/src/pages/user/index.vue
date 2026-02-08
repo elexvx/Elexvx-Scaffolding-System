@@ -108,7 +108,6 @@
               <t-col :xs="24" :sm="12"><t-form-item label="昵称" name="nickname"><t-input v-model="profileForm.nickname" placeholder="请输入昵称" /></t-form-item></t-col>
               <t-col :xs="24" :sm="12"><t-form-item label="手机号码" name="mobile"><t-input v-model="profileForm.mobile" placeholder="请输入手机号码" /></t-form-item></t-col>
               <t-col :xs="24" :sm="12"><t-form-item label="电子邮箱" name="email"><t-input v-model="profileForm.email" placeholder="请输入邮箱" /></t-form-item></t-col>
-              <t-col :xs="24" :sm="12"><t-form-item label="座机" name="phone"><t-input v-model="profileForm.phone" placeholder="请输入座机号" /></t-form-item></t-col>
               <t-col :xs="24" :sm="12">
                 <t-form-item label="省/市/区县" name="provinceId">
                   <t-cascader
@@ -236,7 +235,6 @@ const profileForm = reactive({
   idCard: '',
   idValidFrom: '',
   idValidTo: '',
-  phone: '',
   province: '',
   city: '',
   district: '',
@@ -317,12 +315,14 @@ const documentTypeLabel = computed(() =>
     passport: '护照',
   }),
 );
-const fullAddress = computed(() =>
-  [profile.value.province, profile.value.city, profile.value.district, profile.value.address]
-    .map((item) => (item || '').trim())
-    .filter(Boolean)
-    .join(''),
-);
+const fullAddress = computed(() => {
+  const province = (profile.value.province || '').trim();
+  const city = (profile.value.city || '').trim();
+  const district = (profile.value.district || '').trim();
+  const address = (profile.value.address || '').trim();
+  const parts = [province, city, district, address].filter(Boolean);
+  return parts.filter((part, idx) => idx === 0 || part !== parts[idx - 1]).join('');
+});
 const fallbackCompleteness = computed(() => {
   const missing = new Set<string>();
   const hasText = (value?: string) => Boolean(value && value.trim());
@@ -409,7 +409,7 @@ const createDictAreaOptions = (): AreaOption[] => {
     })
     .filter((entry) => !!entry.province && !!entry.city && !!entry.district);
 
-  const buildDistrictOptions = (province?: string, city?: string): AreaOption[] => {
+  const buildDistrictOptions = (province?: string, city?: string, level = 3): AreaOption[] => {
     if (!province || !city) return [];
     const unique = new Set<string>();
     return districtEntries
@@ -420,32 +420,44 @@ const createDictAreaOptions = (): AreaOption[] => {
         unique.add(key);
         return true;
       })
-      .map((entry) => ({ label: entry.district, value: entry.value, level: 3, children: [] }));
+      .map((entry) => ({ label: entry.district, value: entry.value, level, children: [] }));
   };
 
   const provinceSet = Array.from(new Set(districtEntries.map((entry) => entry.province)));
-  return provinceSet.map((province) => ({
-    label: province,
-    value: toAreaDictValue(province),
-    level: 1,
-    children: Array.from(new Set(districtEntries.filter((e) => e.province === province).map((e) => e.city))).map((city) => ({
+  return provinceSet.map((province) => {
+    const provinceEntries = districtEntries.filter((entry) => entry.province === province);
+    const cities = Array.from(new Set(provinceEntries.map((entry) => entry.city))).filter(Boolean);
+    const normalCities = cities.filter((city) => city !== province);
+    const municipalityDistricts = buildDistrictOptions(province, province, 2);
+    const cityNodes: AreaOption[] = normalCities.map((city) => ({
       label: city,
       value: `${province}/${city}`,
       level: 2,
-      children: buildDistrictOptions(province, city),
-    })),
-  }));
+      children: buildDistrictOptions(province, city, 3),
+    }));
+
+    return {
+      label: province,
+      value: toAreaDictValue(province),
+      level: 1,
+      children: [...municipalityDistricts, ...cityNodes],
+    };
+  });
 };
 const areaDictReady = computed(() => {
   const options = createDictAreaOptions();
   if (options.length === 0) return false;
-  const hasCity = options.some((province) => Array.isArray(province.children) && province.children.length > 0);
+  const hasSecondLevel = options.some((province) => Array.isArray(province.children) && province.children.length > 0);
   const hasDistrict = options.some(
     (province) =>
       Array.isArray(province.children) &&
-      province.children.some((city) => Array.isArray(city.children) && city.children.length > 0),
+      province.children.some((child) => {
+        if (!Array.isArray(child.children)) return false;
+        if (child.children.length === 0) return true;
+        return child.children.length > 0;
+      }),
   );
-  return hasCity && hasDistrict;
+  return hasSecondLevel && hasDistrict;
 });
 
 const ensureAreaDictReady = (notify = true) => {
@@ -488,17 +500,21 @@ const syncAreaFromProfile = async (data: UserProfile) => {
   const cities = Array.isArray(province?.children) ? province.children : [];
   const city = cities.find((item) => item.label === data.city || String(item.value) === data.city);
   const districts = Array.isArray(city?.children) ? city.children : [];
-  const district = districts.find((item) => item.label === data.district || String(item.value) === data.district);
-  const path = [province, city, district].filter(Boolean) as AreaOption[];
+  const districtFromCity = districts.find((item) => item.label === data.district || String(item.value) === data.district);
+  const districtFromProvince = cities.find((item) => item.label === data.district || String(item.value) === data.district);
+  const path = (districtFromCity
+    ? [province, city, districtFromCity]
+    : [province, districtFromProvince]
+  ).filter(Boolean) as AreaOption[];
 
   if (path.length > 0) {
     areaValue.value = path.map((item) => item.value);
     profileForm.provinceId = toNumericId(path[0]?.value);
-    profileForm.cityId = toNumericId(path[1]?.value);
-    profileForm.districtId = toNumericId(path[2]?.value);
+    profileForm.cityId = path.length >= 3 ? toNumericId(path[1]?.value) : null;
+    profileForm.districtId = toNumericId(path[path.length - 1]?.value);
     profileForm.province = path[0]?.label || data.province || '';
-    profileForm.city = path[1]?.label || data.city || '';
-    profileForm.district = path[2]?.label || data.district || '';
+    profileForm.city = (path.length >= 3 ? path[1]?.label : profileForm.province) || data.city || '';
+    profileForm.district = path[path.length - 1]?.label || data.district || '';
   } else if (!data.province && !data.city && !data.district) {
     resetAreaFields();
   }
@@ -513,11 +529,18 @@ const handleAreaChange = (_value: any, context: any) => {
   const ids = pathNodes.map((item: any) => Number(item.value));
   const names = pathNodes.map((item: any) => String(item.label || item.data?.label || item.data?.name || ''));
   profileForm.provinceId = toNumericId(ids[0]);
-  profileForm.cityId = toNumericId(ids[1]);
-  profileForm.districtId = toNumericId(ids[2]);
   profileForm.province = names[0] ?? '';
-  profileForm.city = names[1] ?? '';
-  profileForm.district = names[2] ?? '';
+  if (pathNodes.length === 2) {
+    profileForm.cityId = null;
+    profileForm.districtId = toNumericId(ids[1]);
+    profileForm.city = profileForm.province;
+    profileForm.district = names[1] ?? '';
+  } else {
+    profileForm.cityId = toNumericId(ids[1]);
+    profileForm.districtId = toNumericId(ids[2]);
+    profileForm.city = names[1] ?? '';
+    profileForm.district = names[2] ?? '';
+  }
   profileForm.zipCode = pathNodes[pathNodes.length - 1]?.data?.zipCode || '';
   areaValue.value = pathNodes.map((item: any) => item.value);
 };
@@ -561,7 +584,7 @@ const fetchProfile = async () => {
     Object.assign(profileForm, {
       name: res.name || '', nickname: res.nickname || '', gender: normalizeGender(res.gender), mobile: res.mobile || '', email: res.email || '',
       idType: normalizeDocumentType(res.idType), idCard: res.idCard || '', idValidFrom: res.idValidFrom || '', idValidTo: res.idValidTo || '',
-      phone: res.phone || '', seat: res.seat || '', provinceId: res.provinceId ?? null, province: res.province || '', cityId: res.cityId ?? null,
+      seat: res.seat || '', provinceId: res.provinceId ?? null, province: res.province || '', cityId: res.cityId ?? null,
       city: res.city || '', districtId: res.districtId ?? null, district: res.district || '', zipCode: res.zipCode || '', address: res.address || '',
       introduction: res.introduction || '', tags: res.tags || '',
     });

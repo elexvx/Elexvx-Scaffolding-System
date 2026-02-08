@@ -1,6 +1,7 @@
 package com.tencent.tdesign.controller;
 
 import com.tencent.tdesign.service.ServerMonitorService;
+import com.tencent.tdesign.util.PermissionUtil;
 import com.tencent.tdesign.vo.ApiResponse;
 import com.tencent.tdesign.vo.ServerInfoVO;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,6 +20,7 @@ public class ServerMonitorController {
 
   @GetMapping("/server")
   public ApiResponse<ServerInfoVO> getServerInfo() {
+    PermissionUtil.checkAdmin();
     return ApiResponse.success(serverMonitorService.getServerInfo());
   }
 }

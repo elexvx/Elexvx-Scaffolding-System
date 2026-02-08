@@ -16,8 +16,6 @@ public class UserEntity {
 
   private String mobile;
 
-  private String phone;
-
   private String email;
 
   private String idCard;
@@ -126,14 +124,6 @@ public class UserEntity {
 
   public void setMobile(String mobile) {
     this.mobile = mobile;
-  }
-
-  public String getPhone() {
-    return phone;
-  }
-
-  public void setPhone(String phone) {
-    this.phone = phone;
   }
 
   public String getEmail() {

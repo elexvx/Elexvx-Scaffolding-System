@@ -126,7 +126,6 @@ public class UserAdminService {
     u.setGuid(java.util.UUID.randomUUID().toString());
     u.setName(req.getName());
     u.setMobile(req.getMobile());
-    u.setPhone(req.getPhone());
     u.setEmail(req.getEmail());
     u.setIdCard(req.getIdCard());
     u.setSeat(req.getSeat());
@@ -161,7 +160,6 @@ public class UserAdminService {
     List<String> originalRoles = req.getRoles() != null ? authDao.findRoleNamesByUserId(id) : List.of();
     if (req.getName() != null) u.setName(req.getName());
     if (req.getMobile() != null && !SensitiveMaskUtil.isMasked(req.getMobile())) u.setMobile(req.getMobile());
-    if (req.getPhone() != null && !SensitiveMaskUtil.isMasked(req.getPhone())) u.setPhone(req.getPhone());
     if (req.getEmail() != null && !SensitiveMaskUtil.isMasked(req.getEmail())) u.setEmail(req.getEmail());
     if (req.getIdCard() != null && !SensitiveMaskUtil.isMasked(req.getIdCard())) u.setIdCard(req.getIdCard());
     if (req.getSeat() != null) u.setSeat(req.getSeat());
@@ -285,7 +283,6 @@ public class UserAdminService {
     item.setAccount(u.getAccount());
     item.setName(u.getName());
     item.setMobile(u.getMobile());
-    item.setPhone(u.getPhone());
     item.setEmail(u.getEmail());
     item.setIdCard(u.getIdCard());
     item.setSeat(u.getSeat());

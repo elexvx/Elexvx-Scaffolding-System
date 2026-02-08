@@ -13,8 +13,6 @@ public class UserListItem {
   private String name;
   @Sensitive(desensitizedType = DesensitizedType.PHONE)
   private String mobile;
-  @Sensitive(desensitizedType = DesensitizedType.PHONE)
-  private String phone;
   @Sensitive(desensitizedType = DesensitizedType.EMAIL)
   private String email;
   @Sensitive(desensitizedType = DesensitizedType.ID_CARD)
@@ -71,14 +69,6 @@ public class UserListItem {
 
   public void setMobile(String mobile) {
     this.mobile = mobile;
-  }
-
-  public String getPhone() {
-    return phone;
-  }
-
-  public void setPhone(String phone) {
-    this.phone = phone;
   }
 
   public String getEmail() {

@@ -1,4 +1,4 @@
-﻿-- Unified comments script
+-- Unified comments script
 -- Use only the section matching your database engine.
 
 -- ===========================
@@ -240,7 +240,6 @@ COMMENT ON COLUMN users.account IS 'account';
 COMMENT ON COLUMN users.name IS 'name';
 COMMENT ON COLUMN users.password_hash IS 'password_hash';
 COMMENT ON COLUMN users.mobile IS 'mobile';
-COMMENT ON COLUMN users.phone IS 'phone';
 COMMENT ON COLUMN users.email IS 'email';
 COMMENT ON COLUMN users.seat IS 'seat';
 COMMENT ON COLUMN users.entity IS 'entity';
@@ -532,7 +531,6 @@ COMMENT ON COLUMN users.account IS 'account';
 COMMENT ON COLUMN users.name IS 'name';
 COMMENT ON COLUMN users.password_hash IS 'password_hash';
 COMMENT ON COLUMN users.mobile IS 'mobile';
-COMMENT ON COLUMN users.phone IS 'phone';
 COMMENT ON COLUMN users.email IS 'email';
 COMMENT ON COLUMN users.seat IS 'seat';
 COMMENT ON COLUMN users.entity IS 'entity';
@@ -824,7 +822,6 @@ EXEC sys.sp_addextendedproperty @name = N'MS_Description', @value = N'account', 
 EXEC sys.sp_addextendedproperty @name = N'MS_Description', @value = N'name', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'users', @level2type = N'COLUMN', @level2name = N'name';
 EXEC sys.sp_addextendedproperty @name = N'MS_Description', @value = N'password_hash', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'users', @level2type = N'COLUMN', @level2name = N'password_hash';
 EXEC sys.sp_addextendedproperty @name = N'MS_Description', @value = N'mobile', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'users', @level2type = N'COLUMN', @level2name = N'mobile';
-EXEC sys.sp_addextendedproperty @name = N'MS_Description', @value = N'phone', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'users', @level2type = N'COLUMN', @level2name = N'phone';
 EXEC sys.sp_addextendedproperty @name = N'MS_Description', @value = N'email', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'users', @level2type = N'COLUMN', @level2name = N'email';
 EXEC sys.sp_addextendedproperty @name = N'MS_Description', @value = N'seat', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'users', @level2type = N'COLUMN', @level2name = N'seat';
 EXEC sys.sp_addextendedproperty @name = N'MS_Description', @value = N'entity', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'users', @level2type = N'COLUMN', @level2name = N'entity';

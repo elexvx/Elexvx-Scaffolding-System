@@ -293,7 +293,7 @@ function createAxios(opt?: Partial<CreateAxiosOptions>) {
         // 闂佺儵鍓濈敮鎺楀箠韫囨搩娓?
         timeout: 10 * 1000,
         // 闂備礁婀遍崢褔骞栭锔藉仺闁绘稓顨宱kie
-        withCredentials: true,
+        withCredentials: false,
         // 濠电姰鍨规晶搴ｆ崲濠靛洨鈹嶅┑鐘叉搐缁?        headers: { 'Content-Type': ContentTypeEnum.Json },
         // 闂備浇妗ㄩ懗鑸垫櫠濡も偓閻ｅ灚鎷呴悷鎵獮闂佸憡娲﹂崢浠嬪磹閻愮儤鐓涢柛灞剧矋閸も偓缂?
         transform,

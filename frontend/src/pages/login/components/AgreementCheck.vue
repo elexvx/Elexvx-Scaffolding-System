@@ -24,6 +24,7 @@
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 
 import { useSettingStore } from '@/store';
+import { sanitizeHtml } from '@/utils/sanitizeHtml';
 
 const props = defineProps({
   modelValue: {
@@ -99,7 +100,7 @@ const contentRef = ref<HTMLElement>();
 const agreementTitle = computed(() => (agreementType.value === 'user' ? '用户协议' : '隐私协议'));
 const agreementContent = computed(() => {
   const html = agreementType.value === 'user' ? settingStore.userAgreement : settingStore.privacyAgreement;
-  return html || '<p class="agreement-empty">暂无内容</p>';
+  return sanitizeHtml(html || '<p class="agreement-empty">暂无内容</p>');
 });
 
 const open = (type: 'user' | 'privacy') => {

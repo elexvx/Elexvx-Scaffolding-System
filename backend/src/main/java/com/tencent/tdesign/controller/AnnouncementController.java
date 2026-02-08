@@ -3,6 +3,7 @@ package com.tencent.tdesign.controller;
 import com.tencent.tdesign.annotation.RepeatSubmit;
 import com.tencent.tdesign.dto.AnnouncementUpsertRequest;
 import com.tencent.tdesign.service.AnnouncementService;
+import com.tencent.tdesign.util.PermissionUtil;
 import com.tencent.tdesign.vo.AnnouncementResponse;
 import com.tencent.tdesign.vo.AnnouncementSummary;
 import com.tencent.tdesign.vo.ApiResponse;
@@ -44,24 +45,28 @@ public class AnnouncementController {
   @PostMapping
   @RepeatSubmit
   public ApiResponse<AnnouncementResponse> create(@RequestBody @Valid AnnouncementUpsertRequest req) {
+    PermissionUtil.checkAdmin();
     return ApiResponse.success(service.create(req));
   }
 
   @PutMapping("/{id}")
   @RepeatSubmit
   public ApiResponse<AnnouncementResponse> update(@PathVariable Long id, @RequestBody @Valid AnnouncementUpsertRequest req) {
+    PermissionUtil.checkAdmin();
     return ApiResponse.success(service.update(id, req));
   }
 
   @PostMapping("/{id}/publish")
   @RepeatSubmit
   public ApiResponse<AnnouncementResponse> publish(@PathVariable Long id, @RequestParam(defaultValue = "true") boolean publish) {
+    PermissionUtil.checkAdmin();
     return ApiResponse.success(service.publish(id, publish));
   }
 
   @DeleteMapping("/{id}")
   @RepeatSubmit
   public ApiResponse<Boolean> delete(@PathVariable Long id) {
+    PermissionUtil.checkAdmin();
     return ApiResponse.success(service.delete(id));
   }
 }

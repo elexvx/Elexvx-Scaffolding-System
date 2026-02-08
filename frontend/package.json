@@ -26,6 +26,7 @@
     "axios": "^1.12.2",
     "crypto-js": "^4.2.0",
     "dayjs": "^1.11.13",
+    "dompurify": "^3.2.6",
     "echarts": "5.4.3",
     "lodash": "^4.17.21",
     "nprogress": "^0.2.0",
@@ -74,7 +75,8 @@
     "vue-tsc": "^2.2.8"
   },
   "overrides": {
-    "stylus": "0.64.0"
+    "stylus": "0.64.0",
+    "@babel/runtime-corejs3": "^7.26.10"
   },
   "lint-staged": {
     "*.{js,jsx,vue,ts,tsx}": [

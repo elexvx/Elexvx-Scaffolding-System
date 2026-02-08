@@ -757,8 +757,6 @@ public class AuthService {
       u.setName(req.getName());
     if (req.getMobile() != null && !SensitiveMaskUtil.isMasked(req.getMobile()))
       u.setMobile(req.getMobile());
-    if (req.getPhone() != null && !SensitiveMaskUtil.isMasked(req.getPhone()))
-      u.setPhone(req.getPhone());
     if (req.getEmail() != null && !SensitiveMaskUtil.isMasked(req.getEmail()))
       u.setEmail(req.getEmail());
     if (req.getIdCard() != null && !SensitiveMaskUtil.isMasked(req.getIdCard())) {
@@ -850,7 +848,6 @@ public class AuthService {
     r.setAccount(u.getAccount());
     r.setName(u.getName());
     r.setMobile(u.getMobile());
-    r.setPhone(u.getPhone());
     r.setEmail(u.getEmail());
     r.setIdCard(u.getIdCard());
     r.setIdType(u.getIdType());
@@ -981,7 +978,10 @@ public class AuthService {
 
     UserEntity user = Optional.ofNullable(userMapper.selectByAccount(account))
         .orElseThrow(() -> new IllegalArgumentException("Account not found"));
-    String normalizedPhone = normalizePhone(user.getMobile() != null ? user.getMobile() : user.getPhone());
+    String normalizedPhone = normalizePhone(user.getMobile());
+    if (normalizedPhone.isBlank()) {
+      throw new IllegalArgumentException("Phone not registered");
+    }
     if (!phone.equals(normalizedPhone)) {
       throw new IllegalArgumentException("Phone does not match account");
     }

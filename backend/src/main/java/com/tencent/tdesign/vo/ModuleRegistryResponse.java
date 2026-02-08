@@ -18,7 +18,7 @@ public class ModuleRegistryResponse {
     response.setName(registry.getName());
     response.setVersion(registry.getVersion());
     response.setInstallState(registry.getInstallState());
-    response.setEnabled("INSTALLED".equalsIgnoreCase(registry.getInstallState()));
+    response.setEnabled(Boolean.TRUE.equals(registry.getEnabled()));
     response.setInstalledAt(registry.getInstalledAt());
     return response;
   }

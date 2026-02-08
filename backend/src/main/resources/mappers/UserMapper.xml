@@ -10,7 +10,6 @@
       name,
       password_hash,
       mobile,
-      phone,
       email,
       id_card,
       id_type,
@@ -62,7 +61,7 @@
 
   <select id="selectByPhone" resultType="com.tencent.tdesign.entity.UserEntity">
     <include refid="BaseSelect" />
-    WHERE phone = #{phone}
+    WHERE mobile = #{phone}
   </select>
 
   <select id="selectByEmail" resultType="com.tencent.tdesign.entity.UserEntity">
@@ -95,8 +94,7 @@
           OR name LIKE CONCAT(CONCAT('%', #{keyword}), '%'))
       </if>
       <if test="mobile != null and mobile != ''">
-        AND (mobile LIKE CONCAT(CONCAT('%', #{mobile}), '%')
-          OR phone LIKE CONCAT(CONCAT('%', #{mobile}), '%'))
+        AND mobile LIKE CONCAT(CONCAT('%', #{mobile}), '%')
       </if>
       <if test="status != null">
         AND status = #{status}
@@ -138,8 +136,7 @@
           OR name LIKE CONCAT(CONCAT('%', #{keyword}), '%'))
       </if>
       <if test="mobile != null and mobile != ''">
-        AND (mobile LIKE CONCAT(CONCAT('%', #{mobile}), '%')
-          OR phone LIKE CONCAT(CONCAT('%', #{mobile}), '%'))
+        AND mobile LIKE CONCAT(CONCAT('%', #{mobile}), '%')
       </if>
       <if test="status != null">
         AND status = #{status}
@@ -188,7 +185,6 @@
       name,
       password_hash,
       mobile,
-      phone,
       email,
       id_card,
       id_type,
@@ -225,7 +221,6 @@
       #{name},
       #{passwordHash},
       #{mobile},
-      #{phone},
       #{email},
       #{idCard},
       #{idType},
@@ -266,7 +261,6 @@
       name = #{name},
       password_hash = #{passwordHash},
       mobile = #{mobile},
-      phone = #{phone},
       email = #{email},
       id_card = #{idCard},
       id_type = #{idType},

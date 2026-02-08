@@ -5,7 +5,6 @@ import java.time.LocalDate;
 public class UserProfileUpdateRequest {
   private String name;
   private String mobile;
-  private String phone;
   private String email;
   private String idCard;
   private String idType;
@@ -49,14 +48,6 @@ public class UserProfileUpdateRequest {
 
   public void setMobile(String mobile) {
     this.mobile = mobile;
-  }
-
-  public String getPhone() {
-    return phone;
-  }
-
-  public void setPhone(String phone) {
-    this.phone = phone;
   }
 
   public String getEmail() {

@@ -10,11 +10,13 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import static org.springframework.security.config.Customizer.withDefaults;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
 
 @Configuration
 /**
@@ -46,7 +48,13 @@ public class SecurityConfig {
   public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
     http
       .csrf(csrf -> csrf.disable())
-      .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()))
+      .headers(headers -> headers
+        .frameOptions(frame -> frame.sameOrigin())
+        .contentTypeOptions(withDefaults())
+        .cacheControl(withDefaults())
+        .referrerPolicy(referrer -> referrer.policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.NO_REFERRER))
+        .permissionsPolicy(policy -> policy.policy("geolocation=(), microphone=(), camera=(), payment=()"))
+      )
       .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
       .authorizeHttpRequests(auth -> auth
         .dispatcherTypeMatchers(DispatcherType.ASYNC, DispatcherType.ERROR).permitAll()
@@ -65,7 +73,8 @@ public class SecurityConfig {
           "/auth/logout",
           "/system/ui/public",
           "/system/watermark",
-          "/uploads/**",
+          "/uploads/system/**",
+          "/uploads/business/**",
           "/files/**",
           "/error",
           "/v3/api-docs/**",

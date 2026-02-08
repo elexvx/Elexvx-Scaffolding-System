@@ -62,20 +62,29 @@ public class ModuleRegistryService {
   }
 
   public void assertModuleAvailable(String moduleKey) {
-    ModuleRegistry registry = registryMapper.selectByKey(normalizeKey(moduleKey));
+    String key = normalizeKey(moduleKey);
+    ModuleRegistry registry = registryMapper.selectByKey(key);
     if (registry == null) {
       throw new IllegalArgumentException("模块未安装: " + moduleKey);
     }
     if (!STATE_INSTALLED.equalsIgnoreCase(normalizeState(registry.getInstallState()))) {
       throw new IllegalArgumentException("模块未安装: " + moduleKey);
     }
+    if (!Boolean.TRUE.equals(registry.getEnabled())) {
+      throw new IllegalArgumentException("模块未启用: " + moduleKey);
+    }
+    if (!isRuntimeDependencyAvailable(key)) {
+      throw new IllegalArgumentException("模块依赖未就绪: " + moduleKey);
+    }
   }
 
   public boolean isModuleAvailable(String moduleKey) {
-    ModuleRegistry registry = registryMapper.selectByKey(normalizeKey(moduleKey));
+    String key = normalizeKey(moduleKey);
+    ModuleRegistry registry = registryMapper.selectByKey(key);
     if (registry == null) return false;
     if (!STATE_INSTALLED.equalsIgnoreCase(normalizeState(registry.getInstallState()))) return false;
-    return true;
+    if (!Boolean.TRUE.equals(registry.getEnabled())) return false;
+    return isRuntimeDependencyAvailable(key);
   }
 
   @Transactional

@@ -87,11 +87,11 @@
         </t-space>
       </div>
       <div v-if="current?.attachmentUrl" class="detail-attachments">
-        <t-link :href="current?.attachmentUrl" target="_blank" theme="primary">
+        <t-link :href="current?.attachmentUrl" target="_blank" rel="noopener noreferrer" theme="primary">
           {{ current?.attachmentName || '附件' }}
         </t-link>
       </div>
-      <div class="detail-content" v-html="current?.content"></div>
+      <div class="detail-content" v-html="safeCurrentContent"></div>
     </t-drawer>
   </div>
 </template>
@@ -107,6 +107,7 @@ import placeholderImage from '@/assets/assets-empty.svg?url';
 import { useDictionary } from '@/hooks/useDictionary';
 import { t } from '@/locales';
 import { buildDictOptions, resolveLabel } from '@/utils/dict';
+import { sanitizeHtml } from '@/utils/sanitizeHtml';
 
 import MessageTable from '../components/MessageTable.vue';
 
@@ -123,6 +124,7 @@ const resolveTab = (value: unknown) => {
   return validTabs.has(tab) ? tab : 'announcement';
 };
 const activeTab = ref(resolveTab(route.query.tab));
+const safeCurrentContent = computed(() => sanitizeHtml(current.value?.content || ''));
 
 const query = reactive({
   keyword: '',

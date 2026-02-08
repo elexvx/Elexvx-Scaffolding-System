@@ -1,6 +1,7 @@
 package com.tencent.tdesign.controller;
 
 import com.tencent.tdesign.service.ModuleRegistryService;
+import com.tencent.tdesign.util.PermissionUtil;
 import com.tencent.tdesign.vo.ApiResponse;
 import com.tencent.tdesign.vo.ModuleDescriptor;
 import java.util.List;
@@ -19,6 +20,7 @@ public class SystemModuleController {
 
   @GetMapping
   public ApiResponse<List<ModuleDescriptor>> list() {
+    PermissionUtil.checkAdmin();
     return ApiResponse.success(moduleRegistryService.listModules());
   }
 }

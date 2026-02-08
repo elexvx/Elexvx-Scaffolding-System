@@ -5,7 +5,6 @@ export interface UserProfile {
   account: string;
   name: string;
   mobile: string;
-  phone: string;
   email: string;
   idType?: string;
   idCard: string;
@@ -41,7 +40,6 @@ export interface UserProfile {
 export interface UserProfileUpdate {
   name?: string;
   mobile?: string;
-  phone?: string;
   email?: string;
   idType?: string;
   idCard?: string;

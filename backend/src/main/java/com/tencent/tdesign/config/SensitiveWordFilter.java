@@ -1,6 +1,7 @@
 package com.tencent.tdesign.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.tencent.tdesign.service.ModuleRegistryService;
 import com.tencent.tdesign.service.SensitiveService;
 import com.tencent.tdesign.vo.ApiResponse;
 import jakarta.servlet.FilterChain;
@@ -26,10 +27,16 @@ import org.springframework.web.filter.OncePerRequestFilter;
 public class SensitiveWordFilter extends OncePerRequestFilter {
   private static final String HEADER_PAGE_PATH = "X-Page-Path";
 
+  private final ModuleRegistryService moduleRegistryService;
   private final SensitiveService sensitiveService;
   private final ObjectMapper objectMapper;
 
-  public SensitiveWordFilter(SensitiveService sensitiveService, ObjectMapper objectMapper) {
+  public SensitiveWordFilter(
+    ModuleRegistryService moduleRegistryService,
+    SensitiveService sensitiveService,
+    ObjectMapper objectMapper
+  ) {
+    this.moduleRegistryService = moduleRegistryService;
     this.sensitiveService = sensitiveService;
     this.objectMapper = objectMapper;
   }
@@ -46,6 +53,10 @@ public class SensitiveWordFilter extends OncePerRequestFilter {
     @NonNull FilterChain filterChain
   )
     throws ServletException, IOException {
+    if (!moduleRegistryService.isModuleAvailable("sensitive")) {
+      filterChain.doFilter(request, response);
+      return;
+    }
     if (!shouldCheck(request)) {
       filterChain.doFilter(request, response);
       return;
