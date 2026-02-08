@@ -8,6 +8,16 @@ import { clearTokenStorage } from '@/utils/secureToken';
  * Token 过期检测和处理工具
  */
 
+/**
+ * 使用方式：
+ * - 登录成功后由 store/modules/user.ts 根据 expiresIn 调用 setTokenExpireTimer
+ * - 路由守卫（src/permission.ts）在启动时会恢复 token 并重建定时器
+ *
+ * 处理策略：
+ * - 提前 5 分钟 warning 提示
+ * - 到期后清理登录态并 hard redirect 到登录页，保证多 tab/缓存场景下状态一致
+ */
+
 /** Token 过期通知标记 */
 let tokenExpireNotified = false;
 let tokenExpireWarnTimer: number | null = null;

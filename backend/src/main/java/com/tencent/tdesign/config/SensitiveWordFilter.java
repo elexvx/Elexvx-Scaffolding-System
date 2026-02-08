@@ -14,6 +14,15 @@ import org.springframework.http.MediaType;
 import org.springframework.lang.NonNull;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+/**
+ * 敏感词拦截过滤器（JSON Body 扫描）。
+ *
+ * <p>仅对非 GET/HEAD/OPTIONS 的请求进行检查，且默认只扫描 {@code application/json} 请求体。
+ * 页面维度开关由 {@link SensitiveService#isPageEnabled(String)} 控制，页面标识优先从请求头
+ * {@code X-Page-Path} 获取，其次从 {@code Referer} 提取路径。
+ *
+ * <p>命中敏感词时返回 422，并输出统一响应体 {@link ApiResponse}。
+ */
 public class SensitiveWordFilter extends OncePerRequestFilter {
   private static final String HEADER_PAGE_PATH = "X-Page-Path";
 
@@ -26,6 +35,11 @@ public class SensitiveWordFilter extends OncePerRequestFilter {
   }
 
   @Override
+  /**
+   * 读取并缓存请求体后做敏感词检测。
+   *
+   * <p>若请求体不是合法 JSON，则直接放行以避免误伤非 JSON 内容。
+   */
   protected void doFilterInternal(
     @NonNull HttpServletRequest request,
     @NonNull HttpServletResponse response,

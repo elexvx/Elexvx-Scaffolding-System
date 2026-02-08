@@ -1,5 +1,12 @@
 import { request } from '@/utils/request';
 
+/**
+ * 认证相关 API（无需登录或登录态相关）。
+ *
+ * 约定：
+ * - withToken:false：注册/验证码发送/短信或邮箱登录/重置密码等接口不携带 Authorization
+ * - 返回值由 utils/request 统一按 { code, message, data } 解包（如后端遵循该结构）
+ */
 export interface RegisterPayload {
   account: string;
   password: string;

@@ -17,6 +17,14 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Netty WebSocket 服务器。
+ *
+ * <p>启用条件由 {@link NettyServerProperties#isEnabled()} 控制。当前实现使用 WebSocket（路径 {@code /ws}）
+ * 传输 JSON 文本帧（见 {@link NettyPayload}），并交由 {@link NettyServerHandler} 处理协议与鉴权。
+ *
+ * <p>生命周期：由外部组件在应用启动/停止时调用 {@link #start()} / {@link #stop()}。
+ */
 public class NettySocketServer {
   private static final Logger log = LoggerFactory.getLogger(NettySocketServer.class);
   private final NettyServerProperties properties;
@@ -39,6 +47,11 @@ public class NettySocketServer {
     this.objectMapper = objectMapper;
   }
 
+  /**
+   * 启动服务端并绑定端口。
+   *
+   * <p>注意：该方法会创建并持有 Netty 事件循环线程组；若重复调用需要确保先 {@link #stop()}。
+   */
   public void start() {
     if (!properties.isEnabled()) {
       log.info("Netty socket server disabled.");
@@ -71,6 +84,11 @@ public class NettySocketServer {
     }
   }
 
+  /**
+   * 停止服务端并释放资源。
+   *
+   * <p>关闭 Channel 后再优雅停止事件循环，避免连接未释放导致的端口占用。
+   */
   public void stop() {
     if (serverChannel != null) {
       serverChannel.close();

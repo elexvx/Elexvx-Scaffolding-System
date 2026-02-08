@@ -40,6 +40,20 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+/**
+ * 认证与账号相关业务。
+ *
+ * <p>覆盖能力：
+ * <ul>
+ *   <li>账号密码登录（可选验证码校验）。</li>
+ *   <li>短信/邮箱验证码发送与登录（依赖模块安装状态与系统开关）。</li>
+ *   <li>并发登录处理：当禁用多端登录且存在存量会话时，可通过 SSE 请求在线设备确认。</li>
+ *   <li>Token 会话创建与登录审计。</li>
+ *   <li>个人信息维护与密码修改/找回。</li>
+ * </ul>
+ *
+ * <p>安全注意：入参统一做归一化（账号/邮箱/手机号/验证码），避免因格式差异造成越权或绕过。
+ */
 public class AuthService {
   private static final String MSG_ACCOUNT_REQUIRED = "请输入账号";
   private static final String MSG_ACCOUNT_EXISTS = "账号已存在，请更换后重试";
@@ -137,6 +151,7 @@ public class AuthService {
       throw new IllegalArgumentException("Invalid account or password");
 
     // 闂傚倷娴囧畷鍨叏閻㈢绀夌憸蹇曞垝婵犳艾绠ｉ柨婵嗗暕濮规姊虹粔鍡楀濞堟梻绱掗埀顒€鐣濋崟顒傚幈濠电娀娼уΛ妤咁敂閳哄懏鐓熼幖娣€ら崵娆愩亜椤撶偞鍋ョ€规洖銈稿畷鍗炍旈埀顒勫汲閻斿憡鍙忛柨婵嗘噽婢э箓鏌?
+    // 防御性校验：避免账号归一化/大小写差异导致“查到的用户与输入账号不一致”的异常场景。
     if (!user.getAccount().equals(account)) {
       throw new IllegalArgumentException("Invalid account or password");
     }
@@ -164,7 +179,7 @@ public class AuthService {
     try {
       provider.sendCode(setting, phone, getClientIp(), req.getProvider());
     } catch (Exception e) {
-      throw new IllegalArgumentException("闂傚倸鍊烽悞锕€顪冮崸妤€鐭楅幖娣妼閸屻劑鏌ｉ幋鐑嗙劷闁崇懓绉撮埞鎴︽偐閸欏鎮欓梺娲诲幗椤ㄥ﹪寮婚悢鍛婄秶闁硅鍔曢幃鍛存⒑缁嬫鍎愰柟绋款煼楠炲繘宕ㄩ弶鎴狀啇闂佺粯鍔楁晶妤€顭块埀顒勬⒒? " + e.getMessage());
+      throw new IllegalArgumentException("短信验证码发送失败：" + e.getMessage());
     }
     return new SmsSendResponse(provider.getExpiresInSeconds());
   }
@@ -203,7 +218,7 @@ public class AuthService {
     try {
       provider.sendCode(setting, email, getClientIp(), null);
     } catch (Exception e) {
-      throw new IllegalArgumentException("闂傚倸鍊搁崐椋庢閿熺姴鐭楅幖娣妼缁愭鏌￠崶鈺佷汗闁哄閰ｉ弻鏇＄疀鐎ｎ亖鍋撻弴銏″剹婵°倕鎳忛悡娆撳级閸喎绀冮柛姘€块弻娑氣偓锝庡亝鐏忎即鏌熷畡鐗堝殗妤犵偞鐗犻幃娆撴偋閸喓绐旈梻? " + e.getMessage());
+      throw new IllegalArgumentException("邮箱验证码发送失败：" + e.getMessage());
     }
     return new SmsSendResponse(provider.getExpiresInSeconds());
   }
@@ -232,6 +247,7 @@ public class AuthService {
     DeviceSnapshot snapshot = buildDeviceSnapshot();
 
     // 婵犵數濮烽。钘壩ｉ崨鏉戠；闁逞屽墴閺屾稓鈧綆鍋呭畷宀勬煛瀹€瀣？濞寸媴濡囬幏鐘诲箵閹烘埈娼ュ┑鐘殿暯閳ь剙鍟跨痪褔鏌熼鐓庘偓鎼佹偩閻戣棄唯闁冲搫鍊瑰▍鍥⒑闁偛鑻晶瀵糕偓瑙勬礃閻熲晠寮澶婄妞ゆ挾濯寸槐鏌ユ⒒婵犲骸浜滄繛璇х畵楠炴劖绻濆鍗炲絾濡炪倖甯掔€氼參鎮￠弴銏㈠彄闁搞儯鍔嶉埛鎰版煛鐎ｎ亜顏紒杈ㄥ浮椤㈡岸宕ㄩ鐑嗘骄闂備胶鎳撻崲鏌ヮ敄婢舵劗宓侀柛鈩冨嚬濡俱劌鈹戦檱鐏忔瑩寮繝姘摕闁挎繂鐗滃Ο浣割渻閵堝棙鑲犻柛娑卞灣椤?
+    // 禁用多端登录且存在存量会话时，优先尝试通过 SSE 请求在线设备确认；否则撤销旧会话继续登录。
     if (!allowMultiDeviceLogin && hasActiveSession(user.getId())) {
       if (!Boolean.TRUE.equals(force)) {
         if (concurrentLoginService.hasActiveSubscriber(user.getId())) {
@@ -540,6 +556,7 @@ public class AuthService {
       ip = request.getRemoteAddr();
     }
     // 濠电姷鏁告慨鐑姐€傛禒瀣劦妞ゆ巻鍋撻柛鐔锋健閸┾偓妞ゆ巻鍋撶紓宥咃躬楠炲啫螣鐠囪尙绐為梺褰掑亰閸撴瑥顕?IPv6 闂?localhost闂傚倸鍊烽悞锔锯偓绗涘懐鐭欓柟杈鹃檮閸庢霉閿濆牜鍤夌憸鐗堝笒楠炪垺绻涢幋鐑嗙劷妞ゆ柨顦—鍐Χ鎼粹€茶埅闂佸憡鐟㈤崑鎾剁磽娴ｆ彃浜?IPv4
+    // 兼容本地回环地址：部分环境会返回 IPv6 回环（0:0:0:0:0:0:0:1）。
     if ("0:0:0:0:0:0:0:1".equals(ip)) {
       ip = "127.0.0.1";
     }
@@ -548,6 +565,7 @@ public class AuthService {
 
   private String getLocationByIp(String ip) {
     // 缂傚倸鍊搁崐鐑芥嚄閼稿灚鍙忔い鎾卞灩绾惧鏌熼崜褏甯涢柣鎾存礋閺屸€愁吋閸愩劌顬嬫繝鈷€灞肩凹闁靛洤瀚伴弫鍌滄喆閸曨剛褰嬮梻浣筋嚃閸犳牠鎮ラ悡搴ｆ殾闂侇剙绋侀弫鍥煟濡椿鍟忔俊鑼厴濮婅櫣鎷犻弻銉偓妤佺節閳ь剟鏌嗗鍛紱闂侀潧鐗嗛幏瀣倵閼哥偣浜滈柡宥冨妿閳笺倕霉濠婂嫮鐭掗柡灞剧洴閺佸倻鎷犻幓鎺旑啈缂傚倷鐒﹂崝鏍€冩繝鍥╁祦闁哄稁鍋€閸嬫挸鈽夊▍铏灴钘熼柛鈩兦滄禍婊堟煛閸モ晛鏋庨柛婵堝劋閹便劍绻濋崒娑樹淮閻庤娲栧畷顒冪亽闂佹儳绻橀埀顒佺⊕閹?IP 闂傚倸鍊风欢姘焽婵犳碍鈷旈柛鏇ㄥ亽閻斿棙淇婇娆掝劅闁绘帊绮欓弻娑㈠箛闂堟稒鐏堥梺钘夊暟閸犳牠寮婚弴鐔风窞婵☆垳鍘х敮銉╂⒑閹肩偛鈧洜鈧矮鍗冲濠氭晸閻樻煡鍞跺┑鐘绘涧閻斿棝濮€閻橆偅鏂€?
+    // 位置解析占位：若需要真实地理位置，可接入 IP 地理库或外部服务（注意合规与缓存策略）。
     if (ip.startsWith("127.") || ip.startsWith("192.168.") || ip.equals("localhost") || ip.equals("127.0.0.1")) {
       return "Local network IP";
     }
@@ -923,6 +941,8 @@ public class AuthService {
       throw new IllegalArgumentException("New passwords do not match");
     }
     // 闂傚倸鍊风粈渚€骞栭銈囩煋闁绘垶鏋荤紞鏍ь熆鐠虹尨鍔熼柡鍡愬€曢湁闁挎繂鎳忛幆鍫ユ倵閸偆鍙€闁哄被鍊栭幈銊╁箛椤戣棄浜炬俊銈呮噹閺勩儵鏌ｅΟ鑲╁笡闁稿绲介湁闁挎繂娴傞悞楣冩煃闁垮顥堥柡宀嬬秮婵″爼宕ㄩ鍛紗闁诲孩顔栭崰鏇犲垝濞嗘挸鏋侀柟鍓х帛閸嬫劙姊婚崼鐔恒€掗柣鎾村灴濮婄粯鎷呴崨濠冨創闂佺锕﹂幊鎾烩€﹂崹顕呮建闁逞屽墴楠炲棙绗熼埀顒勭嵁鐎ｎ喗鏅滈柦妯侯槸婢规挸鈹戦悙鑸靛涧缂佹彃娼￠幃娲棘濞嗗墽鍔烽梺瑙勫婢ф鎮?
+    // 新密码必须满足系统密码策略（强度/长度/历史等约束）。
+    // 新密码必须满足系统密码策略（强度/长度/历史等约束）。
     passwordPolicyService.validate(req.getNewPassword());
 
     long userId = authContext.requireUserId();

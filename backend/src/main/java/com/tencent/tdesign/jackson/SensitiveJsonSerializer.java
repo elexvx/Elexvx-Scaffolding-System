@@ -13,7 +13,12 @@ import java.io.IOException;
 import java.util.Objects;
 
 /**
- * 数据脱敏序列化类
+ * 数据脱敏序列化器（Jackson）。
+ *
+ * <p>当字段标注 {@link Sensitive} 注解时，根据 {@link DesensitizedType} 在序列化阶段对字符串进行脱敏输出，
+ * 以降低敏感信息在接口响应中的暴露风险。
+ *
+ * <p>容错策略：脱敏过程中若出现异常，将回退为原值输出，以避免接口因脱敏逻辑失败而整体不可用。
  */
 public class SensitiveJsonSerializer extends JsonSerializer<String> implements ContextualSerializer {
 

@@ -13,6 +13,18 @@ import { PAGE_NOT_FOUND_ROUTE } from '@/utils/route/constant';
 import { useSettingStore } from './setting';
 import { getTabsRouterStore } from './tabs-router';
 
+/**
+ * 权限与动态路由 Store。
+ *
+ * 数据来源：
+ * - 后端菜单接口 getMenuList() 返回 RouteItem 列表（通常包含 title/icon/component 等 meta 信息）
+ *
+ * 处理流程：
+ * - buildAsyncRoutes：拉取菜单 -> transformObjectToRoute 转换为 vue-router RouteRecordRaw -> initRoutes 生成侧边菜单数据
+ * - refreshAsyncRoutes：刷新菜单时先移除旧路由再注入新路由，并同步校正 tabs 与默认首页
+ *
+ * 注意：真正的路由注入发生在 src/permission.ts（router.addRoute），这里负责构建与维护可展示的 routers 数据。
+ */
 const normalizePath = (path?: string) => String(path || '').split(/[?#]/)[0];
 
 const isPathInRoutes = (target: string, routes: RouteRecordRaw[]) => {

@@ -1,5 +1,13 @@
 import { request } from '@/utils/request';
 
+/**
+ * 系统-字典 API。
+ *
+ * 典型用法：
+ * - 页面：通过 fetchDictPage/fetchDictItems 管理字典与字典项
+ * - 业务：通过 fetchDictItemsByCode 按 code 读取字典项（配合 hooks/useDictionary 与 dictionary store 缓存）
+ * - 导入导出：exportDictItems/downloadDictTemplate 使用 blob 响应（返回原始 response）
+ */
 export interface PageResult<T> {
   list: T[];
   total: number;

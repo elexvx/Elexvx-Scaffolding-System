@@ -10,6 +10,15 @@ import { store } from '@/store';
 import type { ModeType } from '@/types/interface';
 import { generateColorMap, insertThemeStylesheet } from '@/utils/color';
 
+/**
+ * UI 配置与站点设置 Store（主题、布局、站点信息、登录方式开关、水印等）。
+ *
+ * 数据来源与兜底：
+ * - STYLE_CONFIG：前端默认 UI 配置（布局/主题/是否展示页脚等）
+ * - OFFLINE_UI_CONFIG：离线兜底（后端 UI 设置不可用时仍可展示站点名称/Logo/favicon/登录背景）
+ *
+ * 说明：该 store 既服务于“界面即时状态”（如 showSettingPanel），也承载后端可配置的系统 UI 设置。
+ */
 const state: Record<string, any> = {
   ...STYLE_CONFIG,
   // 离线模式默认值：当后端 UI 设置不可用时，保证站点标题/Logo 等仍可显示。

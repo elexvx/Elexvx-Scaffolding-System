@@ -2,6 +2,12 @@ import type { RouteRecordRaw } from 'vue-router';
 
 import Layout from '@/layouts/index.vue';
 
+/**
+ * 结果页路由集合。
+ *
+ * 这些页面通常作为全局异常/状态兜底入口被跳转到（例如 403/404/500、网络异常、维护中）。
+ * 设计为 hidden，避免出现在侧边菜单中。
+ */
 export default [
   {
     path: '/result',

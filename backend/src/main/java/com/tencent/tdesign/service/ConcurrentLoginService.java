@@ -18,6 +18,18 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @Service
+/**
+ * 并发登录确认协调器（基于 SSE）。
+ *
+ * <p>用于在“禁止多端登录”场景下，将新登录请求推送给在线设备，由在线设备批准/拒绝后再继续登录流程。
+ *
+ * <p>实现要点：
+ * <ul>
+ *   <li>loginId -> emitters：同一账号可存在多个在线监听端（多浏览器/多标签页）。</li>
+ *   <li>pendingLogins：保存等待确认的登录请求，带 TTL；超时自动视为失效。</li>
+ *   <li>心跳：定期发送 ping，尽快清理断开的 SSE 连接，避免内存泄漏。</li>
+ * </ul>
+ */
 public class ConcurrentLoginService {
   private static final long PENDING_TTL_MS = 2 * 60 * 1000L;
   private static final long LOGIN_HEARTBEAT_INTERVAL_SECONDS = 15L;
@@ -33,10 +45,18 @@ public class ConcurrentLoginService {
   });
 
   @PreDestroy
+  /**
+   * 应用关闭时停止心跳线程，避免容器关闭阶段出现非预期阻塞。
+   */
   public void shutdownHeartbeatExecutor() {
     heartbeatExecutor.shutdownNow();
   }
 
+  /**
+   * 订阅“账号发起并发登录”通知流。
+   *
+   * <p>该订阅通常由“已登录设备”建立，用于接收其他设备的登录确认请求（event: concurrent-login）。
+   */
   public SseEmitter subscribeLoginNotice(long loginId) {
     SseEmitter emitter = new SseEmitter(0L);
     loginEmitters.computeIfAbsent(loginId, key -> new CopyOnWriteArrayList<>()).add(emitter);
@@ -53,6 +73,11 @@ public class ConcurrentLoginService {
     return emitters != null && !emitters.isEmpty();
   }
 
+  /**
+   * 主动通知在线端强制下线。
+   *
+   * <p>用于旧会话被撤销、Token 过期等需要前端立即感知的场景。
+   */
   public void publishForceLogout(long loginId, String message) {
     List<SseEmitter> emitters = loginEmitters.get(loginId);
     if (emitters == null || emitters.isEmpty()) return;
@@ -68,6 +93,11 @@ public class ConcurrentLoginService {
     }
   }
 
+  /**
+   * 创建等待确认的登录请求并推送给在线设备。
+   *
+   * <p>若推送失败（例如 SSE 断开），不会阻塞登录流程；由上层决定是否降级为直接撤销旧会话。
+   */
   public PendingLogin createPending(
     long loginId,
     String deviceModel,
@@ -100,6 +130,11 @@ public class ConcurrentLoginService {
     return pending;
   }
 
+  /**
+   * 订阅单次“登录确认决策”结果流。
+   *
+   * <p>该订阅通常由“发起登录的设备”建立，等待在线设备给出 decision（approved/rejected）。
+   */
   public SseEmitter subscribeDecision(String requestId, String requestKey) {
     PendingLogin pending = getPending(requestId);
     if (pending == null || !pending.requestKey.equals(requestKey)) {
@@ -122,6 +157,9 @@ public class ConcurrentLoginService {
     return emitter;
   }
 
+  /**
+   * 在线设备对登录请求作出批准/拒绝决策。
+   */
   public PendingLogin decide(long loginId, String requestId, boolean approve) {
     PendingLogin pending = getPending(requestId);
     if (pending == null) {
@@ -142,6 +180,11 @@ public class ConcurrentLoginService {
     return pending;
   }
 
+  /**
+   * 消费已批准的登录请求（一次性）。
+   *
+   * <p>调用成功后会移除 pending 记录，避免重复使用同一个 requestId 继续登录。
+   */
   public PendingLogin consumeApproved(String requestId, String requestKey) {
     PendingLogin pending = getPending(requestId);
     if (pending == null || !pending.requestKey.equals(requestKey)) {

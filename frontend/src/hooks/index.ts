@@ -3,6 +3,12 @@ import type { Ref, ShallowRef } from 'vue';
 import { onMounted, onUnmounted, ref, shallowRef } from 'vue';
 
 /**
+ * 通用 Hooks 集合（与业务无关）。
+ *
+ * - useChart：ECharts 初始化与容器 resize 监听
+ * - useCounter：通用倒计时（短信/邮箱验证码等场景）
+ */
+/**
  * eChart hook
  * @param domId
  */

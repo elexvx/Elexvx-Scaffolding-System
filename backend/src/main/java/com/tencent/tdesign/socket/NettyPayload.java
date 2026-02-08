@@ -1,5 +1,17 @@
 package com.tencent.tdesign.socket;
 
+/**
+ * WebSocket 消息载荷（JSON）。
+ *
+ * <p>常用字段约定：
+ * <ul>
+ *   <li>{@code type}：消息类型（例如 auth / ping / pong / auth_ok / auth_fail）。</li>
+ *   <li>{@code token}：鉴权令牌（仅在 auth 请求中使用）。</li>
+ *   <li>{@code clientId}：客户端自定义标识（可选，用于多端区分）。</li>
+ *   <li>{@code userId}：服务端识别的用户 ID（通常由服务端下行填充）。</li>
+ *   <li>{@code timestamp}：毫秒时间戳，用于调试与时序校验。</li>
+ * </ul>
+ */
 public class NettyPayload {
   private String type;
   private String token;

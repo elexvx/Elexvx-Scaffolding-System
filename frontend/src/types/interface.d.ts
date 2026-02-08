@@ -1,9 +1,17 @@
+/**
+ * 全局类型声明（业务模型 + 路由/标签页等前端结构体）。
+ *
+ * 说明：
+ * - 这里的类型会被 store/router/components 等多处复用
+ * - 若后端返回结构有变化，优先在这里收敛调整，避免散落各处的 any
+ */
 import type { TabValue } from 'tdesign-vue-next';
 import type { Component, DefineComponent, FunctionalComponent } from 'vue';
 import type { LocationQueryRaw, RouteMeta, RouteRecordName } from 'vue-router';
 
 export interface MenuRoute {
-  // TODO: menuitem 组件实际支持 string 类型但是类型错误，暂时使用 any 类型避免打包错误待组件类型修复
+  // TODO: MenuItem 组件实际支持 string，但其类型声明不兼容；先用 any 规避类型/打包错误。
+  // 建议后续：收敛为 string，并在组件库升级或类型修复后移除 any。
   path: any;
   title?: string | Record<string, string>;
   name?: string;

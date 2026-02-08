@@ -10,6 +10,14 @@ import {
   PARENT_LAYOUT,
 } from '@/utils/route/constant';
 
+/**
+ * 后端菜单/路由结构 -> vue-router RouteRecordRaw 的转换工具。
+ *
+ * 关键点：
+ * - LayoutMap：将后端 component 标识（LAYOUT/BLANK/IFRAME/PARENT_LAYOUT）映射到前端布局组件
+ * - dynamicImport：支持从 pages 与 views 两套目录动态加载页面组件（由 VITE_ROUTE_VIEW_DIR 控制优先级）
+ * - asyncImportRoute：递归处理子路由，拼接相对 path，并为每个路由补齐 component
+ */
 // 动态从包内引入单个Icon,如果没有网络环境可以使用这种方式 但是会导致产物存在多个chunk
 // const iconsPath = import.meta.glob('../../../node_modules/tdesign-icons-vue-next/esm/components/*.js');
 

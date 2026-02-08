@@ -1,4 +1,13 @@
-// axios闂傚倷鐒﹀妯肩矓閸洘鍋? 闂備礁鎲￠悷顖炲垂閻㈢鍚规繝濠傛噺閸嬫﹢鎮橀悙鎻掆挃濠㈢懓鐭傞弻鐔烘嫚閳ヨ櫕鐝濋梺闈涙缁夊綊骞嗛崟顖ｆ晩閻犳亽鍔庨鎺楁煟閻愬鈽夐柡鍫墮鐓ら柛褎顨呯紒鈺呮煟瑜嶉幗婊呯矆婢舵劖鐓曟繛鍡樏奸柇顖涚箾閹惧磭鍩ｇ€殿喖顕埀顒佺⊕钃遍柡鍡╁弮閹綊宕堕妷銉ュ闂佸搫顑呴崯顖滅矉閹烘梹宕夐柛婵嗗閵堫噣姊洪崨濠勬噽闁搞劎鏅Σ鎰攽鐎ｎ亞顦ч梺鍝勭墢閺佹悂鏌ч崒鐐寸厸闁稿本纰嶉惌妤佺箾閸℃劕鐏茬€规洩缍侀、娑樷枎鎼达綁鐎哄┑鐐村灦閹稿摜绮旂€涙ɑ鍙?
+/**
+ * Axios 请求实例入口（VAxios 封装）。
+ *
+ * 统一收口的能力：
+ * - API Host 解析：根据 Vite 环境变量与部署模式计算 baseURL
+ * - 请求前处理：前缀拼接、时间戳防缓存、参数/日期格式化、RESTful 参数拼接
+ * - 鉴权注入：从 userStore 写入 Authorization，并附带当前页面路径（X-Page-Path）
+ * - 错误处理：把后端业务 code/message 映射为 Error；对 401/403/422/5xx 做统一提示与跳转
+ * - 重试策略：仅对允许重试的请求按 requestOptions.retry 进行退避重试
+ */
 import type { AxiosInstance } from 'axios';
 import axios from 'axios';
 import isString from 'lodash/isString';
@@ -19,6 +28,7 @@ let hasNotifiedUnauthorized = false;
 let isUnauthorizedRedirecting = false;
 
 // 濠电姷顣介埀顒€鍟块埀顒€缍婇幃妯诲緞閹邦剙寮烽梺姹囧劤閹槈k婵犵妲呴崹顏堝焵椤掆偓绾绢厾娑甸埀?闂?婵犵數鍋涙径鍥焵椤掑啯鐝柛搴㈢懇閺岋綁锝為鈧俊鎸庣箾閸欏顕滄繛鐓庮煼閹瑩寮堕幐搴㈡闂?闂佽绻愮换鎰亹婢跺瞼绠斿鑸靛姈閻撯偓閻庡箍鍎卞ú銊╁几娣囩惤st 濠电偞娼欓崥瀣┍濞差亝鎲橀悗锝庡枛鐎氬銇勯幒鍡椾壕濠电姭鍋撶痪鐗堢睄ck闂備胶鎳撻崵鏍⒔閸曨垰鏄?闂?Vite 濠电偛顕刊瀵稿緤閸ф绠?
+// 根据环境与配置解析后端 API Host（支持 Vite 多环境部署）。
 const host = resolveApiHost();
 const UNAUTHORIZED_SENTINEL = '\u767b\u5f55\u72b6\u6001\u5df2\u5931\u6548 [401]';
 const UNAUTHORIZED_NOTICE_KEY = 'tdesign.auth.invalid.notice';
@@ -43,11 +53,13 @@ const isSilent403Path = (url?: string) => {
 };
 
 // 闂備浇妗ㄩ懗鑸垫櫠濡も偓閻ｅ灚鎷呴悷鎵獮闂佸憡娲﹂崢浠嬪磹閻愮儤鐓ユ繛鎴炆戝﹢浼存煛瀹€鈧崰鎰箔閻旂厧鍨傛い鏂裤偢濞堫剟姊洪崨濠傜瑨婵☆偅顨婅棟閻犳亽鍔庨惌鎾垛偓骞垮劚閹峰危闁秵鐓熼柣鎰级椤ョ偤鏌″畝鈧崰搴敋?
+// AxiosTransform：集中定义“响应解包 / 异常映射 / 请求预处理 / 鉴权注入”等钩子。
 const transform: AxiosTransform = {
   // 濠电姰鍨煎▔娑氣偓姘煎櫍楠炲啯绻濋崟顒€鐝伴梻浣哥仢椤戝洤锕㈤幘顔界厸濞达絽鎼。鑲┾偓瑙勬尫缁舵碍淇婇幘顔肩＜婵ê鍚嬮幖鎰版⒑閸濆嫷鍎愮紒顔肩Ч瀵娊鎮㈤悡搴ｎ唹濡炪倖妫佸畷鐢告偡濠靛鐓涢柛鏇㈡涧閻忥附銇勯敐鍌涙珚鐎殿喚鏁婚幃銏ゅ传閵夈儺妫旈柣搴㈩問閸犳牗顨ヨ箛鏇燁潟婵犻潧顑呴惌妤併亜閺嶃劎鐭嬬紒缁㈠灦閺岀喖骞侀幒鎴濆婵犳鍠栫换妯虹暦濞嗗緷娲敂閸涱喗鐝﹂梺?
   transformRequestHook: (res, options) => {
     const { isTransformResponse, isReturnNativeResponse } = options;
 
+    // 特殊场景：204 + 写操作（PUT/PATCH/DELETE）时直接返回原始响应，避免被误判为“无 data”。
     // 濠电姷顣介埀顒€鍟块埀顒€缍婇幃?04闂備礁鎼崯鐗堟叏閹绢喖鑸归悗鐢电《閸嬫捇鎮烽悧鍫ｇ濠电偞褰冨锟犵嵁閹烘唯闁靛ě鍜佸敼闂?
     const method = res.config.method?.toLowerCase();
     if (res.status === 204 && ['put', 'patch', 'delete'].includes(method)) {
@@ -95,6 +107,9 @@ const transform: AxiosTransform = {
 
     // 闂備礁鎲￠悷顖涚濠靛棴鑰垮〒姘ｅ亾鐎规洜鍏樻俊姝岊槻妞ゃ儲顨婇幃妤冩喆閸曨剛娈ゅ┑鐐茬墛閸ㄥ墎绮欐径鎰ㄩ柍杞扮劍椤忕喖姊绘担鐟邦嚋闁荤喆鍔戦、姘跺Χ婢跺﹦鐫勯梺鍏兼倐濞佳嚶烽崨瀛樺仯闁告繂瀚弸鍐╃箾閺夋垶顥為柕鍥у閹粙宕ㄦ繝鍐︹偓鍐⒑閹稿海鈽夐柣顒傚帶閳诲秹濡烽妸锝勬睏闂佸搫娲ㄩ崑鎴炵婵傚憡鍋ｉ柟鎵虫櫅閸斻倝鏌ｉ埄鍐ㄧ仸缂佸顦甸崺鈧い鎺戝閸ゅ銇勯幒鎴濐仾闁哄應鏅犻幃褰掑炊鐠鸿櫣浠х紓浣诡殔椤﹂亶骞戦崟顓涘亾閸︻厼校缂?
     if (code === 401) {
+      // 401：清理本地登录态并强制跳转登录页（window.location.replace）以彻底重置应用状态。
+      // - saveUnauthorizedNotice：用于在登录页展示一次性的“会话失效”提示
+      // - UNAUTHORIZED_SENTINEL：用于让上层识别“已处理的 401”，避免重复提示
       const user = useUserStore();
       const humanMsg = UNAUTHORIZED_NOTICE_TEXT;
       const currentRoute = router.currentRoute.value;

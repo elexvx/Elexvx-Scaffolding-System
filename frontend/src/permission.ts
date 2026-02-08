@@ -10,6 +10,16 @@ import { PAGE_NOT_FOUND_ROUTE } from '@/utils/route/constant';
 import { clearTokenStorage } from '@/utils/secureToken';
 import { handleTokenExpired, isLocalTokenExpired, setTokenExpireTimer } from '@/utils/tokenExpire';
 
+/**
+ * 全局路由守卫（鉴权 / 动态路由 / 进度条 / 异常兜底）。
+ *
+ * 关键职责：
+ * - 统一处理路由切换加载态（NProgress + appStore.routeLoading）
+ * - 在首次进入时从持久化状态恢复 token，并在本地维护“过期定时器”
+ * - 已登录时按需拉取用户信息与通知通道，并通过 permissionStore 构建并动态注入后端路由（router.addRoute）
+ * - 未登录时仅允许白名单路由，其他跳转到 /login 并带上 redirect
+ * - router.onError 捕获动态 import chunk 异常并跳转到结果页
+ */
 NProgress.configure({ showSpinner: false });
 
 const AUTH_PAGES = new Set(['/login', '/register', '/forgot']);

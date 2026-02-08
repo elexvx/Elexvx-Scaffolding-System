@@ -14,6 +14,18 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 @Component
+/**
+ * Token 鉴权过滤器。
+ *
+ * <p>职责：
+ * <ul>
+ *   <li>从请求头/参数解析 Token。</li>
+ *   <li>从 {@link AuthTokenService} 读取服务端会话，并写入 {@code SecurityContext}。</li>
+ *   <li>按访问频率刷新会话（touch），避免每次请求都写存储造成压力。</li>
+ * </ul>
+ *
+ * <p>安全注意：允许通过 URL 参数传 Token 是一种折中方案，默认应关闭，仅在确有需要的端点开启。
+ */
 public class AuthTokenFilter extends OncePerRequestFilter {
   private final AuthTokenService tokenService;
   private final com.tencent.tdesign.service.SecuritySettingService securitySettingService;
@@ -27,6 +39,11 @@ public class AuthTokenFilter extends OncePerRequestFilter {
   }
 
   @Override
+  /**
+   * 构建 Spring Security 认证信息。
+   *
+   * <p>当请求已存在认证信息时不会重复解析；当 Token 无效或会话不存在时保持匿名继续向下游传递，由安全配置拦截。
+   */
   protected void doFilterInternal(
     HttpServletRequest request,
     HttpServletResponse response,
@@ -46,6 +63,11 @@ public class AuthTokenFilter extends OncePerRequestFilter {
     filterChain.doFilter(request, response);
   }
 
+  /**
+   * 以固定间隔刷新一次会话访问时间，减少频繁写存储。
+   *
+   * <p>用于“滑动过期/在线状态”类能力；间隔过小会增加 Redis/DB 写入压力，间隔过大会降低在线状态实时性。
+   */
   private void touchSession(String token, AuthSession session) {
     long now = System.currentTimeMillis();
     Object lastAccessObj = session.getAttributes().get("lastAccessTime");
@@ -56,6 +78,12 @@ public class AuthTokenFilter extends OncePerRequestFilter {
     }
   }
 
+  /**
+   * 解析 Token。
+   *
+   * <p>优先读取 {@code Authorization} 请求头，支持 {@code Bearer <token>} 与直接传值两种形式。
+   * 当系统配置允许（或特定 SSE 端点需要）时，退化为从 URL 参数读取 Token。
+   */
   private String resolveToken(HttpServletRequest request) {
     String header = request.getHeader(HttpHeaders.AUTHORIZATION);
     if (StringUtils.hasText(header)) {

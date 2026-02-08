@@ -7,6 +7,12 @@ import java.util.Map;
 import org.springframework.stereotype.Service;
 
 @Service
+/**
+ * 验证码 Provider 注册表。
+ *
+ * <p>将 Spring 容器中发现的 {@link VerificationProvider} 按 {@code type} 归一化（trim + lower-case）后注册，
+ * 供认证流程按类型选择具体实现（例如 sms / email）。
+ */
 public class VerificationProviderRegistry {
   private final Map<String, VerificationProvider> providers;
 

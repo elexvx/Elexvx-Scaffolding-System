@@ -7,6 +7,13 @@
   </t-config-provider>
 </template>
 <script setup lang="ts">
+/**
+ * 根组件：
+ * - 注入 TDesign 全局配置（含 table 空状态统一渲染）
+ * - 承载全局覆盖层：水印、会话踢下线监听、路由加载中遮罩
+ * - 监听 storage/pageshow 等事件，保证“多标签页登录态”一致，并在必要时刷新页面
+ * - 负责动态更新 document.title 与 favicon
+ */
 import { computed, h, onMounted, onUnmounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 

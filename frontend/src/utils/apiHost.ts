@@ -1,3 +1,10 @@
+/**
+ * 解析后端 API Host（baseURL）。
+ *
+ * 场景：
+ * - 本地开发通常通过 Vite 代理转发请求，此时可按 VITE_API_URL 指向后端地址
+ * - 为避免把“localhost 后端地址”下发给外网用户，这里对 loopback 地址做了保护与修正
+ */
 const LOOPBACK_HOSTS = new Set(['localhost', '127.0.0.1', '::1', '[::1]']);
 
 function isLoopbackHostname(hostname: string) {

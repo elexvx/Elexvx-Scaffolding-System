@@ -1,3 +1,9 @@
+/**
+ * 路由标题解析工具。
+ *
+ * - 支持 string 或 i18n 结构（Record<locale,title>）
+ * - 会过滤常见“占位符标题”（例如仅由符号组成），避免渲染到页面标题/菜单里
+ */
 const PLACEHOLDER_TITLE_PATTERN = /^[\s?？._\-*/\\|]+$/u;
 
 export function isPlaceholderTitle(value?: string | null): boolean {

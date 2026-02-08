@@ -17,6 +17,16 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
+/**
+ * Spring Security 访问控制配置。
+ *
+ * <p>设计要点：
+ * <ul>
+ *   <li>采用无状态会话（{@code SessionCreationPolicy.STATELESS}），实际登录态由 Token + 服务端会话存储维护。</li>
+ *   <li>白名单仅放行登录/注册/验证码、静态资源、Swagger 文档等公共端点；其他请求必须携带有效 Token。</li>
+ *   <li>认证失败与鉴权失败统一返回 {@code ApiResponse}，避免前端对非 JSON 响应做兼容处理。</li>
+ * </ul>
+ */
 public class SecurityConfig {
   private final AuthTokenFilter authTokenFilter;
   private final ObjectMapper objectMapper;
@@ -27,6 +37,12 @@ public class SecurityConfig {
   }
 
   @Bean
+  /**
+   * 定义过滤器链与鉴权策略。
+   *
+   * <p>Token 解析过滤器放在 {@link UsernamePasswordAuthenticationFilter} 之前，以便后续鉴权决策能读取到
+   * {@code SecurityContext} 中的认证信息。
+   */
   public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
     http
       .csrf(csrf -> csrf.disable())
@@ -78,6 +94,11 @@ public class SecurityConfig {
     return http.build();
   }
 
+  /**
+   * 输出统一错误响应体。
+   *
+   * <p>注意：过滤器链可能在响应已提交后再次触发异常处理，因此写响应前必须检查 {@code isCommitted()}。
+   */
   private void writeError(HttpServletResponse response, HttpStatus status) throws IOException {
     if (response.isCommitted()) return;
     response.setStatus(status.value());

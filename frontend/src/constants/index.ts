@@ -1,3 +1,10 @@
+/**
+ * 前端常量定义（枚举/映射/通用请求头等）。
+ *
+ * 约定：
+ * - 与业务强相关的枚举放在这里，便于统一维护与复用
+ * - 通用的 ContentTypeEnum 供 utils/request 在重试与 header 处理中使用
+ */
 // 合同状态枚举
 export const CONTRACT_STATUS = {
   FAIL: 0,

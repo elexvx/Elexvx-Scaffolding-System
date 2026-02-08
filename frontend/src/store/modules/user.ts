@@ -5,6 +5,14 @@ import type { LoginResponse, UserInfo } from '@/types/interface';
 import { clearTokenStorage, saveRefreshToken, saveToken } from '@/utils/secureToken';
 import { clearTokenExpireTimer } from '@/utils/tokenExpire';
 
+/**
+ * 用户登录态与资料 Store。
+ *
+ * 核心点：
+ * - token/refreshToken 的读写通过 utils/secureToken 统一收口（避免各处自行操作 storage）
+ * - tokenExpiresAt 为本地过期时间戳（配合 utils/tokenExpire 做“主动过期”处理）
+ * - afterRestore：持久化恢复后初始化权限路由（permissionStore.initRoutes），保证刷新后菜单可用
+ */
 const InitUserInfo: UserInfo = {
   id: undefined,
   name: '', // 用户名，用于展示在页面右上角头像处

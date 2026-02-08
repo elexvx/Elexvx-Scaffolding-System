@@ -3,6 +3,15 @@ import uniq from 'lodash/uniq';
 import type { RouteRecordRaw } from 'vue-router';
 import { createRouter, createWebHistory } from 'vue-router';
 
+/**
+ * 路由装配入口（固定路由 + 可选的“模块路由”）。
+ *
+ * - 固定路由：登录/注册/找回密码/根路径重定向等（defaultRouterList）
+ * - 模块路由：设计上支持通过 import.meta.glob 自动聚合 `router/modules/**` 下的路由文件
+ *   - 目前两个 glob 处于注释状态：这意味着实际运行只会加载 defaultRouterList
+ *   - 动态菜单/动态路由由 permissionStore.buildAsyncRoutes + router.addRoute 负责（见 src/permission.ts）
+ * - history base：site 环境使用固定子路径，其余环境取 VITE_BASE_URL
+ */
 const env = import.meta.env.MODE || 'development';
 
 // 导入homepage相关固定路由

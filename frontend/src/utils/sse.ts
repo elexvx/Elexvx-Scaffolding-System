@@ -1,5 +1,11 @@
 import { resolveApiHost } from '@/utils/apiHost';
 
+/**
+ * SSE URL 构造工具。
+ *
+ * 统一规则：host（resolveApiHost）+ VITE_API_URL_PREFIX + path + query。
+ * 适用于 EventSource/Fetch SSE 等需要完整绝对地址的场景。
+ */
 function joinUrl(base: string, path: string) {
   if (!base) return path;
   if (!path) return base;

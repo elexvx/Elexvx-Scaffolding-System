@@ -1,3 +1,12 @@
+/**
+ * Token 存储与简单加密封装（浏览器端）。
+ *
+ * - 使用 WebCrypto AES-GCM 对 token/refreshToken 进行加密后再落盘（localStorage）
+ * - 加密密钥以 raw 形式持久化（localStorage/sessionStorage），用于“同浏览器同站点”解密恢复
+ * - clearTokenStorage：统一清理登录态相关缓存，避免各处分散删除 key
+ *
+ * 注意：这不是为了对抗高强度攻击，而是用于降低明文 token 暴露风险（例如误截图/日志/简单读取）。
+ */
 const TOKEN_STORAGE_KEY = 'tdesign.auth.token';
 const TOKEN_KEY_STORAGE_KEY = 'tdesign.auth.token.key';
 const REFRESH_TOKEN_STORAGE_KEY = 'tdesign.auth.refreshToken';

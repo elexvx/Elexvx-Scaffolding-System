@@ -4,6 +4,13 @@ import { computed } from 'vue';
 import type { I18nOptions } from 'vue-i18n';
 import { createI18n } from 'vue-i18n';
 
+/**
+ * i18n 入口（vue-i18n + 语言包自动收集）。
+ *
+ * - 通过 import.meta.glob 自动加载 ./lang/{lang}/index.ts 下的语言包
+ * - localeConfigKey 存储用户选择的语言（localStorage），并以浏览器语言作为回退
+ * - langList 提供给语言切换下拉（TDesign DropdownOption）
+ */
 // 导入语言文件
 const langModules = import.meta.glob('./lang/*/index.ts', { eager: true });
 

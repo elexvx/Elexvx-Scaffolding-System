@@ -34,6 +34,12 @@ import java.util.Locale;
 import java.util.stream.Collectors;
 
 @RestControllerAdvice
+/**
+ * 全局异常处理器。
+ *
+ * <p>将常见异常统一转换为 {@link ApiResponse}，并对 SSE 请求做兼容处理：
+ * SSE 场景下返回 {@code text/event-stream} 格式的事件，避免前端连接被异常响应体破坏。
+ */
 public class GlobalExceptionHandler {
   private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
   private static final @NonNull MediaType SSE_MEDIA_TYPE = MediaType.parseMediaType(MediaType.TEXT_EVENT_STREAM_VALUE);
@@ -174,7 +180,7 @@ public class GlobalExceptionHandler {
         .contentType(SSE_MEDIA_TYPE)
         .body(payload);
     }
-    return ApiResponse.failure(500, "鏈嶅姟鍣ㄥ唴閮ㄩ敊璇紝璇疯仈绯荤鐞嗗憳");
+    return ApiResponse.failure(500, "服务器内部错误，请联系管理员");
   }
 
   @ExceptionHandler(NoResourceFoundException.class)
