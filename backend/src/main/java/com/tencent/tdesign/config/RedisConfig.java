@@ -1,10 +1,15 @@
 package com.tencent.tdesign.config;
 
+import io.lettuce.core.ClientOptions;
+import io.lettuce.core.SocketOptions;
+import java.time.Duration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.connection.RedisPassword;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
+import org.springframework.data.redis.connection.lettuce.LettuceClientConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
@@ -31,10 +36,26 @@ public class RedisConfig {
     
     String password = Objects.requireNonNullElse(redisProperties.getPassword(), "");
     if (!password.isEmpty()) {
-      config.setPassword(Objects.requireNonNull(password));
+      config.setPassword(RedisPassword.of(password));
     }
-    
-    return new LettuceConnectionFactory(config);
+
+    LettuceClientConfiguration clientConfiguration = buildClientConfiguration();
+    return new LettuceConnectionFactory(config, clientConfiguration);
+  }
+
+  private LettuceClientConfiguration buildClientConfiguration() {
+    int timeoutMs = redisProperties.getTimeout();
+    if (timeoutMs <= 0) {
+      return LettuceClientConfiguration.builder().build();
+    }
+
+    Duration timeout = Duration.ofMillis(timeoutMs);
+    return LettuceClientConfiguration.builder()
+        .commandTimeout(timeout)
+        .clientOptions(ClientOptions.builder()
+            .socketOptions(SocketOptions.builder().connectTimeout(timeout).build())
+            .build())
+        .build();
   }
 
   @Bean

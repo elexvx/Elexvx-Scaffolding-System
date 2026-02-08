@@ -27,7 +27,7 @@ export default {
     verification: 'verification code is required',
   },
   invalid: {
-    account: 'account only supports letters, numbers, and _@@.- (no spaces)',
+    account: "account only supports letters, numbers, and _{'@'}.- (no spaces)",
     email: 'invalid email format (no spaces)',
     phone: 'invalid phone format (no spaces)',
   },

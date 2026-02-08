@@ -4,6 +4,7 @@ import com.tencent.tdesign.security.AccessControlService;
 import com.tencent.tdesign.security.AuthContext;
 import com.tencent.tdesign.service.PermissionFacade;
 import java.util.List;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Component;
 
@@ -13,6 +14,7 @@ public final class PermissionUtil {
   private static PermissionFacade permissionFacade;
   private static AuthContext authContext;
 
+  @Autowired
   public PermissionUtil(
     AccessControlService accessControlService,
     PermissionFacade permissionFacade,
@@ -22,8 +24,6 @@ public final class PermissionUtil {
     PermissionUtil.permissionFacade = permissionFacade;
     PermissionUtil.authContext = authContext;
   }
-
-  private PermissionUtil() {}
 
   public static void check(String permission) {
     ensureInitialized();

@@ -28,7 +28,7 @@ export default {
     verification: '验证码必填',
   },
   invalid: {
-    account: '账号仅支持字母、数字及_@@.-，不支持空格',
+    account: "账号仅支持字母、数字及_{'@'}.-，不支持空格",
     email: '邮箱格式不正确（不支持空格）',
     phone: '手机号格式不正确（不支持空格）',
   },

@@ -50,50 +50,50 @@ public class SensitiveController {
     @RequestParam(defaultValue = "0") int page,
     @RequestParam(defaultValue = "10") int size
   ) {
-    PermissionUtil.check("system:sensitive:query");
     requireModule();
+    PermissionUtil.check("system:sensitive:query");
     return ApiResponse.success(sensitiveService.pageWords(keyword, page, size));
   }
 
   @PostMapping("/words")
-    PermissionUtil.check("system:sensitive:create");
   public ApiResponse<SensitiveWord> createWord(@RequestBody @Valid SensitiveWordCreateRequest req) {
     requireModule();
+    PermissionUtil.check("system:sensitive:create");
     return ApiResponse.success(sensitiveService.createWord(req.getWord()));
   }
 
-    PermissionUtil.check("system:sensitive:delete");
   @DeleteMapping("/words/{id}")
   public ApiResponse<Boolean> deleteWord(@PathVariable long id) {
     requireModule();
+    PermissionUtil.check("system:sensitive:delete");
     return ApiResponse.success(sensitiveService.deleteWord(id));
   }
-    PermissionUtil.check("system:sensitive:query");
 
   @GetMapping("/words/template")
   public void downloadTemplate(jakarta.servlet.http.HttpServletResponse response) {
     requireModule();
+    PermissionUtil.check("system:sensitive:query");
     sensitiveService.downloadTemplate(response);
-    PermissionUtil.check("system:sensitive:create");
   }
 
   @PostMapping("/words/import")
   public ApiResponse<SensitiveImportResult> importWords(@RequestParam("file") MultipartFile file) {
     requireModule();
-    PermissionUtil.check("system:sensitive:query");
+    PermissionUtil.check("system:sensitive:create");
     return ApiResponse.success(sensitiveService.importWords(file));
   }
 
   @GetMapping("/settings")
   public ApiResponse<SensitiveSettingsResponse> getSettings() {
-    PermissionUtil.check("system:sensitive:update");
     requireModule();
+    PermissionUtil.check("system:sensitive:query");
     return ApiResponse.success(sensitiveService.getSettings());
   }
 
   @PostMapping("/settings")
   public ApiResponse<SensitiveSettingsResponse> saveSettings(@RequestBody SensitiveSettingsRequest req) {
     requireModule();
+    PermissionUtil.check("system:sensitive:update");
     return ApiResponse.success(sensitiveService.saveSettings(req));
   }
 }

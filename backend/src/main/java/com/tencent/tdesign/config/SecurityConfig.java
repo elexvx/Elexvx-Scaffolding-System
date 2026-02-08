@@ -76,6 +76,7 @@ public class SecurityConfig {
           "/uploads/system/**",
           "/uploads/business/**",
           "/files/**",
+          "/health",
           "/error",
           "/v3/api-docs/**",
           "/v3/api-docs",
