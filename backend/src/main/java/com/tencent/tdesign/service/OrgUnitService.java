@@ -4,9 +4,11 @@ import com.tencent.tdesign.dto.OrgUnitReorderRequest;
 import com.tencent.tdesign.dto.OrgUnitUpsertRequest;
 import com.tencent.tdesign.entity.OrgUnitEntity;
 import com.tencent.tdesign.entity.UserEntity;
+import com.tencent.tdesign.entity.UserOrgUnitRelation;
 import com.tencent.tdesign.enums.OrgUnitType;
 import com.tencent.tdesign.mapper.OrgUnitLeaderMapper;
 import com.tencent.tdesign.mapper.OrgUnitMapper;
+import com.tencent.tdesign.mapper.UserOrgUnitMapper;
 import com.tencent.tdesign.mapper.UserMapper;
 import com.tencent.tdesign.vo.OrgUnitNode;
 import java.util.ArrayList;
@@ -17,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Stream;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,11 +29,18 @@ public class OrgUnitService {
   private final OrgUnitMapper orgUnitMapper;
   private final OrgUnitLeaderMapper leaderMapper;
   private final UserMapper userMapper;
+  private final UserOrgUnitMapper userOrgUnitMapper;
 
-  public OrgUnitService(OrgUnitMapper orgUnitMapper, OrgUnitLeaderMapper leaderMapper, UserMapper userMapper) {
+  public OrgUnitService(
+    OrgUnitMapper orgUnitMapper,
+    OrgUnitLeaderMapper leaderMapper,
+    UserMapper userMapper,
+    UserOrgUnitMapper userOrgUnitMapper
+  ) {
     this.orgUnitMapper = orgUnitMapper;
     this.leaderMapper = leaderMapper;
     this.userMapper = userMapper;
+    this.userOrgUnitMapper = userOrgUnitMapper;
   }
 
   public List<OrgUnitNode> tree() {
@@ -55,6 +65,7 @@ public class OrgUnitService {
         }
       }
     }
+    attachUserCount(roots);
     return roots;
   }
 
@@ -64,6 +75,7 @@ public class OrgUnitService {
     OrgUnitNode node = toNode(entity);
     Map<Long, OrgUnitNode> nodeMap = Map.of(id, node);
     attachLeaderInfo(nodeMap);
+    node.setUserCount(calcUserCountForOrgUnit(id));
     return node;
   }
 
@@ -130,6 +142,30 @@ public class OrgUnitService {
     }
     leaderMapper.deleteByOrgUnitId(id);
     orgUnitMapper.deleteById(id);
+    return true;
+  }
+
+  @Transactional
+  public boolean addUsers(long orgUnitId, List<Long> userIds) {
+    OrgUnitEntity entity = orgUnitMapper.selectById(orgUnitId);
+    if (entity == null) throw new IllegalArgumentException("机构不存在");
+    List<Long> cleaned = Stream.ofNullable(userIds)
+      .flatMap(List::stream)
+      .filter(Objects::nonNull)
+      .distinct()
+      .toList();
+    if (cleaned.isEmpty()) return true;
+
+    List<UserEntity> existingUsers = userMapper.selectByIds(cleaned);
+    Set<Long> existingUserIds = existingUsers.stream().map(UserEntity::getId).filter(Objects::nonNull).collect(Collectors.toSet());
+    List<Long> invalid = cleaned.stream().filter((id) -> !existingUserIds.contains(id)).toList();
+    if (!invalid.isEmpty()) throw new IllegalArgumentException("存在无效用户: " + invalid);
+
+    Set<Long> alreadyInOrg = new HashSet<>(userOrgUnitMapper.selectUserIdsByOrgUnitId(orgUnitId));
+    List<Long> toInsert = cleaned.stream().filter((uid) -> !alreadyInOrg.contains(uid)).toList();
+    if (toInsert.isEmpty()) return true;
+
+    userOrgUnitMapper.insertOrgUnitUsers(orgUnitId, toInsert);
     return true;
   }
 
@@ -228,5 +264,60 @@ public class OrgUnitService {
         .collect(Collectors.toList());
       node.setLeaderNames(leaderNames);
     }
+  }
+
+  private void attachUserCount(List<OrgUnitNode> roots) {
+    if (roots == null || roots.isEmpty()) return;
+    List<UserOrgUnitRelation> relations = userOrgUnitMapper.selectAll();
+    Map<Long, Set<Long>> direct = new HashMap<>();
+    for (UserOrgUnitRelation rel : relations) {
+      if (rel == null || rel.getOrgUnitId() == null || rel.getUserId() == null) continue;
+      direct.computeIfAbsent(rel.getOrgUnitId(), (k) -> new HashSet<>()).add(rel.getUserId());
+    }
+    for (OrgUnitNode root : roots) {
+      computeUserSet(root, direct);
+    }
+  }
+
+  private Set<Long> computeUserSet(OrgUnitNode node, Map<Long, Set<Long>> direct) {
+    Set<Long> set = new HashSet<>(direct.getOrDefault(node.getId(), Set.of()));
+    if (node.getChildren() != null && !node.getChildren().isEmpty()) {
+      for (OrgUnitNode child : node.getChildren()) {
+        set.addAll(computeUserSet(child, direct));
+      }
+    }
+    node.setUserCount(set.size());
+    return set;
+  }
+
+  private int calcUserCountForOrgUnit(long orgUnitId) {
+    List<OrgUnitEntity> entities = orgUnitMapper.selectAll();
+    Map<Long, List<Long>> children = new HashMap<>();
+    for (OrgUnitEntity e : entities) {
+      Long pid = e.getParentId();
+      if (pid == null || pid == 0) continue;
+      children.computeIfAbsent(pid, (k) -> new ArrayList<>()).add(e.getId());
+    }
+
+    Set<Long> subtreeIds = new HashSet<>();
+    ArrayList<Long> stack = new ArrayList<>();
+    stack.add(orgUnitId);
+    while (!stack.isEmpty()) {
+      Long cur = stack.remove(stack.size() - 1);
+      if (cur == null || !subtreeIds.add(cur)) continue;
+      List<Long> cs = children.get(cur);
+      if (cs != null) stack.addAll(cs);
+    }
+
+    if (subtreeIds.isEmpty()) return 0;
+    List<UserOrgUnitRelation> relations = userOrgUnitMapper.selectAll();
+    Set<Long> userIds = new HashSet<>();
+    for (UserOrgUnitRelation rel : relations) {
+      if (rel == null || rel.getUserId() == null || rel.getOrgUnitId() == null) continue;
+      if (subtreeIds.contains(rel.getOrgUnitId())) {
+        userIds.add(rel.getUserId());
+      }
+    }
+    return userIds.size();
   }
 }

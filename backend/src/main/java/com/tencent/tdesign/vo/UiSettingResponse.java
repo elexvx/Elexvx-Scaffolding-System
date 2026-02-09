@@ -33,6 +33,8 @@ public class UiSettingResponse {
   private Boolean isHeaderFixed;
   private Boolean isUseTabsRouter;
   private Boolean showHeader;
+  private String headerGithubUrl;
+  private String headerHelpUrl;
   private String brandTheme;
   private Boolean smsEnabled;
   private String smsProvider;
@@ -141,6 +143,10 @@ public class UiSettingResponse {
   public void setIsUseTabsRouter(Boolean isUseTabsRouter) { this.isUseTabsRouter = isUseTabsRouter; }
   public Boolean getShowHeader() { return showHeader; }
   public void setShowHeader(Boolean showHeader) { this.showHeader = showHeader; }
+  public String getHeaderGithubUrl() { return headerGithubUrl; }
+  public void setHeaderGithubUrl(String headerGithubUrl) { this.headerGithubUrl = headerGithubUrl; }
+  public String getHeaderHelpUrl() { return headerHelpUrl; }
+  public void setHeaderHelpUrl(String headerHelpUrl) { this.headerHelpUrl = headerHelpUrl; }
   public String getBrandTheme() { return brandTheme; }
   public void setBrandTheme(String brandTheme) { this.brandTheme = brandTheme; }
   public Boolean getSmsEnabled() { return smsEnabled; }

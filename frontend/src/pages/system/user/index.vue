@@ -103,7 +103,6 @@
             <t-form-item label="账号" name="account">
               <t-input
                 v-model="form.account"
-                :disabled="mode === 'edit'"
                 placeholder="如：admin"
                 style="max-width: 500px; width: 100%"
               />
@@ -112,6 +111,22 @@
           <t-col :xs="24" :sm="12">
             <t-form-item label="姓名" name="name">
               <t-input v-model="form.name" placeholder="如：张三" style="max-width: 500px; width: 100%" />
+            </t-form-item>
+          </t-col>
+          <t-col :xs="24" :sm="12">
+            <t-form-item label="昵称" name="nickname">
+              <t-input v-model="form.nickname" placeholder="请输入昵称" style="max-width: 500px; width: 100%" />
+            </t-form-item>
+          </t-col>
+          <t-col :xs="24" :sm="12">
+            <t-form-item label="性别" name="gender">
+              <t-select
+                v-model="form.gender"
+                :options="genderOptions"
+                clearable
+                placeholder="请选择性别"
+                style="max-width: 500px; width: 100%"
+              />
             </t-form-item>
           </t-col>
           <t-col v-if="mode === 'create'" :xs="24" :sm="12">
@@ -144,6 +159,7 @@
                 multiple
                 clearable
                 filterable
+                :disabled="form.departmentIds.length > 0"
                 placeholder="选择机构"
                 :keys="orgTreeKeys"
                 style="max-width: 500px; width: 100%"
@@ -158,8 +174,8 @@
                 multiple
                 clearable
                 filterable
-                :disabled="form.orgUnitIds.length === 0"
-                placeholder="请先选择机构"
+                :disabled="form.orgUnitIds.length > 0"
+                placeholder="选择部门"
                 :keys="orgTreeKeys"
                 style="max-width: 500px; width: 100%"
               />
@@ -185,8 +201,67 @@
             </t-form-item>
           </t-col>
           <t-col :xs="24" :sm="12">
-            <t-form-item label="身份证号码" name="idCard">
-              <t-input v-model="form.idCard" placeholder="身份证号" style="max-width: 500px; width: 100%" />
+            <t-form-item label="省市区" name="provinceId">
+              <t-cascader
+                v-model="areaValue"
+                :options="areaOptions"
+                :loading="areaLoading"
+                value-type="full"
+                :show-all-levels="true"
+                clearable
+                placeholder="请选择省/市/区"
+                @change="handleAreaChange"
+                style="max-width: 500px; width: 100%"
+              />
+            </t-form-item>
+          </t-col>
+          <t-col :xs="24" :sm="12">
+            <t-form-item label="邮编" name="zipCode">
+              <t-input v-model="form.zipCode" placeholder="请输入邮编" style="max-width: 500px; width: 100%" />
+            </t-form-item>
+          </t-col>
+          <t-col :xs="24" :sm="24">
+            <t-form-item label="详细地址" name="address">
+              <t-input v-model="form.address" placeholder="请输入详细地址" style="max-width: 500px; width: 100%" />
+            </t-form-item>
+          </t-col>
+          <t-col :xs="24" :sm="12">
+            <t-form-item label="证件类型" name="idType">
+              <t-select
+                v-model="form.idType"
+                :options="documentTypeOptions"
+                clearable
+                filterable
+                placeholder="请选择证件类型"
+                style="max-width: 500px; width: 100%"
+              />
+            </t-form-item>
+          </t-col>
+          <t-col :xs="24" :sm="12">
+            <t-form-item label="证件号码" name="idCard">
+              <t-input v-model="form.idCard" :placeholder="documentNoPlaceholder" style="max-width: 500px; width: 100%" />
+            </t-form-item>
+          </t-col>
+          <t-col :xs="24" :sm="12">
+            <t-form-item label="证件有效期起" name="idValidFrom">
+              <t-date-picker
+                v-model="form.idValidFrom"
+                clearable
+                format="YYYY-MM-DD"
+                value-type="YYYY-MM-DD"
+                style="max-width: 500px; width: 100%"
+              />
+            </t-form-item>
+          </t-col>
+          <t-col :xs="24" :sm="12">
+            <t-form-item label="证件有效期止" name="idValidTo">
+              <t-date-picker
+                v-model="form.idValidTo"
+                clearable
+                format="YYYY-MM-DD"
+                value-type="YYYY-MM-DD"
+                style="max-width: 500px; width: 100%"
+              />
             </t-form-item>
           </t-col>
           <t-col :xs="24" :sm="12">
@@ -246,7 +321,7 @@ import { computed, onMounted, reactive, ref, watch } from 'vue';
 import ConfirmDrawer from '@/components/ConfirmDrawer.vue';
 import { useDictionary } from '@/hooks/useDictionary';
 import { useUserStore } from '@/store';
-import { buildDictOptions } from '@/utils/dict';
+import { buildDictOptions, parseDictValue } from '@/utils/dict';
 import { hasPerm } from '@/utils/permission';
 import { request } from '@/utils/request';
 
@@ -269,16 +344,37 @@ interface OrgUnitNode {
   children?: OrgUnitNode[];
 }
 
+interface AreaOption {
+  label: string;
+  value: number | string;
+  level?: number;
+  zipCode?: string | null;
+  children?: AreaOption[] | boolean;
+}
+
 interface UserRow {
   id: number;
   guid: string;
   account: string;
   name: string;
+  nickname?: string;
+  gender?: string;
   mobile?: string;
   email?: string;
+  idType?: string;
   idCard?: string;
+  idValidFrom?: string;
+  idValidTo?: string;
   joinDay?: string;
   team?: string;
+  provinceId?: number | null;
+  province?: string;
+  cityId?: number | null;
+  city?: string;
+  districtId?: number | null;
+  district?: string;
+  zipCode?: string;
+  address?: string;
   roles?: string[];
   orgUnitIds?: number[];
   orgUnitNames?: string[];
@@ -328,6 +424,18 @@ const statusRadioOptions = computed(
     }>,
 );
 
+const genderDict = useDictionary('gender');
+const areaDict = useDictionary('address_district');
+const documentTypeDict = useDictionary('id_document_type');
+const genderOptions = computed(() => buildDictOptions(genderDict.items.value));
+const documentTypeOptions = computed(() => buildDictOptions(documentTypeDict.items.value, documentTypeFallbackOptions));
+
+const areaOptions = ref<AreaOption[]>([]);
+const areaValue = ref<Array<number | string>>([]);
+const areaLoadingState = ref(false);
+const areaDictHintMessage = '地址字典未完善，请先在系统字典中完善 address_district 的 province/city/district 字段';
+const areaLoading = computed(() => areaLoadingState.value || areaDict.loading.value);
+
 const passwordPolicy = reactive({
   minLength: 6,
   requireUppercase: false,
@@ -353,12 +461,35 @@ const TYPE_LABEL_MAP = new Map([
   ['用户', 'USER'],
 ]);
 
+const DOC_TYPE_RESIDENT_ID_CARD = 'resident_id_card';
+const DOC_TYPE_PASSPORT = 'passport';
+const RESIDENT_ID_CARD_WEIGHTS = [7, 9, 10, 5, 8, 4, 2, 1, 6, 3, 7, 9, 10, 5, 8, 4, 2];
+const RESIDENT_ID_CARD_CHECKSUM_CODES = ['1', '0', 'X', '9', '8', '7', '6', '5', '4', '3', '2'];
+const documentTypeFallbackOptions: SelectOption[] = [
+  { label: '居民身份证', value: DOC_TYPE_RESIDENT_ID_CARD },
+  { label: '护照', value: DOC_TYPE_PASSPORT },
+];
+
 const normalizeOrgUnitType = (value?: string | null) => (value || '').toString().trim().toUpperCase();
+const resolveOrgUnitType = (node?: OrgUnitNode | null) => {
+  if (!node) return '';
+  const rawType = node.type == null ? '' : String(node.type).trim();
+  let normalized = normalizeOrgUnitType(rawType);
+  if (!normalized && rawType) {
+    const mapped = TYPE_LABEL_MAP.get(rawType);
+    if (mapped) normalized = mapped;
+  }
+  if (!normalized && node.typeLabel) {
+    const label = String(node.typeLabel).trim();
+    normalized = TYPE_LABEL_MAP.get(label) || normalizeOrgUnitType(label);
+  }
+  return normalized;
+};
 
 const buildOrgUnitTree = (nodes: OrgUnitNode[]): OrgUnitNode[] => {
   const result = nodes
     .map((node) => {
-      const isOrg = ORG_UNIT_TYPES.has(node.type || '');
+      const isOrg = ORG_UNIT_TYPES.has(resolveOrgUnitType(node));
       if (!isOrg) return null;
       const children = node.children ? buildOrgUnitTree(node.children) : [];
       return { ...node, children };
@@ -382,18 +513,15 @@ const buildDepartmentSubtree = (node: OrgUnitNode): OrgUnitNode | null => {
   const children = node.children
     ? node.children.map((child) => buildDepartmentSubtree(child)).filter((child): child is OrgUnitNode => !!child)
     : [];
-  const type = node.type || '';
-  const isDept = DEPARTMENT_TYPES.has(type);
-  const isOrg = ORG_UNIT_TYPES.has(type);
+  const resolvedType = resolveOrgUnitType(node);
+  const isDept = DEPARTMENT_TYPES.has(resolvedType);
+  const isOrg = ORG_UNIT_TYPES.has(resolvedType);
   if (!isDept && !isOrg && children.length === 0) return null;
   return { ...node, children, disabled: !isDept };
 };
 
-const buildDepartmentTree = (nodes: OrgUnitNode[], selectedOrgIds: number[]): OrgUnitNode[] => {
-  if (!selectedOrgIds || selectedOrgIds.length === 0) return [];
-  const roots = selectedOrgIds.map((id) => findNodeById(nodes, id)).filter((node): node is OrgUnitNode => !!node);
-  return roots.map((root) => buildDepartmentSubtree(root)).filter((node): node is OrgUnitNode => !!node);
-};
+const buildDepartmentTree = (nodes: OrgUnitNode[]): OrgUnitNode[] =>
+  nodes.map((node) => buildDepartmentSubtree(node)).filter((node): node is OrgUnitNode => !!node);
 
 const collectSelectableIds = (
   nodes: OrgUnitNode[],
@@ -408,12 +536,12 @@ const collectSelectableIds = (
 };
 
 const orgUnitTree = computed(() => buildOrgUnitTree(orgTree.value));
-const departmentTree = computed(() => buildDepartmentTree(orgTree.value, form.orgUnitIds));
+const departmentTree = computed(() => buildDepartmentTree(orgTree.value));
 const orgSelectableIds = computed(() =>
-  collectSelectableIds(orgUnitTree.value, (node) => ORG_UNIT_TYPES.has(node.type || '')),
+  collectSelectableIds(orgUnitTree.value, (node) => ORG_UNIT_TYPES.has(resolveOrgUnitType(node))),
 );
 const departmentSelectableIds = computed(() =>
-  collectSelectableIds(departmentTree.value, (node) => DEPARTMENT_TYPES.has(node.type || '')),
+  collectSelectableIds(departmentTree.value, (node) => DEPARTMENT_TYPES.has(resolveOrgUnitType(node))),
 );
 
 const roleOptions = computed<SelectOption[]>(() => (roles.value || []).map((r) => ({ label: r.name, value: r.name })));
@@ -448,13 +576,26 @@ const formRef = ref<FormInstanceFunctions>();
 const form = reactive({
   account: '',
   name: '',
+  nickname: '',
+  gender: '',
   password: '',
   roles: [] as string[],
   mobile: '',
   email: '',
+  idType: '',
   idCard: '',
+  idValidFrom: '' as string | '',
+  idValidTo: '' as string | '',
   joinDay: '' as string | '',
   team: '',
+  provinceId: null as number | null,
+  province: '',
+  cityId: null as number | null,
+  city: '',
+  districtId: null as number | null,
+  district: '',
+  zipCode: '',
+  address: '',
   orgUnitIds: [] as number[],
   departmentIds: [] as number[],
   status: 1,
@@ -463,6 +604,220 @@ const form = reactive({
 const resetPasswordForm = reactive({
   password: '',
 });
+
+const normalizeDocumentType = (value?: string) => {
+  if (!value) return '';
+  const raw = String(value).trim();
+  if (!raw) return '';
+  const lower = raw.toLowerCase();
+  if (['resident_id_card', 'id_card', 'identity_card', 'china_id_card'].includes(lower) || raw === '居民身份证') {
+    return DOC_TYPE_RESIDENT_ID_CARD;
+  }
+  if (lower === 'passport' || raw === '护照') {
+    return DOC_TYPE_PASSPORT;
+  }
+  return lower;
+};
+
+const isValidResidentIdCard = (value: string) => {
+  const text = value.trim().toUpperCase();
+  if (!/^[1-9]\d{16}[0-9X]$/.test(text)) return false;
+  const birth = text.slice(6, 14);
+  if (!/^\d{8}$/.test(birth)) return false;
+  const y = Number(birth.slice(0, 4));
+  const m = Number(birth.slice(4, 6));
+  const d = Number(birth.slice(6, 8));
+  const date = new Date(y, m - 1, d);
+  if (date.getFullYear() !== y || date.getMonth() !== m - 1 || date.getDate() !== d) return false;
+
+  let sum = 0;
+  for (let i = 0; i < 17; i += 1) sum += Number(text[i]) * RESIDENT_ID_CARD_WEIGHTS[i];
+  return RESIDENT_ID_CARD_CHECKSUM_CODES[sum % 11] === text[17];
+};
+
+const isValidPassport = (value: string) => /^[A-Z0-9]{5,17}$/.test(value.trim().toUpperCase());
+const validateDocumentNumber = (docType?: string, docNo?: string) => {
+  const number = (docNo || '').trim();
+  if (!number) return true;
+  const type = normalizeDocumentType(docType);
+  if (!type) return false;
+  if (type === DOC_TYPE_RESIDENT_ID_CARD) return isValidResidentIdCard(number);
+  if (type === DOC_TYPE_PASSPORT) return isValidPassport(number);
+  return false;
+};
+const validateDocumentDateRange = (from?: string, to?: string) => !from || !to || from <= to;
+
+const documentNoPlaceholder = computed(() => {
+  const type = normalizeDocumentType(form.idType);
+  if (type === DOC_TYPE_RESIDENT_ID_CARD) return '请输入18位居民身份证号码';
+  if (type === DOC_TYPE_PASSPORT) return '请输入护照号码（5-17位字母数字）';
+  return '请先选择证件类型，再输入证件号码';
+});
+
+const toAreaDictValue = (raw: unknown): string | number => {
+  if (typeof raw === 'number' && Number.isFinite(raw)) return raw;
+  if (typeof raw === 'string') return raw;
+  if (typeof raw === 'boolean') return raw ? 'true' : 'false';
+  if (raw == null) return '';
+  return String(raw);
+};
+
+const createDictAreaOptions = (): AreaOption[] => {
+  const areaItems = areaDict.items.value;
+  if (areaItems.length === 0) return [];
+
+  const districtEntries = areaItems
+    .map((item) => {
+      const row = item as any;
+      const province = String(row.province || '').trim();
+      const city = String(row.city || '').trim();
+      const district = String(row.district || '').trim();
+      return { label: item.label, value: toAreaDictValue(item.id ?? parseDictValue(item)), province, city, district };
+    })
+    .filter((entry) => !!entry.province && !!entry.city && !!entry.district);
+
+  const buildDistrictOptions = (province?: string, city?: string, level = 3): AreaOption[] => {
+    if (!province || !city) return [];
+    const unique = new Set<string>();
+    return districtEntries
+      .filter((entry) => entry.province === province && entry.city === city)
+      .filter((entry) => {
+        const key = `${province}/${city}/${entry.district}`;
+        if (unique.has(key)) return false;
+        unique.add(key);
+        return true;
+      })
+      .map((entry) => ({ label: entry.district, value: entry.value, level, children: [] }));
+  };
+
+  const provinceSet = Array.from(new Set(districtEntries.map((entry) => entry.province)));
+  return provinceSet.map((province) => {
+    const provinceEntries = districtEntries.filter((entry) => entry.province === province);
+    const cities = Array.from(new Set(provinceEntries.map((entry) => entry.city))).filter(Boolean);
+    const normalCities = cities.filter((city) => city !== province);
+    const municipalityDistricts = buildDistrictOptions(province, province, 2);
+    const cityNodes: AreaOption[] = normalCities.map((city) => ({
+      label: city,
+      value: `${province}/${city}`,
+      level: 2,
+      children: buildDistrictOptions(province, city, 3),
+    }));
+
+    return {
+      label: province,
+      value: toAreaDictValue(province),
+      level: 1,
+      children: [...municipalityDistricts, ...cityNodes],
+    };
+  });
+};
+
+const areaDictReady = computed(() => {
+  const options = createDictAreaOptions();
+  if (options.length === 0) return false;
+  const hasSecondLevel = options.some((province) => Array.isArray(province.children) && province.children.length > 0);
+  const hasDistrict = options.some(
+    (province) =>
+      Array.isArray(province.children) &&
+      province.children.some((child) => {
+        if (!Array.isArray(child.children)) return false;
+        if (child.children.length === 0) return true;
+        return child.children.length > 0;
+      }),
+  );
+  return hasSecondLevel && hasDistrict;
+});
+
+const ensureAreaDictReady = (notify = true) => {
+  if (areaDictReady.value) return true;
+  areaOptions.value = [];
+  if (notify) MessagePlugin.error(areaDictHintMessage);
+  return false;
+};
+
+const loadRootAreas = async (notify = true) => {
+  areaLoadingState.value = true;
+  try {
+    if (!ensureAreaDictReady(notify)) return false;
+    areaOptions.value = createDictAreaOptions();
+    return true;
+  } finally {
+    areaLoadingState.value = false;
+  }
+};
+
+const resetAreaFields = () => {
+  areaValue.value = [];
+  form.provinceId = null;
+  form.cityId = null;
+  form.districtId = null;
+  form.province = '';
+  form.city = '';
+  form.district = '';
+  form.zipCode = '';
+};
+
+const toNumericId = (value: unknown) => (typeof value === 'number' && Number.isFinite(value) ? value : null);
+
+const syncAreaFromUser = async (data: UserRow) => {
+  if (!(await loadRootAreas(true))) {
+    areaValue.value = [];
+    return;
+  }
+  const province = areaOptions.value.find((item) => item.label === data.province || String(item.value) === data.province);
+  const cities = Array.isArray(province?.children) ? province.children : [];
+  const city = cities.find((item) => item.label === data.city || String(item.value) === data.city);
+  const districts = Array.isArray(city?.children) ? city.children : [];
+  const districtFromCity = districts.find((item) => item.label === data.district || String(item.value) === data.district);
+  const districtFromProvince = cities.find((item) => item.label === data.district || String(item.value) === data.district);
+  const path = (districtFromCity
+    ? [province, city, districtFromCity]
+    : [province, districtFromProvince]
+  ).filter(Boolean) as AreaOption[];
+
+  if (path.length > 0) {
+    areaValue.value = path.map((item) => item.value);
+    form.provinceId = toNumericId(path[0]?.value);
+    form.cityId = path.length >= 3 ? toNumericId(path[1]?.value) : null;
+    form.districtId = toNumericId(path[path.length - 1]?.value);
+    form.province = path[0]?.label || data.province || '';
+    form.city = (path.length >= 3 ? path[1]?.label : form.province) || data.city || '';
+    form.district = path[path.length - 1]?.label || data.district || '';
+  } else if (!data.province && !data.city && !data.district) {
+    resetAreaFields();
+  }
+};
+
+const handleAreaChange = (_value: any, context: any) => {
+  const node = context?.node;
+  if (!node) return resetAreaFields();
+  const pathNodes = node.getPath?.() || [];
+  if (!pathNodes.length) return resetAreaFields();
+
+  const ids = pathNodes.map((item: any) => Number(item.value));
+  const names = pathNodes.map((item: any) => String(item.label || item.data?.label || item.data?.name || ''));
+  form.provinceId = toNumericId(ids[0]);
+  form.province = names[0] ?? '';
+  if (pathNodes.length === 2) {
+    form.cityId = null;
+    form.districtId = toNumericId(ids[1]);
+    form.city = form.province;
+    form.district = names[1] ?? '';
+  } else {
+    form.cityId = toNumericId(ids[1]);
+    form.districtId = toNumericId(ids[2]);
+    form.city = names[1] ?? '';
+    form.district = names[2] ?? '';
+  }
+  form.zipCode = pathNodes[pathNodes.length - 1]?.data?.zipCode || '';
+  areaValue.value = pathNodes.map((item: any) => item.value);
+};
+
+const loadDictionaries = async (force = false) =>
+  Promise.all([genderDict.load(force), areaDict.load(force), documentTypeDict.load(force)]);
+
+const normalizeGender = (value?: string) =>
+  value === 'secret' && genderDict.items.value.some((item) => item.value === 'unknown') ? 'unknown' : value || '';
 
 const minPasswordLength = computed(() =>
   passwordPolicy.minLength && passwordPolicy.minLength > 0 ? passwordPolicy.minLength : 6,
@@ -548,6 +903,41 @@ const rules = computed<Record<string, FormRule[]>>(() => {
     ],
     name: [{ required: true, message: '请输入姓名', type: 'error' }],
     password: mode.value === 'create' ? passwordRules : [],
+    orgUnitIds: [
+      {
+        validator: () => !(form.orgUnitIds.length > 0 && form.departmentIds.length > 0),
+        message: '所属机构与所属部门不能同时选择',
+        type: 'error',
+      },
+    ],
+    departmentIds: [
+      {
+        validator: () => !(form.orgUnitIds.length > 0 && form.departmentIds.length > 0),
+        message: '已选择机构时不能选择部门',
+        type: 'error',
+      },
+    ],
+    idType: [
+      {
+        validator: (val: string) => !form.idCard?.trim() || Boolean(normalizeDocumentType(val)),
+        message: '已填写证件号码时，请先选择证件类型',
+        type: 'error',
+      },
+    ],
+    idCard: [
+      {
+        validator: (val: string) => validateDocumentNumber(form.idType, val),
+        message: '证件号码格式与证件类型不匹配',
+        type: 'error',
+      },
+    ],
+    idValidTo: [
+      {
+        validator: (val: string) => validateDocumentDateRange(form.idValidFrom, val),
+        message: '证件有效期止不能早于证件有效期起',
+        type: 'error',
+      },
+    ],
     roles: [
       {
         validator: (val: string[]) => Array.isArray(val) && val.length > 0,
@@ -576,16 +966,30 @@ const resetRules = computed<Record<string, FormRule[]>>(() => {
 const resetForm = () => {
   form.account = '';
   form.name = '';
+  form.nickname = '';
+  form.gender = '';
   form.password = '';
   form.roles = [];
   form.mobile = '';
   form.email = '';
+  form.idType = '';
   form.idCard = '';
+  form.idValidFrom = '';
+  form.idValidTo = '';
   form.joinDay = '';
   form.team = '';
+  form.provinceId = null;
+  form.province = '';
+  form.cityId = null;
+  form.city = '';
+  form.districtId = null;
+  form.district = '';
+  form.zipCode = '';
+  form.address = '';
   form.orgUnitIds = [];
   form.departmentIds = [];
   form.status = 1;
+  resetAreaFields();
 };
 
 const syncOrgSelection = () => {
@@ -619,6 +1023,18 @@ watch(departmentSelectableIds, syncDepartmentSelection, { immediate: true });
 watch(
   () => form.orgUnitIds,
   () => {
+    if (form.orgUnitIds.length > 0 && form.departmentIds.length > 0) {
+      form.departmentIds = [];
+    }
+    syncOrgSelection();
+    syncDepartmentSelection();
+  },
+  { deep: true },
+);
+watch(
+  () => form.departmentIds,
+  () => {
+    if (form.departmentIds.length > 0 && form.orgUnitIds.length > 0) form.departmentIds = [];
     syncOrgSelection();
     syncDepartmentSelection();
   },
@@ -706,10 +1122,7 @@ const handleOrgSelect = (ctx: any) => {
   const nodeId = Number(rawId);
   if (Number.isNaN(nodeId)) return;
   const resolvedNode = findNodeById(orgTree.value, nodeId);
-  let nodeType = normalizeOrgUnitType(resolvedNode?.type ?? rawNode?.type);
-  if (!nodeType && rawNode?.typeLabel) {
-    nodeType = TYPE_LABEL_MAP.get(rawNode.typeLabel.trim()) || '';
-  }
+  let nodeType = resolveOrgUnitType(resolvedNode || rawNode);
   if (!nodeType) {
     const parentId = resolvedNode?.parentId ?? rawNode?.parentId;
     if (parentId != null && parentId !== 0) {
@@ -732,7 +1145,7 @@ const handleOrgSelect = (ctx: any) => {
   reload();
 };
 
-const openCreate = () => {
+const openCreate = async () => {
   if (!canCreate.value) {
     MessagePlugin.warning('无创建权限');
     return;
@@ -741,9 +1154,46 @@ const openCreate = () => {
   editingId.value = null;
   resetForm();
   drawerVisible.value = true;
+  try {
+    await loadDictionaries(true);
+    areaOptions.value = [];
+    await loadRootAreas(false);
+  } catch (error) {
+    console.error('Load dictionaries failed:', error);
+  }
 };
 
-const openEdit = (row: UserRow) => {
+const applyUserToForm = (data: UserRow) => {
+  form.account = data.account || '';
+  form.name = data.name || '';
+  form.nickname = data.nickname || '';
+  form.gender = normalizeGender(data.gender);
+  form.roles = [...(data.roles || [])];
+  form.mobile = data.mobile || '';
+  form.email = data.email || '';
+  form.idType = normalizeDocumentType(data.idType);
+  form.idCard = data.idCard || '';
+  form.idValidFrom = data.idValidFrom || '';
+  form.idValidTo = data.idValidTo || '';
+  form.joinDay = data.joinDay || '';
+  form.team = data.team || '';
+  form.provinceId = data.provinceId ?? null;
+  form.province = data.province || '';
+  form.cityId = data.cityId ?? null;
+  form.city = data.city || '';
+  form.districtId = data.districtId ?? null;
+  form.district = data.district || '';
+  form.zipCode = data.zipCode || '';
+  form.address = data.address || '';
+  form.orgUnitIds = [...(data.orgUnitIds || [])];
+  form.departmentIds = [...(data.departmentIds || [])];
+  if (form.orgUnitIds.length > 0 && form.departmentIds.length > 0) {
+    form.departmentIds = [];
+  }
+  form.status = data.status ?? 1;
+};
+
+const openEdit = async (row: UserRow) => {
   if (!canUpdate.value) {
     MessagePlugin.warning('无编辑权限');
     return;
@@ -752,18 +1202,17 @@ const openEdit = (row: UserRow) => {
   mode.value = 'edit';
   editingId.value = row.id;
   resetForm();
-  form.account = row.account;
-  form.name = row.name;
-  form.roles = [...(row.roles || [])];
-  form.mobile = row.mobile || '';
-  form.email = row.email || '';
-  form.idCard = row.idCard || '';
-  form.joinDay = row.joinDay || '';
-  form.team = row.team || '';
-  form.orgUnitIds = [...(row.orgUnitIds || [])];
-  form.departmentIds = [...(row.departmentIds || [])];
-  form.status = row.status ?? 1;
+  applyUserToForm(row);
   drawerVisible.value = true;
+  try {
+    await loadDictionaries(true);
+    const detail = await request.get<UserRow>({ url: `/system/user/${row.id}` });
+    applyUserToForm(detail);
+    await syncAreaFromUser(detail);
+  } catch (error) {
+    console.error('Load user detail failed:', error);
+    MessagePlugin.error('加载用户详情失败');
+  }
 };
 
 const submitForm = async () => {
@@ -777,13 +1226,26 @@ const submitForm = async () => {
         data: {
           account: form.account,
           name: form.name,
+          nickname: form.nickname?.trim() || '',
+          gender: form.gender || '',
           password: form.password || undefined,
           roles: form.roles,
           mobile: form.mobile || undefined,
           email: form.email || undefined,
-          idCard: form.idCard || undefined,
+          idType: normalizeDocumentType(form.idType) || '',
+          idCard: form.idCard?.trim() || '',
+          idValidFrom: form.idValidFrom || undefined,
+          idValidTo: form.idValidTo || undefined,
           joinDay: form.joinDay || undefined,
           team: form.team || undefined,
+          provinceId: form.provinceId,
+          province: form.province || '',
+          cityId: form.cityId,
+          city: form.city || '',
+          districtId: form.districtId,
+          district: form.district || '',
+          zipCode: form.zipCode || '',
+          address: form.address?.trim() || '',
           orgUnitIds: form.orgUnitIds,
           departmentIds: form.departmentIds,
           status: form.status,
@@ -794,13 +1256,27 @@ const submitForm = async () => {
       await request.put({
         url: `/system/user/${editingId.value}`,
         data: {
+          account: form.account,
           name: form.name,
+          nickname: form.nickname?.trim() || '',
+          gender: form.gender || '',
           roles: form.roles,
           mobile: form.mobile || undefined,
           email: form.email || undefined,
-          idCard: form.idCard || undefined,
+          idType: normalizeDocumentType(form.idType) || '',
+          idCard: form.idCard?.trim() || '',
+          idValidFrom: form.idValidFrom || undefined,
+          idValidTo: form.idValidTo || undefined,
           joinDay: form.joinDay || undefined,
           team: form.team || undefined,
+          provinceId: form.provinceId,
+          province: form.province || '',
+          cityId: form.cityId,
+          city: form.city || '',
+          districtId: form.districtId,
+          district: form.district || '',
+          zipCode: form.zipCode || '',
+          address: form.address?.trim() || '',
           orgUnitIds: form.orgUnitIds,
           departmentIds: form.departmentIds,
           status: form.status,
@@ -945,6 +1421,7 @@ const flattenOrgIds = (nodes: OrgUnitNode[]): number[] => {
 
 onMounted(async () => {
   void statusDict.load();
+  void loadDictionaries();
   await loadRoles();
   await loadOrgTree();
   await loadPasswordPolicy();

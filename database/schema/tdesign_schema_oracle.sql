@@ -163,7 +163,9 @@ CREATE TABLE ui_layout_settings (
   is_sidebar_fixed NUMBER(3),
   is_header_fixed NUMBER(3),
   is_use_tabs_router NUMBER(3),
-  show_header NUMBER(3)
+  show_header NUMBER(3),
+  header_github_url VARCHAR2(255),
+  header_help_url VARCHAR2(255)
 );
 
 CREATE TABLE ui_theme_settings (

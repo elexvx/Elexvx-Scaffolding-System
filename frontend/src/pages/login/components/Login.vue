@@ -493,7 +493,17 @@ const onSubmit = async (ctx: SubmitContext) => {
     }
     throw new Error(t('pages.login.loginFailed'));
   } catch (e: any) {
-    MessagePlugin.error(String(e?.message || t('pages.login.loginFailed')));
+    const rawMsg = String(e?.message || '').trim();
+    const msg = rawMsg
+      ? /network error/i.test(rawMsg)
+        ? '网络异常，请检查网络或稍后重试'
+        : /timeout/i.test(rawMsg)
+          ? '请求超时，请稍后重试'
+          : /request interface error/i.test(rawMsg)
+            ? '接口响应异常，请稍后重试'
+            : rawMsg
+      : t('pages.login.loginFailed');
+    MessagePlugin.error(msg);
     loadCaptcha();
   }
 };

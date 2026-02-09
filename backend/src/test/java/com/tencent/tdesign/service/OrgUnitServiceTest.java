@@ -10,6 +10,7 @@ import com.tencent.tdesign.dto.OrgUnitUpsertRequest;
 import com.tencent.tdesign.entity.OrgUnitEntity;
 import com.tencent.tdesign.mapper.OrgUnitLeaderMapper;
 import com.tencent.tdesign.mapper.OrgUnitMapper;
+import com.tencent.tdesign.mapper.UserOrgUnitMapper;
 import com.tencent.tdesign.mapper.UserMapper;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -22,8 +23,9 @@ public class OrgUnitServiceTest {
     OrgUnitMapper orgUnitMapper = mock(OrgUnitMapper.class);
     OrgUnitLeaderMapper leaderMapper = mock(OrgUnitLeaderMapper.class);
     UserMapper userMapper = mock(UserMapper.class);
+    UserOrgUnitMapper userOrgUnitMapper = mock(UserOrgUnitMapper.class);
 
-    OrgUnitService service = new OrgUnitService(orgUnitMapper, leaderMapper, userMapper);
+    OrgUnitService service = new OrgUnitService(orgUnitMapper, leaderMapper, userMapper, userOrgUnitMapper);
 
     OrgUnitEntity existing = new OrgUnitEntity();
     existing.setId(10L);
@@ -33,9 +35,11 @@ public class OrgUnitServiceTest {
     existing.setSortOrder(1);
     existing.setStatus(1);
     when(orgUnitMapper.selectById(10L)).thenReturn(existing);
+    when(orgUnitMapper.selectAll()).thenReturn(List.of(existing));
 
     when(leaderMapper.selectLeaderIds(10L)).thenReturn(List.of());
     when(userMapper.selectByIds(any())).thenReturn(List.of());
+    when(userOrgUnitMapper.selectAll()).thenReturn(List.of());
 
     OrgUnitUpsertRequest req = new OrgUnitUpsertRequest();
     req.setParentId(null);

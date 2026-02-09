@@ -67,9 +67,14 @@
     flex-direction: column;
   }
 
+  &-wrapper > .t-layout {
+    flex: 1;
+    min-height: 0;
+  }
+
   &-main-wrapper {
-    height: 500px;
-    overflow: scroll;
+    height: 100%;
+    overflow: auto;
   }
 
   &-side-nav-layout {
@@ -83,8 +88,9 @@
   }
 
   &-layout {
-    height: calc(100vh - var(--td-starter-header-height));
-    overflow-y: scroll;
+    height: 100%;
+    overflow-y: auto;
+    min-height: 0;
 
     &-tabs-nav {
       max-width: 100%;

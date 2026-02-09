@@ -14,7 +14,7 @@
           <t-button variant="outline" :loading="loading" @click="loadModules">刷新</t-button>
           <t-upload
             v-model="installPackages"
-            action="/api/system/modules/package/install"
+            :action="installAction"
             :headers="uploadHeaders"
             theme="file"
             :auto-upload="true"
@@ -47,7 +47,15 @@
           </template>
           <template #op="{ row }">
             <t-space>
-              <t-button size="small" variant="outline" @click="downloadPackage(row)">下载包</t-button>
+              <t-button
+                size="small"
+                variant="outline"
+                :loading="isActionLoading(row.moduleKey, 'download')"
+                :disabled="isActionLoading(row.moduleKey, 'download')"
+                @click="downloadPackage(row)"
+              >
+                下载包
+              </t-button>
               <t-button
                 size="small"
                 theme="primary"
@@ -82,9 +90,16 @@ import { DialogPlugin, MessagePlugin } from 'tdesign-vue-next';
 import { computed, onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 
+import { importExportApi } from '@/api/importExport';
 import type { ModuleRegistryItem } from '@/api/system/module';
-import { disableModule, enableModule, fetchModules, installModule, uninstallModule } from '@/api/system/module';
-import { useUserStore } from '@/store';
+import {
+  disableModule,
+  enableModule,
+  fetchModules,
+  installModule,
+  uninstallModule,
+} from '@/api/system/module';
+import { usePermissionStore, useUserStore } from '@/store';
 
 interface ModuleTableRow extends ModuleRegistryItem {
   source?: string;
@@ -96,10 +111,24 @@ const modules = ref<ModuleTableRow[]>([]);
 const actionLoading = ref<Record<string, boolean>>({});
 const route = useRoute();
 const userStore = useUserStore();
+const permissionStore = usePermissionStore();
 const installPackages = ref<any[]>([]);
 const uploadHeaders = computed(() => ({
   Authorization: userStore.token,
 }));
+const installAction = computed(() => importExportApi.modules.installPackageAction());
+
+const refreshNavigation = async () => {
+  try {
+    await userStore.getUserInfo(true);
+  } catch (_e) {
+  }
+  try {
+    await permissionStore.refreshAsyncRoutes(userStore.userInfo);
+  } catch (error: any) {
+    MessagePlugin.warning(error?.message || '导航刷新失败');
+  }
+};
 
 const normalizeModuleKey = (value?: string | null) =>
   String(value || '')
@@ -220,6 +249,7 @@ const install = async (row: ModuleTableRow) => {
   try {
     await installModule(row.moduleKey);
     MessagePlugin.success('模块安装完成');
+    await refreshNavigation();
   } catch (error: any) {
     MessagePlugin.error(error?.message || '模块安装失败');
   } finally {
@@ -228,13 +258,22 @@ const install = async (row: ModuleTableRow) => {
   }
 };
 
-const downloadPackage = (row: ModuleTableRow) => {
+const downloadPackage = async (row: ModuleTableRow) => {
   const key = normalizeKey(row.moduleKey);
-  window.open(`/api/system/modules/${key}/package`, '_blank');
+  setActionLoading(row.moduleKey, 'download', true);
+  try {
+    const response = await importExportApi.modules.downloadPackage(key);
+    await importExportApi.utils.downloadBlobResponse(response as any, `${key}.zip`);
+  } catch (error: any) {
+    MessagePlugin.error(error?.message || '下载失败');
+  } finally {
+    setActionLoading(row.moduleKey, 'download', false);
+  }
 };
 
 const handlePackageInstallSuccess = () => {
   MessagePlugin.success('模块包已上传并开始安装');
+  void refreshNavigation();
   void loadModules();
 };
 
@@ -255,6 +294,7 @@ const toggleEnabled = async (row: ModuleTableRow, enabled: boolean) => {
       await disableModule(row.moduleKey);
       MessagePlugin.success('模块已禁用');
     }
+    await refreshNavigation();
   } catch (error: any) {
     MessagePlugin.error(error?.message || '模块状态更新失败');
   } finally {
@@ -268,6 +308,7 @@ const performUninstall = async (row: ModuleTableRow) => {
   try {
     await uninstallModule(row.moduleKey);
     MessagePlugin.success('模块已卸载');
+    await refreshNavigation();
   } catch (error: any) {
     MessagePlugin.error(error?.message || '模块卸载失败');
   } finally {

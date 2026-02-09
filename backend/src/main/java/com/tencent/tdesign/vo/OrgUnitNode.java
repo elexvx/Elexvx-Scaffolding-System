@@ -13,6 +13,7 @@ public class OrgUnitNode {
   private String typeLabel;
   private Integer sortOrder;
   private Integer status;
+  private Integer userCount;
   private String phone;
   private String email;
   private List<Long> leaderIds = new ArrayList<>();
@@ -83,6 +84,14 @@ public class OrgUnitNode {
 
   public void setStatus(Integer status) {
     this.status = status;
+  }
+
+  public Integer getUserCount() {
+    return userCount;
+  }
+
+  public void setUserCount(Integer userCount) {
+    this.userCount = userCount;
   }
 
   public String getPhone() {

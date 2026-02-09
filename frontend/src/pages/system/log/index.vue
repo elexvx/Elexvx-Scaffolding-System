@@ -43,6 +43,7 @@ import type { PageInfo, PrimaryTableCol, SelectOption } from 'tdesign-vue-next';
 import { MessagePlugin } from 'tdesign-vue-next';
 import { computed, onMounted, reactive, ref } from 'vue';
 
+import { importExportApi } from '@/api/importExport';
 import { useDictionary } from '@/hooks/useDictionary';
 import { buildDictOptions, resolveLabel, resolveTagTheme } from '@/utils/dict';
 import { request } from '@/utils/request';
@@ -174,43 +175,17 @@ const resetFilters = () => {
   reload();
 };
 
-const resolveFilename = (disposition?: string) => {
-  if (!disposition) return 'operation-logs.csv';
-  const match = disposition.match(/filename\*=UTF-8''([^;]+)|filename="?([^";]+)"?/i);
-  const raw = match?.[1] || match?.[2];
-  if (!raw) return 'operation-logs.csv';
-  try {
-    return decodeURIComponent(raw);
-  } catch {
-    return raw;
-  }
-};
-
 const exportCsv = async () => {
   exporting.value = true;
   try {
     const { start, end } = resolveDateParams();
-    const res: any = await request.get(
-      {
-        url: '/system/log/export',
-        params: {
-          keyword: keyword.value || undefined,
-          action: action.value || undefined,
-          start: start || undefined,
-          end: end || undefined,
-        },
-        responseType: 'blob',
-      },
-      { isTransformResponse: false, isReturnNativeResponse: true },
-    );
-    const blob = res?.data instanceof Blob ? res.data : new Blob([res?.data || ''], { type: 'text/csv' });
-    const filename = resolveFilename(res?.headers?.['content-disposition']);
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename;
-    link.click();
-    window.URL.revokeObjectURL(url);
+    const res = await importExportApi.log.exportCsv({
+      keyword: keyword.value || undefined,
+      action: action.value || undefined,
+      start: start || undefined,
+      end: end || undefined,
+    });
+    await importExportApi.utils.downloadBlobResponse(res as any, 'operation-logs.xlsx');
   } catch (err: any) {
     MessagePlugin.error(String(err?.message || '导出失败'));
   } finally {

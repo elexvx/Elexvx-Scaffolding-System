@@ -143,21 +143,21 @@ public class AuthService {
     if (Boolean.TRUE.equals(captchaEnabled)) {
       boolean ok = captchaService.verify(req.getCaptchaId(), captchaCode);
       if (!ok)
-        throw new IllegalArgumentException("Verification code invalid or expired");
+        throw new IllegalArgumentException("验证码错误或已过期");
     }
 
     UserEntity user = userMapper.selectByAccount(account);
     if (user == null)
-      throw new IllegalArgumentException("Invalid account or password");
+      throw new IllegalArgumentException("账号或密码错误");
 
     // 闂傚倷娴囧畷鍨叏閻㈢绀夌憸蹇曞垝婵犳艾绠ｉ柨婵嗗暕濮规姊虹粔鍡楀濞堟梻绱掗埀顒€鐣濋崟顒傚幈濠电娀娼уΛ妤咁敂閳哄懏鐓熼幖娣€ら崵娆愩亜椤撶偞鍋ョ€规洖銈稿畷鍗炍旈埀顒勫汲閻斿憡鍙忛柨婵嗘噽婢э箓鏌?
     // 防御性校验：避免账号归一化/大小写差异导致“查到的用户与输入账号不一致”的异常场景。
     if (!user.getAccount().equals(account)) {
-      throw new IllegalArgumentException("Invalid account or password");
+      throw new IllegalArgumentException("账号或密码错误");
     }
 
     if (!BCrypt.checkpw(req.getPassword(), user.getPasswordHash())) {
-      throw new IllegalArgumentException("Invalid account or password");
+      throw new IllegalArgumentException("账号或密码错误");
     }
 
     return completeLogin(user, req.getForce());
@@ -172,14 +172,14 @@ public class AuthService {
     String phone = normalizePhone(req.getPhone());
     UserEntity user = findUserByPhone(phone);
     if (user == null) {
-      throw new IllegalArgumentException("Phone not registered");
+      throw new IllegalArgumentException("手机号未注册");
     }
 
     com.tencent.tdesign.verification.VerificationProvider provider = verificationProviderRegistry.require("sms");
     try {
       provider.sendCode(setting, phone, getClientIp(), req.getProvider());
     } catch (Exception e) {
-      throw new IllegalArgumentException("短信验证码发送失败：" + e.getMessage());
+      throw new IllegalArgumentException("短信验证码发送失败，请稍后重试");
     }
     return new SmsSendResponse(provider.getExpiresInSeconds());
   }
@@ -193,11 +193,11 @@ public class AuthService {
     String code = normalizeCode(req.getCode());
     boolean ok = smsCodeService.verify(phone, code);
     if (!ok)
-      throw new IllegalArgumentException("Invalid verification code");
+      throw new IllegalArgumentException("验证码错误");
 
     UserEntity user = findUserByPhone(phone);
     if (user == null) {
-      throw new IllegalArgumentException("Phone not registered");
+      throw new IllegalArgumentException("手机号未注册");
     }
     return completeLogin(user, req.getForce());
   }
@@ -211,14 +211,14 @@ public class AuthService {
     String email = normalizeEmail(req.getEmail());
     UserEntity user = findUserByEmail(email);
     if (user == null) {
-      throw new IllegalArgumentException("Email not registered");
+      throw new IllegalArgumentException("邮箱未注册");
     }
 
     com.tencent.tdesign.verification.VerificationProvider provider = verificationProviderRegistry.require("email");
     try {
       provider.sendCode(setting, email, getClientIp(), null);
     } catch (Exception e) {
-      throw new IllegalArgumentException("邮箱验证码发送失败：" + e.getMessage());
+      throw new IllegalArgumentException("邮箱验证码发送失败，请稍后重试");
     }
     return new SmsSendResponse(provider.getExpiresInSeconds());
   }
@@ -232,11 +232,11 @@ public class AuthService {
     String code = normalizeCode(req.getCode());
     boolean ok = emailCodeService.verify(email, code);
     if (!ok)
-      throw new IllegalArgumentException("Invalid verification code");
+      throw new IllegalArgumentException("验证码错误");
 
     UserEntity user = findUserByEmail(email);
     if (user == null) {
-      throw new IllegalArgumentException("Email not registered");
+      throw new IllegalArgumentException("邮箱未注册");
     }
     return completeLogin(user, req.getForce());
   }
@@ -280,7 +280,7 @@ public class AuthService {
 
   private void ensureUserActive(UserEntity user) {
     if (user.getStatus() != null && user.getStatus() == 0) {
-      throw new IllegalArgumentException("Account disabled");
+      throw new IllegalArgumentException("账号已禁用");
     }
   }
 
@@ -290,28 +290,28 @@ public class AuthService {
 
   private void ensureSmsEnabled(VerificationSetting setting) {
     if (smsSenderService.isEmpty()) {
-      throw new IllegalArgumentException("SMS module not enabled");
+      throw new IllegalArgumentException("短信模块未启用");
     }
     if (setting == null || !Boolean.TRUE.equals(setting.getSmsEnabled())) {
-      throw new IllegalArgumentException("SMS verification is disabled");
+      throw new IllegalArgumentException("短信验证已关闭");
     }
   }
 
   private void ensureEmailEnabled(VerificationSetting setting) {
     if (emailSenderService.isEmpty()) {
-      throw new IllegalArgumentException("Email module not enabled");
+      throw new IllegalArgumentException("邮箱模块未启用");
     }
     if (setting == null || !Boolean.TRUE.equals(setting.getEmailEnabled())) {
-      throw new IllegalArgumentException("Email verification is disabled");
+      throw new IllegalArgumentException("邮箱验证已关闭");
     }
   }
 
   private SmsSenderService requireSmsSender() {
-    return smsSenderService.orElseThrow(() -> new IllegalArgumentException("SMS module not enabled"));
+    return smsSenderService.orElseThrow(() -> new IllegalArgumentException("短信模块未启用"));
   }
 
   private EmailSenderService requireEmailSender() {
-    return emailSenderService.orElseThrow(() -> new IllegalArgumentException("Email module not enabled"));
+    return emailSenderService.orElseThrow(() -> new IllegalArgumentException("邮箱模块未启用"));
   }
 
   private void ensureEmailConfig(VerificationSetting setting) {
@@ -321,18 +321,18 @@ public class AuthService {
         || setting.getEmailPort() <= 0
         || isBlank(setting.getEmailUsername())
         || isBlank(setting.getEmailPassword())) {
-      throw new IllegalArgumentException("Email config incomplete");
+      throw new IllegalArgumentException("邮箱配置不完整");
     }
   }
 
   private void ensureSmsConfig(VerificationSetting setting) {
     if (setting == null)
-      throw new IllegalArgumentException("SMS config missing");
+      throw new IllegalArgumentException("短信配置缺失");
     SmsSenderService sender = requireSmsSender();
     boolean aliyunEnabled = sender.isAliyunEnabled(setting);
     boolean tencentEnabled = sender.isTencentEnabled(setting);
     if (!aliyunEnabled && !tencentEnabled) {
-      throw new IllegalArgumentException("SMS config incomplete");
+      throw new IllegalArgumentException("短信配置不完整");
     }
     if (aliyunEnabled) {
       boolean accessKeyMissing = isBlank(setting.getSmsAliyunAccessKeyId());
@@ -341,7 +341,7 @@ public class AuthService {
       boolean templateMissing = isBlank(setting.getSmsAliyunTemplateCode());
       boolean regionMissing = isBlank(setting.getSmsAliyunRegionId());
       if (accessKeyMissing || secretMissing || signMissing || templateMissing || regionMissing) {
-        throw new IllegalArgumentException("SMS config incomplete");
+        throw new IllegalArgumentException("短信配置不完整");
       }
     }
     if (tencentEnabled) {
@@ -351,7 +351,7 @@ public class AuthService {
           || isBlank(setting.getSmsTencentTemplateId())
           || isBlank(setting.getSmsTencentRegion())
           || isBlank(setting.getSmsSdkAppId())) {
-        throw new IllegalArgumentException("SMS config incomplete");
+        throw new IllegalArgumentException("短信配置不完整");
       }
     }
   }
@@ -935,7 +935,7 @@ public class AuthService {
   @Transactional
   public boolean changePassword(ChangePasswordRequest req) {
     if (!req.getNewPassword().equals(req.getConfirmPassword())) {
-      throw new IllegalArgumentException("New passwords do not match");
+      throw new IllegalArgumentException("两次新密码不一致");
     }
     // 闂傚倸鍊风粈渚€骞栭銈囩煋闁绘垶鏋荤紞鏍ь熆鐠虹尨鍔熼柡鍡愬€曢湁闁挎繂鎳忛幆鍫ユ倵閸偆鍙€闁哄被鍊栭幈銊╁箛椤戣棄浜炬俊銈呮噹閺勩儵鏌ｅΟ鑲╁笡闁稿绲介湁闁挎繂娴傞悞楣冩煃闁垮顥堥柡宀嬬秮婵″爼宕ㄩ鍛紗闁诲孩顔栭崰鏇犲垝濞嗘挸鏋侀柟鍓х帛閸嬫劙姊婚崼鐔恒€掗柣鎾村灴濮婄粯鎷呴崨濠冨創闂佺锕﹂幊鎾烩€﹂崹顕呮建闁逞屽墴楠炲棙绗熼埀顒勭嵁鐎ｎ喗鏅滈柦妯侯槸婢规挸鈹戦悙鑸靛涧缂佹彃娼￠幃娲棘濞嗗墽鍔烽梺瑙勫婢ф鎮?
     // 新密码必须满足系统密码策略（强度/长度/历史等约束）。
@@ -944,10 +944,10 @@ public class AuthService {
 
     long userId = authContext.requireUserId();
     UserEntity u = Optional.ofNullable(userMapper.selectById(userId))
-        .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        .orElseThrow(() -> new IllegalArgumentException("用户不存在"));
 
     if (!BCrypt.checkpw(req.getOldPassword(), u.getPasswordHash())) {
-      throw new IllegalArgumentException("Current password is incorrect");
+      throw new IllegalArgumentException("当前密码不正确");
     }
 
     u.setPasswordHash(BCrypt.hashpw(req.getNewPassword(), BCrypt.gensalt()));
@@ -962,7 +962,7 @@ public class AuthService {
   public boolean resetPassword(ForgotPasswordRequest req) {
     String account = normalizeAccount(req.getAccount());
     if (!req.getNewPassword().equals(req.getConfirmPassword())) {
-      throw new IllegalArgumentException("New passwords do not match");
+      throw new IllegalArgumentException("两次新密码不一致");
     }
     // 闂傚倸鍊风粈渚€骞栭銈囩煋闁绘垶鏋荤紞鏍ь熆鐠虹尨鍔熼柡鍡愬€曢湁闁挎繂鎳忛幆鍫ユ倵閸偆鍙€闁哄被鍊栭幈銊╁箛椤戣棄浜炬俊銈呮噹閺勩儵鏌ｅΟ鑲╁笡闁稿绲介湁闁挎繂娴傞悞楣冩煃闁垮顥堥柡宀嬬秮婵″爼宕ㄩ鍛紗闁诲孩顔栭崰鏇犲垝濞嗘挸鏋侀柟鍓х帛閸嬫劙姊婚崼鐔恒€掗柣鎾村灴濮婄粯鎷呴崨濠冨創闂佺锕﹂幊鎾烩€﹂崹顕呮建闁逞屽墴楠炲棙绗熼埀顒勭嵁鐎ｎ喗鏅滈柦妯侯槸婢规挸鈹戦悙鑸靛涧缂佹彃娼￠幃娲棘濞嗗墽鍔烽梺瑙勫婢ф鎮?
     passwordPolicyService.validate(req.getNewPassword());
@@ -973,17 +973,17 @@ public class AuthService {
     String code = normalizeCode(req.getCode());
     boolean verified = smsCodeService.verify(phone, code);
     if (!verified) {
-      throw new IllegalArgumentException("Verification code invalid or expired");
+      throw new IllegalArgumentException("验证码错误或已过期");
     }
 
     UserEntity user = Optional.ofNullable(userMapper.selectByAccount(account))
-        .orElseThrow(() -> new IllegalArgumentException("Account not found"));
+        .orElseThrow(() -> new IllegalArgumentException("账号不存在"));
     String normalizedPhone = normalizePhone(user.getMobile());
     if (normalizedPhone.isBlank()) {
-      throw new IllegalArgumentException("Phone not registered");
+      throw new IllegalArgumentException("手机号未注册");
     }
     if (!phone.equals(normalizedPhone)) {
-      throw new IllegalArgumentException("Phone does not match account");
+      throw new IllegalArgumentException("手机号与账号不匹配");
     }
 
     user.setPasswordHash(BCrypt.hashpw(req.getNewPassword(), BCrypt.gensalt()));
@@ -997,7 +997,7 @@ public class AuthService {
   public UserInfoResponse switchRoles(RoleSwitchRequest req) {
     long userId = authContext.requireUserId();
     if (!permissionFacade.isAdminAccount(userId)) {
-      throw new IllegalArgumentException("Only admin can switch demo roles");
+      throw new IllegalArgumentException("仅管理员可切换演示角色");
     }
     if (req.getRoles() == null || req.getRoles().isEmpty()) {
       permissionFacade.clearAssumedRoles(userId);
@@ -1010,7 +1010,7 @@ public class AuthService {
   public List<String> listAllRoleNames() {
     long userId = authContext.requireUserId();
     if (!permissionFacade.isAdminAccount(userId)) {
-      throw new IllegalArgumentException("Only admin can view roles");
+      throw new IllegalArgumentException("仅管理员可查看角色");
     }
     return roleMapper.selectAll().stream().map(r -> r.getName()).toList();
   }
@@ -1032,16 +1032,16 @@ public class AuthService {
     Boolean captchaEnabled = securitySettingService.getOrCreate().getCaptchaEnabled();
     if (Boolean.TRUE.equals(captchaEnabled)) {
       if (req.getCaptchaId() == null || req.getCaptchaId().isBlank() || req.getCaptchaCode() == null || req.getCaptchaCode().isBlank()) {
-        throw new IllegalArgumentException("Verification code is required");
+        throw new IllegalArgumentException("请输入验证码");
       }
       String captchaCode = normalizeCode(req.getCaptchaCode());
       boolean ok = captchaService.verify(req.getCaptchaId(), captchaCode);
       if (!ok) {
-        throw new IllegalArgumentException("Verification code invalid or expired");
+        throw new IllegalArgumentException("验证码错误或已过期");
       }
     }
     if (!req.getPassword().equals(req.getConfirmPassword())) {
-      throw new IllegalArgumentException("Passwords do not match");
+      throw new IllegalArgumentException("两次密码不一致");
     }
     passwordPolicyService.validate(req.getPassword());
 

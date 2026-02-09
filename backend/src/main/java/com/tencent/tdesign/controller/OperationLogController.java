@@ -3,23 +3,23 @@ package com.tencent.tdesign.controller;
 import com.tencent.tdesign.service.OperationLogService;
 import com.tencent.tdesign.security.AccessControlService;
 import com.tencent.tdesign.security.AuthContext;
+import com.tencent.tdesign.util.ExcelExportUtil;
 import com.tencent.tdesign.util.PermissionUtil;
 import com.tencent.tdesign.vo.ApiResponse;
 import com.tencent.tdesign.vo.OperationLogVO;
 import com.tencent.tdesign.vo.PageResult;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Objects;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 @RestController
 @RequestMapping("/system/log")
@@ -67,34 +67,42 @@ public class OperationLogController {
     LocalDate endDate = parseDate(end);
     Long userId = accessControlService.hasRole("admin") ? null : authContext.requireUserId();
     List<OperationLogVO> list = service.listAll(keyword, action, startDate, endDate, userId);
+    Workbook workbook = new XSSFWorkbook();
+    try {
+      Sheet sheet = workbook.createSheet("操作日志");
+      var headerStyle = ExcelExportUtil.createHeaderStyle(workbook);
+      var bodyStyle = ExcelExportUtil.createBodyStyle(workbook);
+      String[] headers = new String[] { "序号", "操作类型", "模块", "详情", "账号", "IP", "设备信息", "时间" };
+      ExcelExportUtil.writeHeaderRow(sheet, 0, headers, headerStyle);
 
-    StringBuilder sb = new StringBuilder();
-    sb.append("id,action,module,detail,account,ip,device,createdAt\n");
-    for (OperationLogVO row : list) {
-      sb.append(safe(row.getId()))
-        .append(',')
-        .append(safe(row.getAction()))
-        .append(',')
-        .append(safe(row.getModule()))
-        .append(',')
-        .append(safe(row.getDetail()))
-        .append(',')
-        .append(safe(row.getAccount()))
-        .append(',')
-        .append(safe(row.getIpAddress()))
-        .append(',')
-        .append(safe(row.getDeviceInfo()))
-        .append(',')
-        .append(safe(row.getCreatedAt()))
-        .append('\n');
+      int rowIndex = 1;
+      for (OperationLogVO row : list) {
+        Row r = sheet.createRow(rowIndex++);
+        r.createCell(0).setCellValue(rowIndex - 1);
+        r.createCell(1).setCellValue(row.getAction() == null ? "" : row.getAction());
+        r.createCell(2).setCellValue(row.getModule() == null ? "" : row.getModule());
+        r.createCell(3).setCellValue(row.getDetail() == null ? "" : row.getDetail());
+        r.createCell(4).setCellValue(row.getAccount() == null ? "" : row.getAccount());
+        r.createCell(5).setCellValue(row.getIpAddress() == null ? "" : row.getIpAddress());
+        r.createCell(6).setCellValue(row.getDeviceInfo() == null ? "" : row.getDeviceInfo());
+        r.createCell(7).setCellValue(row.getCreatedAt() == null ? "" : String.valueOf(row.getCreatedAt()));
+        ExcelExportUtil.applyRowCellStyle(r, headers.length, bodyStyle);
+      }
+
+      for (int i = 0; i < headers.length; i++) {
+        sheet.autoSizeColumn(i);
+        int width = Math.min(Math.max(sheet.getColumnWidth(i) + 512, 12 * 256), 80 * 256);
+        sheet.setColumnWidth(i, width);
+      }
+
+      String fileName = "operation-logs-" + LocalDate.now().format(DATE_FORMAT) + ".xlsx";
+      return ExcelExportUtil.toXlsxResponse(workbook, fileName);
+    } finally {
+      try {
+        workbook.close();
+      } catch (Exception ignored) {
+      }
     }
-
-    String fileName = "operation-logs-" + LocalDate.now().format(DATE_FORMAT) + ".csv";
-    String encoded = URLEncoder.encode(fileName, StandardCharsets.UTF_8);
-    HttpHeaders headers = new HttpHeaders();
-    headers.setContentType(new MediaType("text", "csv", Objects.requireNonNull(StandardCharsets.UTF_8)));
-    headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + encoded + "\"");
-    return ResponseEntity.ok().headers(headers).body(sb.toString().getBytes(StandardCharsets.UTF_8));
   }
 
   private LocalDate parseDate(String value) {
@@ -102,13 +110,5 @@ public class OperationLogController {
     return LocalDate.parse(value, DATE_FORMAT);
   }
 
-  private String safe(Object value) {
-    if (value == null) return "";
-    String s = String.valueOf(value);
-    s = s.replace("\"", "\"\"");
-    if (s.contains(",") || s.contains("\n")) {
-      return "\"" + s + "\"";
-    }
-    return s;
-  }
+  
 }

@@ -7,12 +7,12 @@ import com.tencent.tdesign.dto.DictionaryUpdateRequest;
 import com.tencent.tdesign.entity.SysDict;
 import com.tencent.tdesign.entity.SysDictItem;
 import com.tencent.tdesign.mapper.SysDictMapper;
+import com.tencent.tdesign.util.ExcelExportUtil;
 import com.tencent.tdesign.util.PermissionUtil;
 import com.tencent.tdesign.vo.DictionaryImportResult;
 import com.tencent.tdesign.vo.PageResult;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
@@ -26,8 +26,7 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -350,7 +349,7 @@ public class DictionaryService {
         item.setDictId(dictId);
         item.setLabel(row.label.trim());
         item.setValue(value);
-        item.setValueType(normalizeValueType(row.valueType));
+        item.setValueType(inferValueTypeFromValue(value));
         item.setStatus(row.status == null ? 1 : row.status);
         item.setSort(row.sort == null ? 0 : row.sort);
         item.setTagColor(normalizeText(row.tagColor));
@@ -372,7 +371,7 @@ public class DictionaryService {
         imported += 1;
       } else {
         existing.setLabel(row.label.trim());
-        existing.setValueType(normalizeValueType(row.valueType));
+        existing.setValueType(inferValueTypeFromValue(value));
         existing.setStatus(row.status == null ? existing.getStatus() : row.status);
         existing.setSort(row.sort == null ? existing.getSort() : row.sort);
         if (row.tagColor != null) {
@@ -419,41 +418,92 @@ public class DictionaryService {
     }
 
     List<SysDictItem> items = itemTableService.selectByDict(dict);
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    out.writeBytes("label,value,value_type,status,sort,tag_color,province,city,district\n".getBytes(StandardCharsets.UTF_8));
-    for (SysDictItem item : items) {
-      String line = String.format(
-        "%s,%s,%s,%s,%s,%s,%s,%s,%s\n",
-        escapeCsv(item.getLabel()),
-        escapeCsv(item.getValue()),
-        escapeCsv(item.getValueType()),
-        item.getStatus() == null ? "" : item.getStatus(),
-        item.getSort() == null ? "" : item.getSort(),
-        escapeCsv(item.getTagColor()),
-        escapeCsv(item.getProvince()),
-        escapeCsv(item.getCity()),
-        escapeCsv(item.getDistrict())
-      );
-      out.writeBytes(line.getBytes(StandardCharsets.UTF_8));
-    }
+    Workbook workbook = new XSSFWorkbook();
+    try {
+      Sheet sheet = workbook.createSheet("字典项");
+      var headerStyle = ExcelExportUtil.createHeaderStyle(workbook);
+      var bodyStyle = ExcelExportUtil.createBodyStyle(workbook);
+      String[] headers = new String[] { "序号", "名称", "数据值", "状态", "排序", "标签颜色", "省", "市", "区" };
+      ExcelExportUtil.writeHeaderRow(sheet, 0, headers, headerStyle);
 
-    String filename = "dict_" + dict.getCode() + "_items.csv";
-    HttpHeaders headers = new HttpHeaders();
-    headers.setContentType(MediaType.parseMediaType("text/csv"));
-    headers.set(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + filename);
-    return ResponseEntity.ok().headers(headers).body(out.toByteArray());
+      int rowIndex = 1;
+      for (SysDictItem item : items) {
+        Row row = sheet.createRow(rowIndex++);
+        row.createCell(0).setCellValue(rowIndex - 1);
+        row.createCell(1).setCellValue(item.getLabel() == null ? "" : item.getLabel());
+        row.createCell(2).setCellValue(item.getValue() == null ? "" : item.getValue());
+        row.createCell(3).setCellValue(item.getStatus() == null ? "" : String.valueOf(item.getStatus()));
+        row.createCell(4).setCellValue(item.getSort() == null ? "" : String.valueOf(item.getSort()));
+        row.createCell(5).setCellValue(item.getTagColor() == null ? "" : item.getTagColor());
+        row.createCell(6).setCellValue(item.getProvince() == null ? "" : item.getProvince());
+        row.createCell(7).setCellValue(item.getCity() == null ? "" : item.getCity());
+        row.createCell(8).setCellValue(item.getDistrict() == null ? "" : item.getDistrict());
+        ExcelExportUtil.applyRowCellStyle(row, headers.length, bodyStyle);
+      }
+
+      for (int i = 0; i < headers.length; i++) {
+        sheet.autoSizeColumn(i);
+        int width = Math.min(Math.max(sheet.getColumnWidth(i) + 512, 12 * 256), 60 * 256);
+        sheet.setColumnWidth(i, width);
+      }
+
+      String filename = "dict_" + dict.getCode() + "_items.xlsx";
+      return ExcelExportUtil.toXlsxResponse(workbook, filename);
+    } finally {
+      try {
+        workbook.close();
+      } catch (Exception ignored) {
+      }
+    }
   }
 
   public void downloadTemplate(HttpServletResponse response) {
     PermissionUtil.check("system:SystemDict:query");
     try {
       String content =
-        "label,value,value_type,status,sort,tag_color,province,city,district\nsample,example,string,1,1,success,骞夸笢鐪?娣卞湷甯?鍗楀北鍖篭n";
+        "index,label,value,status,sort,tag_color,province,city,district\n1,sample,example,1,1,success,广东省,深圳市,南山区\n";
       response.setContentType("text/csv; charset=UTF-8");
       response.setHeader("Content-Disposition", "attachment; filename=dict_items_template.csv");
       response.getOutputStream().write(content.getBytes(StandardCharsets.UTF_8));
     } catch (Exception e) {
       throw new RuntimeException("Failed to generate template: " + e.getMessage());
+    }
+  }
+
+  public void downloadTemplateXlsx(HttpServletResponse response) {
+    PermissionUtil.check("system:SystemDict:query");
+    Workbook workbook = new XSSFWorkbook();
+    try {
+      Sheet sheet = workbook.createSheet("字典项模板");
+      var headerStyle = ExcelExportUtil.createHeaderStyle(workbook);
+      var bodyStyle = ExcelExportUtil.createBodyStyle(workbook);
+      String[] headers = new String[] { "序号", "名称", "数据值", "状态", "排序", "标签颜色", "省", "市", "区" };
+      ExcelExportUtil.writeHeaderRow(sheet, 0, headers, headerStyle);
+
+      Row sample = sheet.createRow(1);
+      sample.createCell(0).setCellValue(1);
+      sample.createCell(1).setCellValue("示例");
+      sample.createCell(2).setCellValue("example");
+      sample.createCell(3).setCellValue("1");
+      sample.createCell(4).setCellValue("1");
+      sample.createCell(5).setCellValue("success");
+      sample.createCell(6).setCellValue("广东省");
+      sample.createCell(7).setCellValue("深圳市");
+      sample.createCell(8).setCellValue("南山区");
+      ExcelExportUtil.applyRowCellStyle(sample, headers.length, bodyStyle);
+
+      for (int i = 0; i < headers.length; i++) {
+        sheet.autoSizeColumn(i);
+        int width = Math.min(Math.max(sheet.getColumnWidth(i) + 512, 12 * 256), 60 * 256);
+        sheet.setColumnWidth(i, width);
+      }
+
+      ExcelExportUtil.writeXlsxToResponse(response, workbook, "dict_items_template.xlsx");
+    } finally {
+      try {
+        workbook.close();
+      } catch (Exception ignored) {
+      }
     }
   }
 
@@ -511,6 +561,21 @@ public class DictionaryService {
       case "bool", "boolean" -> "boolean";
       default -> "string";
     };
+  }
+
+  private String inferValueTypeFromValue(String value) {
+    if (!StringUtils.hasText(value)) {
+      return "string";
+    }
+    String trimmed = value.trim();
+    String lower = trimmed.toLowerCase(Locale.ROOT);
+    if ("true".equals(lower) || "false".equals(lower)) {
+      return "boolean";
+    }
+    if (trimmed.matches("[-+]?\\d+(\\.\\d+)?")) {
+      return "number";
+    }
+    return "string";
   }
 
   private String normalizeText(String text) {
@@ -576,24 +641,33 @@ public class DictionaryService {
         return rows;
       }
       boolean headerSkipped = false;
+      boolean hasSeqColumn = false;
+      boolean hasValueTypeColumn = false;
       for (Row row : sheet) {
-        String label = formatter.formatCellValue(row.getCell(0));
-        String value = formatter.formatCellValue(row.getCell(1));
-        String valueType = formatter.formatCellValue(row.getCell(2));
-        String status = formatter.formatCellValue(row.getCell(3));
-        String sort = formatter.formatCellValue(row.getCell(4));
-        String tagColor = formatter.formatCellValue(row.getCell(5));
-        String province = formatter.formatCellValue(row.getCell(6));
-        String city = formatter.formatCellValue(row.getCell(7));
-        String district = formatter.formatCellValue(row.getCell(8));
-        if (!headerSkipped && isHeaderRow(label, value)) {
+        String c0 = formatter.formatCellValue(row.getCell(0));
+        String c1 = formatter.formatCellValue(row.getCell(1));
+        String c2 = formatter.formatCellValue(row.getCell(2));
+        String c3 = formatter.formatCellValue(row.getCell(3));
+        if (!headerSkipped && isHeaderRow(c0, c1)) {
           headerSkipped = true;
+          hasSeqColumn = containsSeqHeader(c0);
+          String headerJoined = (c0 + "," + c1 + "," + c2 + "," + c3).toLowerCase(Locale.ROOT);
+          hasValueTypeColumn = headerJoined.contains("value_type") || headerJoined.contains("数据值类型");
           continue;
         }
+        int offset = hasSeqColumn ? 1 : 0;
+        int valueTypeOffset = hasValueTypeColumn ? 1 : 0;
+        String label = formatter.formatCellValue(row.getCell(offset));
+        String value = formatter.formatCellValue(row.getCell(offset + 1));
+        String status = formatter.formatCellValue(row.getCell(offset + 2 + valueTypeOffset));
+        String sort = formatter.formatCellValue(row.getCell(offset + 3 + valueTypeOffset));
+        String tagColor = formatter.formatCellValue(row.getCell(offset + 4 + valueTypeOffset));
+        String province = formatter.formatCellValue(row.getCell(offset + 5 + valueTypeOffset));
+        String city = formatter.formatCellValue(row.getCell(offset + 6 + valueTypeOffset));
+        String district = formatter.formatCellValue(row.getCell(offset + 7 + valueTypeOffset));
         DictItemRow item = new DictItemRow();
         item.label = label;
         item.value = value;
-        item.valueType = valueType;
         item.status = parseInteger(status);
         item.sort = parseInteger(sort);
         item.tagColor = StringUtils.hasText(tagColor) ? tagColor.trim() : null;
@@ -614,6 +688,8 @@ public class DictionaryService {
     try (BufferedReader reader = new BufferedReader(new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {
       String line;
       boolean headerSkipped = false;
+      boolean hasSeqColumn = false;
+      boolean hasValueTypeColumn = false;
       while ((line = reader.readLine()) != null) {
         if (line.isBlank()) {
           continue;
@@ -623,18 +699,22 @@ public class DictionaryService {
         String value = parts.length > 1 ? parts[1].trim() : "";
         if (!headerSkipped && isHeaderRow(label, value)) {
           headerSkipped = true;
+          hasSeqColumn = containsSeqHeader(label);
+          String headerJoined = String.join(",", parts).toLowerCase(Locale.ROOT);
+          hasValueTypeColumn = headerJoined.contains("value_type") || headerJoined.contains("数据值类型");
           continue;
         }
+        int offset = hasSeqColumn ? 1 : 0;
+        int valueTypeOffset = hasValueTypeColumn ? 1 : 0;
         DictItemRow item = new DictItemRow();
-        item.label = label;
-        item.value = value;
-        item.valueType = parts.length > 2 ? parts[2].trim() : null;
-        item.status = parts.length > 3 ? parseInteger(parts[3]) : null;
-        item.sort = parts.length > 4 ? parseInteger(parts[4]) : null;
-        item.tagColor = parts.length > 5 ? normalizeText(parts[5]) : null;
-        item.province = parts.length > 6 ? normalizeText(parts[6]) : null;
-        item.city = parts.length > 7 ? normalizeText(parts[7]) : null;
-        item.district = parts.length > 8 ? normalizeText(parts[8]) : null;
+        item.label = parts.length > offset ? parts[offset].trim() : "";
+        item.value = parts.length > offset + 1 ? parts[offset + 1].trim() : "";
+        item.status = parts.length > offset + 2 + valueTypeOffset ? parseInteger(parts[offset + 2 + valueTypeOffset]) : null;
+        item.sort = parts.length > offset + 3 + valueTypeOffset ? parseInteger(parts[offset + 3 + valueTypeOffset]) : null;
+        item.tagColor = parts.length > offset + 4 + valueTypeOffset ? normalizeText(parts[offset + 4 + valueTypeOffset]) : null;
+        item.province = parts.length > offset + 5 + valueTypeOffset ? normalizeText(parts[offset + 5 + valueTypeOffset]) : null;
+        item.city = parts.length > offset + 6 + valueTypeOffset ? normalizeText(parts[offset + 6 + valueTypeOffset]) : null;
+        item.district = parts.length > offset + 7 + valueTypeOffset ? normalizeText(parts[offset + 7 + valueTypeOffset]) : null;
         if (isEmptyRow(item)) {
           continue;
         }
@@ -646,7 +726,18 @@ public class DictionaryService {
 
   private boolean isHeaderRow(String label, String value) {
     String lower = (label + value).toLowerCase(Locale.ROOT);
-    return lower.contains("label") || lower.contains("name") || lower.contains("value");
+    if (lower.contains("label") || lower.contains("name") || lower.contains("value")) return true;
+    String normalized = (label + value).replace(" ", "");
+    return normalized.contains("序号") || normalized.contains("名称") || normalized.contains("数据值") || normalized.contains("数据值类型");
+  }
+
+  private boolean containsSeqHeader(String cell) {
+    if (!StringUtils.hasText(cell)) {
+      return false;
+    }
+    String normalized = cell.replace(" ", "");
+    String lower = normalized.toLowerCase(Locale.ROOT);
+    return normalized.contains("序号") || lower.contains("index") || lower.contains("seq");
   }
 
   private Integer parseInteger(String input) {

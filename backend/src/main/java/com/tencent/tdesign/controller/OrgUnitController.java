@@ -1,6 +1,7 @@
 package com.tencent.tdesign.controller;
 
 import com.tencent.tdesign.annotation.RepeatSubmit;
+import com.tencent.tdesign.dto.OrgUnitAddUsersRequest;
 import com.tencent.tdesign.dto.OrgUnitReorderRequest;
 import com.tencent.tdesign.dto.OrgUnitUpsertRequest;
 import com.tencent.tdesign.service.OrgUnitService;
@@ -65,5 +66,12 @@ public class OrgUnitController {
   public ApiResponse<Boolean> reorder(@RequestBody @Valid OrgUnitReorderRequest req) {
     PermissionUtil.check("system:SystemOrg:update");
     return ApiResponse.success(orgUnitService.reorder(req));
+  }
+
+  @PutMapping("/{id}/users")
+  @RepeatSubmit
+  public ApiResponse<Boolean> addUsers(@PathVariable long id, @RequestBody @Valid OrgUnitAddUsersRequest req) {
+    PermissionUtil.check("system:SystemOrg:update");
+    return ApiResponse.success(orgUnitService.addUsers(id, req.getUserIds()));
   }
 }

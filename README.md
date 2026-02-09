@@ -71,3 +71,4 @@ mvn -DskipTests package
 - 项目概述：`docs/PROJECT_OVERVIEW.md`
 - 架构说明：`docs/ARCHITECTURE.md`
 - 类图/时序图：`docs/DIAGRAMS.md`
+- 模块包规范：`docs/MODULE_PACKAGE.md`

@@ -3,10 +3,21 @@
   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.tencent.tdesign.mapper.UserOrgUnitMapper">
+  <select id="selectAll" resultType="com.tencent.tdesign.entity.UserOrgUnitRelation">
+    SELECT user_id AS userId, org_unit_id AS orgUnitId
+    FROM user_org_units
+  </select>
+
   <select id="selectOrgUnitIdsByUserId" resultType="long">
     SELECT org_unit_id
     FROM user_org_units
     WHERE user_id = #{userId}
+  </select>
+
+  <select id="selectUserIdsByOrgUnitId" resultType="long">
+    SELECT user_id
+    FROM user_org_units
+    WHERE org_unit_id = #{orgUnitId}
   </select>
 
   <delete id="deleteByUserId">
@@ -17,6 +28,14 @@
     INSERT INTO user_org_units (user_id, org_unit_id)
     VALUES
     <foreach collection="orgUnitIds" item="orgUnitId" separator=",">
+      (#{userId}, #{orgUnitId})
+    </foreach>
+  </insert>
+
+  <insert id="insertOrgUnitUsers">
+    INSERT INTO user_org_units (user_id, org_unit_id)
+    VALUES
+    <foreach collection="userIds" item="userId" separator=",">
       (#{userId}, #{orgUnitId})
     </foreach>
   </insert>

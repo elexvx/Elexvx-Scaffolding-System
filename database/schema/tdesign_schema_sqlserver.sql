@@ -176,7 +176,9 @@ CREATE TABLE ui_layout_settings (
   is_sidebar_fixed TINYINT,
   is_header_fixed TINYINT,
   is_use_tabs_router TINYINT,
-  show_header TINYINT
+  show_header TINYINT,
+  header_github_url NVARCHAR(255),
+  header_help_url NVARCHAR(255)
 );
 GO
 

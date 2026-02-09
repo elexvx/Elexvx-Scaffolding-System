@@ -4,6 +4,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.tencent.tdesign.service.ModulePackageService;
 import com.tencent.tdesign.service.ModuleRegistryService;
 import com.tencent.tdesign.service.SensitiveService;
 import java.util.ArrayList;
@@ -23,9 +24,14 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
   private final String corsAllowedOriginPatterns;
+  private final ModulePackageService modulePackageService;
 
-  public WebConfig(@Value("${tdesign.web.cors.allowed-origin-patterns:*}") String corsAllowedOriginPatterns) {
+  public WebConfig(
+    @Value("${tdesign.web.cors.allowed-origin-patterns:*}") String corsAllowedOriginPatterns,
+    ModulePackageService modulePackageService
+  ) {
     this.corsAllowedOriginPatterns = corsAllowedOriginPatterns;
+    this.modulePackageService = modulePackageService;
   }
 
   @Bean
@@ -72,6 +78,13 @@ public class WebConfig implements WebMvcConfigurer {
     String base = "file:" + uploadDir.toAbsolutePath().toString() + "/";
     registry.addResourceHandler("/uploads/system/**").addResourceLocations(base + "system/");
     registry.addResourceHandler("/uploads/business/**").addResourceLocations(base + "business/");
+
+    Path moduleFrontend = modulePackageService.getFrontendDir();
+    try {
+      Files.createDirectories(moduleFrontend);
+    } catch (Exception ignored) {}
+    String moduleBase = "file:" + moduleFrontend.toAbsolutePath().toString() + "/";
+    registry.addResourceHandler("/modules/**").addResourceLocations(moduleBase);
   }
 
   private List<String> splitCsv(String raw) {

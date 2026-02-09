@@ -59,7 +59,11 @@ public class GlobalExceptionHandler {
     HttpServletRequest request
   ) {
     log.debug("用户未登录或token已过期: {}", e.getMessage());
-    String msg = e.getMessage() == null || e.getMessage().isBlank() ? "未登录或登录已失效，请重新登录" : e.getMessage();
+    String raw = e.getMessage();
+    String msg = "未登录或登录已失效，请重新登录";
+    if (raw != null && !raw.isBlank() && !raw.matches(".*[A-Za-z].*")) {
+      msg = raw;
+    }
     if (isSseRequest(request)) {
       String payload = "event: unauthorized\ndata: " + escapeSseData(msg) + "\n\n";
       return ResponseEntity.status(HttpStatus.UNAUTHORIZED).contentType(SSE_MEDIA_TYPE).body(payload);
@@ -216,6 +220,9 @@ public class GlobalExceptionHandler {
     String text = permission.trim();
     // Keep plain access-denied messages unchanged to avoid duplicated "missing permission" wrappers.
     if (!text.contains(":")) {
+      if ("Access is denied".equalsIgnoreCase(text) || "Forbidden".equalsIgnoreCase(text)) {
+        return "权限不足，请联系管理员开通权限后再试";
+      }
       return text;
     }
     String[] parts = text.split(":");

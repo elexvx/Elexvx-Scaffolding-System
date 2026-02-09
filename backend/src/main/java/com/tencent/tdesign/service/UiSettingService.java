@@ -73,6 +73,8 @@ public class UiSettingService {
       out.setIsHeaderFixed(layout.getIsHeaderFixed());
       out.setIsUseTabsRouter(layout.getIsUseTabsRouter());
       out.setShowHeader(layout.getShowHeader());
+      out.setHeaderGithubUrl(layout.getHeaderGithubUrl());
+      out.setHeaderHelpUrl(layout.getHeaderHelpUrl());
     }
 
     UiThemeSetting theme = themeMapper.selectTop();
@@ -168,6 +170,8 @@ public class UiSettingService {
     if (req.getIsHeaderFixed() != null) { s.setIsHeaderFixed(req.getIsHeaderFixed()); changed = true; }
     if (req.getIsUseTabsRouter() != null) { s.setIsUseTabsRouter(req.getIsUseTabsRouter()); changed = true; }
     if (req.getShowHeader() != null) { s.setShowHeader(req.getShowHeader()); changed = true; }
+    if (req.getHeaderGithubUrl() != null) { s.setHeaderGithubUrl(req.getHeaderGithubUrl()); changed = true; }
+    if (req.getHeaderHelpUrl() != null) { s.setHeaderHelpUrl(req.getHeaderHelpUrl()); changed = true; }
     if (changed) upsertLayout(s);
   }
 

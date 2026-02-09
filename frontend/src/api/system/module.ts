@@ -1,4 +1,5 @@
 import { request } from '@/utils/request';
+import type { AxiosResponse } from 'axios';
 
 export interface ModuleDescriptor {
   key: string;
@@ -40,4 +41,11 @@ export function installModule(moduleKey: string) {
 
 export function uninstallModule(moduleKey: string) {
   return request.post<ModuleRegistryItem>({ url: `/system/modules/${moduleKey}/uninstall` });
+}
+
+export function downloadModulePackage(moduleKey: string) {
+  return request.get<AxiosResponse<Blob>>(
+    { url: `/system/modules/${moduleKey}/package`, responseType: 'blob' },
+    { isReturnNativeResponse: true, isTransformResponse: false },
+  );
 }

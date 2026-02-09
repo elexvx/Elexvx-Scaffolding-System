@@ -210,14 +210,13 @@ import type { FormInstanceFunctions, FormRule, PageInfo, PrimaryTableCol, Upload
 import { DialogPlugin, MessagePlugin } from 'tdesign-vue-next';
 import { computed, onMounted, reactive, ref } from 'vue';
 
+import { importExportApi } from '@/api/importExport';
 import type { DictionaryImportResult, SysDict, SysDictItem } from '@/api/system/dictionary';
 import {
   createDict,
   createDictItem,
   deleteDict,
   deleteDictItem,
-  downloadDictTemplate,
-  exportDictItems,
   fetchDictItems,
   fetchDictPage,
   updateDict,
@@ -369,9 +368,7 @@ const configDialogTitle = computed(() => (selectedDict.value ? `${selectedDict.v
 const itemDialogTitle = computed(() => (itemDialogMode.value === 'create' ? '新增字典项' : '编辑字典项'));
 
 const uploadHeaders = computed(() => ({ Authorization: userStore.token }));
-const uploadAction = computed(() =>
-  selectedDict.value ? `/api/system/dict/${selectedDict.value.id}/items/import` : '/api/system/dict/0/items/import',
-);
+const uploadAction = computed(() => importExportApi.dict.importItemsAction(selectedDict.value?.id ?? 0));
 const importFiles = ref<UploadFile[]>([]);
 
 const loadDicts = async () => {
@@ -624,30 +621,21 @@ const handleImportFail = () => {
 
 const exportItems = async () => {
   if (!selectedDict.value) return;
-  const response = await exportDictItems(selectedDict.value.id);
-  const blob = new Blob([response.data]);
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  const disposition = response.headers?.['content-disposition'] as string;
-  let filename = `dict_${selectedDict.value.code}_items.csv`;
-  if (disposition && disposition.includes('filename=')) {
-    filename = decodeURIComponent(disposition.split('filename=')[1]);
+  try {
+    const response = await importExportApi.dict.exportItems(selectedDict.value.id);
+    await importExportApi.utils.downloadBlobResponse(response as any, `dict_${selectedDict.value.code}_items.xlsx`);
+  } catch (err: any) {
+    MessagePlugin.error(String(err?.message || '导出失败'));
   }
-  link.href = url;
-  link.download = filename;
-  link.click();
-  URL.revokeObjectURL(url);
 };
 
 const downloadTemplate = async () => {
-  const response = await downloadDictTemplate();
-  const blob = new Blob([response.data]);
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = 'dict_items_template.csv';
-  link.click();
-  URL.revokeObjectURL(url);
+  try {
+    const response = await importExportApi.dict.downloadTemplate();
+    await importExportApi.utils.downloadBlobResponse(response as any, 'dict_items_template.xlsx');
+  } catch (err: any) {
+    MessagePlugin.error(String(err?.message || '模板下载失败'));
+  }
 };
 
 onMounted(() => {

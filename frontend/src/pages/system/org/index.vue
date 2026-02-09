@@ -39,6 +39,9 @@
         <template #leaderNames="{ row }">
           <span>{{ formatList(row.leaderNames) }}</span>
         </template>
+        <template #userCount="{ row }">
+          <span>{{ row.userCount ?? 0 }}</span>
+        </template>
         <template #status="{ row }">
           <t-tag :theme="row.status === 1 ? 'success' : 'danger'" variant="light">
             {{ row.status === 1 ? '正常' : '停用' }}
@@ -105,6 +108,15 @@
               </t-input>
             </t-form-item>
           </t-col>
+          <t-col v-if="editingId" :xs="24">
+            <t-form-item label="加入用户">
+              <t-input v-model="memberDisplay" readonly placeholder="选择用户加入该机构" @click="openMemberDialog">
+                <template #suffixIcon>
+                  <t-icon name="user" />
+                </template>
+              </t-input>
+            </t-form-item>
+          </t-col>
           <t-col :xs="24" :sm="12">
             <t-form-item label="联系电话" name="phone">
               <t-input v-model="form.phone" placeholder="请输入联系电话" />
@@ -133,7 +145,13 @@
       </template>
     </confirm-drawer>
 
-    <t-dialog v-model:visible="leaderDialogVisible" width="920px" header="用户选择" :footer="false">
+    <t-dialog
+      v-model:visible="leaderDialogVisible"
+      width="min(1120px, calc(100vw - 48px))"
+      placement="center"
+      header="用户选择"
+      :footer="false"
+    >
       <div class="leader-dialog">
         <div class="leader-dialog__search">
           <t-input
@@ -170,15 +188,17 @@
           <div class="leader-panel">
             <div class="leader-panel__title">用户列表</div>
             <div class="leader-panel__body">
-              <t-table
-                row-key="id"
-                :data="leaderRows"
-                :columns="leaderColumns"
-                :pagination="leaderPagination"
-                :selected-row-keys="leaderSelection.map((u) => u.id)"
-                @select-change="handleLeaderSelectChange"
-                @page-change="onLeaderPageChange"
-              />
+              <div class="leader-table">
+                <t-table
+                  row-key="id"
+                  :data="leaderRows"
+                  :columns="leaderColumns"
+                  :pagination="leaderPagination"
+                  :selected-row-keys="leaderSelection.map((u) => u.id)"
+                  @select-change="handleLeaderSelectChange"
+                  @page-change="onLeaderPageChange"
+                />
+              </div>
             </div>
           </div>
           <div class="leader-panel">
@@ -200,6 +220,85 @@
         <div class="dialog-footer">
           <t-button variant="outline" @click="leaderDialogVisible = false">取消</t-button>
           <t-button theme="primary" @click="confirmLeaderSelection">确定</t-button>
+        </div>
+      </div>
+    </t-dialog>
+
+    <t-dialog
+      v-model:visible="memberDialogVisible"
+      width="min(1120px, calc(100vw - 48px))"
+      placement="center"
+      header="选择用户加入机构"
+      :footer="false"
+    >
+      <div class="leader-dialog">
+        <div class="leader-dialog__search">
+          <t-input
+            v-model="memberFilters.keyword"
+            clearable
+            placeholder="请输入用户姓名"
+            class="leader-dialog__keyword"
+          />
+          <t-space class="leader-dialog__actions" size="small">
+            <t-button theme="primary" @click="loadMembers">搜索</t-button>
+            <t-button variant="outline" @click="resetMemberFilters">重置</t-button>
+          </t-space>
+        </div>
+        <div class="leader-dialog__content">
+          <div class="leader-panel">
+            <div class="leader-panel__title">组织机构</div>
+            <div class="leader-panel__body">
+              <t-input
+                v-model="memberFilters.orgKeyword"
+                clearable
+                placeholder="请输入组织名称"
+                class="leader-panel__filter"
+              />
+              <t-tree
+                class="leader-tree"
+                :data="memberFilteredTree"
+                :keys="orgTreeKeys"
+                hover
+                activable
+                @click="handleMemberOrgSelect"
+              />
+            </div>
+          </div>
+          <div class="leader-panel">
+            <div class="leader-panel__title">用户列表</div>
+            <div class="leader-panel__body">
+              <div class="leader-table">
+                <t-table
+                  row-key="id"
+                  :data="memberRows"
+                  :columns="memberColumns"
+                  :pagination="memberPagination"
+                  :selected-row-keys="memberSelection.map((u) => u.id)"
+                  @select-change="handleMemberSelectChange"
+                  @page-change="onMemberPageChange"
+                />
+              </div>
+            </div>
+          </div>
+          <div class="leader-panel">
+            <div class="leader-panel__title">已选择用户 ({{ memberSelection.length }}人)</div>
+            <div class="leader-panel__body leader-selected">
+              <t-tag
+                v-for="user in memberSelection"
+                :key="user.id"
+                theme="primary"
+                variant="light"
+                closable
+                @close="removeMember(user.id)"
+              >
+                {{ user.name }}
+              </t-tag>
+            </div>
+          </div>
+        </div>
+        <div class="dialog-footer">
+          <t-button variant="outline" @click="memberDialogVisible = false">取消</t-button>
+          <t-button theme="primary" :loading="addingMembers" @click="confirmMemberSelection">加入机构</t-button>
         </div>
       </div>
     </t-dialog>
@@ -232,6 +331,7 @@ interface OrgUnitNode {
   typeLabel?: string;
   sortOrder?: number;
   status?: number;
+  userCount?: number;
   phone?: string;
   email?: string;
   leaderIds?: number[];
@@ -258,6 +358,8 @@ const savingOrder = ref(false);
 const dirty = ref(false);
 const dialogVisible = ref(false);
 const leaderDialogVisible = ref(false);
+const memberDialogVisible = ref(false);
+const addingMembers = ref(false);
 const editingId = ref<number | null>(null);
 const tableRef = ref<EnhancedTableInstanceFunctions<OrgUnitNode> | null>(null);
 const expandedTreeNodes = ref<Array<string | number>>([]);
@@ -335,6 +437,7 @@ const columns: PrimaryTableCol[] = [
   { colKey: 'name', title: '机构名称', width: 220 },
   { colKey: 'typeLabel', title: '机构类型', width: 120 },
   { colKey: 'leaderNames', title: '负责人', width: 200 },
+  { colKey: 'userCount', title: '人数', width: 90 },
   { colKey: 'status', title: '状态', width: 100 },
   { colKey: 'createdAt', title: '创建时间', width: 180 },
   { colKey: 'op', title: '操作', width: 180, fixed: 'right' },
@@ -380,6 +483,39 @@ const leaderColumns: PrimaryTableCol[] = [
 const leaderFilteredTree = computed(() => {
   if (!leaderFilters.orgKeyword) return orgTree.value;
   return filterTreeByKeyword(orgTree.value, leaderFilters.orgKeyword.trim());
+});
+
+const memberFilters = reactive({
+  keyword: '',
+  orgKeyword: '',
+  orgUnitId: null as number | null,
+  departmentId: null as number | null,
+});
+
+const memberRows = ref<UserRow[]>([]);
+const memberSelection = ref<UserRow[]>([]);
+const memberDisplay = computed(() => (memberSelection.value.length ? `已选择 ${memberSelection.value.length} 人` : ''));
+const memberPagination = reactive({
+  current: 1,
+  pageSize: 8,
+  total: 0,
+});
+
+const memberColumns: PrimaryTableCol[] = [
+  {
+    colKey: 'row-select',
+    type: 'multiple',
+    width: 48,
+    fixed: 'left',
+  },
+  { colKey: 'name', title: '用户名', width: 140 },
+  { colKey: 'account', title: '账号', width: 160 },
+  { colKey: 'orgUnitNames', title: '所属部门', width: 180 },
+];
+
+const memberFilteredTree = computed(() => {
+  if (!memberFilters.orgKeyword) return orgTree.value;
+  return filterTreeByKeyword(orgTree.value, memberFilters.orgKeyword.trim());
 });
 
 const reload = async () => {
@@ -473,6 +609,7 @@ const openEdit = (row: OrgUnitNode) => {
   form.email = row.email || '';
   form.leaderIds = [...(row.leaderIds || [])];
   selectedLeaderNames.value = [...(row.leaderNames || [])];
+  memberSelection.value = [];
   dialogVisible.value = true;
 };
 
@@ -486,6 +623,7 @@ const resetForm = () => {
   form.email = '';
   form.leaderIds = [];
   selectedLeaderNames.value = [];
+  memberSelection.value = [];
 };
 
 const submitForm = async () => {
@@ -657,6 +795,102 @@ const confirmLeaderSelection = () => {
   leaderDialogVisible.value = false;
 };
 
+const openMemberDialog = () => {
+  memberDialogVisible.value = true;
+  memberSelection.value = [];
+  memberPagination.current = 1;
+  loadMembers();
+};
+
+const loadMembers = async () => {
+  const res = await request.get<PageResult<UserRow>>({
+    url: '/system/user/page',
+    params: {
+      keyword: memberFilters.keyword || undefined,
+      orgUnitId: memberFilters.orgUnitId || undefined,
+      departmentId: memberFilters.departmentId || undefined,
+      page: memberPagination.current - 1,
+      size: memberPagination.pageSize,
+    },
+  });
+  memberRows.value = res.list;
+  memberPagination.total = res.total;
+};
+
+const onMemberPageChange = (pageInfo: PageInfo) => {
+  memberPagination.current = pageInfo.current;
+  memberPagination.pageSize = pageInfo.pageSize;
+  loadMembers();
+};
+
+const resetMemberFilters = () => {
+  memberFilters.keyword = '';
+  memberFilters.orgKeyword = '';
+  memberFilters.orgUnitId = null;
+  memberFilters.departmentId = null;
+  memberPagination.current = 1;
+  loadMembers();
+};
+
+const handleMemberOrgSelect = (ctx: any) => {
+  const node = ctx?.node;
+  if (!node) return;
+  const rawNode = node.data || (node.getModel?.() as any) || node;
+  const rawId = rawNode?.id ?? node.value ?? node.id;
+  const nodeId = Number(rawId);
+  if (Number.isNaN(nodeId)) return;
+  let nodeType = normalizeOrgUnitType(rawNode?.type ?? rawNode?.typeLabel);
+  if (!nodeType && rawNode?.typeLabel) {
+    nodeType = TYPE_LABEL_MAP.get(rawNode.typeLabel.trim()) || '';
+  }
+  if (DEPARTMENT_TYPES.has(nodeType)) {
+    memberFilters.departmentId = nodeId;
+    memberFilters.orgUnitId = null;
+  } else if (ORG_UNIT_TYPES.has(nodeType)) {
+    memberFilters.orgUnitId = nodeId;
+    memberFilters.departmentId = null;
+  } else {
+    memberFilters.orgUnitId = nodeId;
+    memberFilters.departmentId = null;
+  }
+  memberPagination.current = 1;
+  loadMembers();
+};
+
+const removeMember = (id: number) => {
+  memberSelection.value = memberSelection.value.filter((user) => user.id !== id);
+};
+
+const handleMemberSelectChange = (selectedKeys: Array<string | number>, ctx: any) => {
+  const selectedIds = selectedKeys.map((key) => Number(key)).filter((key) => !Number.isNaN(key));
+  if (ctx?.selectedRowData) {
+    memberSelection.value = ctx.selectedRowData as UserRow[];
+  } else {
+    memberSelection.value = memberRows.value.filter((row) => selectedIds.includes(row.id));
+  }
+};
+
+const confirmMemberSelection = async () => {
+  if (!editingId.value) return;
+  if (memberSelection.value.length === 0) {
+    MessagePlugin.warning('请选择用户');
+    return;
+  }
+  addingMembers.value = true;
+  try {
+    await request.put({
+      url: `/system/org/${editingId.value}/users`,
+      data: { userIds: memberSelection.value.map((user) => user.id) },
+    });
+    MessagePlugin.success('已加入机构');
+    memberDialogVisible.value = false;
+    memberSelection.value = [];
+    await reload();
+  } finally {
+    addingMembers.value = false;
+  }
+};
+
 const formatTime = (value?: string) => {
   if (!value) return '-';
   return dayjs(value).format('YYYY-MM-DD HH:mm');
@@ -680,11 +914,18 @@ onMounted(async () => {
   gap: 8px;
 }
 
+.leader-dialog {
+  display: flex;
+  flex-direction: column;
+  height: clamp(440px, 62vh, 620px);
+}
+
 .dialog-footer {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
   margin-top: 16px;
+  flex-shrink: 0;
 }
 
 .leader-dialog__search {
@@ -692,6 +933,7 @@ onMounted(async () => {
   align-items: center;
   gap: 12px;
   margin-bottom: 12px;
+  flex-shrink: 0;
 }
 
 .leader-dialog__keyword {
@@ -705,18 +947,21 @@ onMounted(async () => {
 
 .leader-dialog__content {
   display: grid;
-  grid-template-columns: 220px minmax(360px, 1fr) 240px;
+  grid-template-columns: 260px minmax(0, 1fr) 280px;
   gap: 16px;
-  min-height: 420px;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
 }
 
 .leader-panel {
   background: var(--td-bg-color-container);
   border-radius: 8px;
   padding: 12px;
-  min-height: 420px;
+  min-height: 0;
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 .leader-panel__title {
@@ -739,6 +984,16 @@ onMounted(async () => {
 .leader-tree {
   flex: 1;
   overflow: auto;
+}
+
+.leader-table {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+.leader-table :deep(.t-table__content) {
+  overflow-x: hidden;
 }
 
 .leader-selected {

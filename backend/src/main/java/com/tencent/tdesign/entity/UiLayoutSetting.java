@@ -15,6 +15,8 @@ public class UiLayoutSetting {
   private Boolean isHeaderFixed;
   private Boolean isUseTabsRouter;
   private Boolean showHeader;
+  private String headerGithubUrl;
+  private String headerHelpUrl;
 
   public Long getId() { return id; }
   public void setId(Long id) { this.id = id; }
@@ -44,4 +46,8 @@ public class UiLayoutSetting {
   public void setIsUseTabsRouter(Boolean isUseTabsRouter) { this.isUseTabsRouter = isUseTabsRouter; }
   public Boolean getShowHeader() { return showHeader; }
   public void setShowHeader(Boolean showHeader) { this.showHeader = showHeader; }
+  public String getHeaderGithubUrl() { return headerGithubUrl; }
+  public void setHeaderGithubUrl(String headerGithubUrl) { this.headerGithubUrl = headerGithubUrl; }
+  public String getHeaderHelpUrl() { return headerHelpUrl; }
+  public void setHeaderHelpUrl(String headerHelpUrl) { this.headerHelpUrl = headerHelpUrl; }
 }

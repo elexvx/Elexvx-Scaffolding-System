@@ -30,7 +30,7 @@
                 </t-button>
                 <t-upload
                   v-model="importFiles"
-                  action="/api/system/sensitive/words/import"
+                  :action="importAction"
                   :headers="uploadHeaders"
                   theme="file"
                   :auto-upload="true"
@@ -156,6 +156,7 @@ import { DialogPlugin, MessagePlugin } from 'tdesign-vue-next';
 import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
+import { importExportApi } from '@/api/importExport';
 import { fetchModuleList } from '@/api/system/module';
 import type { SensitiveImportResult, SensitivePageSetting, SensitiveWord } from '@/api/system/sensitive';
 import {
@@ -192,6 +193,7 @@ const userStore = useUserStore();
 const uploadHeaders = computed(() => ({
   Authorization: userStore.token,
 }));
+const importAction = computed(() => importExportApi.sensitive.importWordsAction());
 
 const route = useRoute();
 const router = useRouter();
@@ -394,25 +396,8 @@ const handleBatchDelete = () => {
 
 const handleDownloadTemplate = async () => {
   try {
-    const res: any = await request.get(
-      {
-        url: '/system/sensitive/words/template',
-        responseType: 'blob',
-      } as any,
-      { isTransformResponse: false, isReturnNativeResponse: true },
-    );
-    const blob =
-      res?.data instanceof Blob
-        ? res.data
-        : new Blob([res?.data || ''], {
-            type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-          });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'sensitive_words_template.xlsx';
-    link.click();
-    window.URL.revokeObjectURL(url);
+    const res = await importExportApi.sensitive.downloadTemplate();
+    await importExportApi.utils.downloadBlobResponse(res as any, 'sensitive_words_template.xlsx');
   } catch (err: any) {
     MessagePlugin.error(String(err?.message || '模板下载失败'));
   }

@@ -163,7 +163,9 @@ CREATE TABLE IF NOT EXISTS ui_layout_settings (
   is_sidebar_fixed SMALLINT,
   is_header_fixed SMALLINT,
   is_use_tabs_router SMALLINT,
-  show_header SMALLINT
+  show_header SMALLINT,
+  header_github_url VARCHAR(255),
+  header_help_url VARCHAR(255)
 );
 
 CREATE TABLE IF NOT EXISTS ui_theme_settings (

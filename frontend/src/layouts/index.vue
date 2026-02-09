@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div :class="`${prefix}-wrapper`">
     <template v-if="setting.layout.value === 'side'">
       <t-layout key="side" :class="mainLayoutCls">
         <t-aside><layout-side-nav /></t-aside>

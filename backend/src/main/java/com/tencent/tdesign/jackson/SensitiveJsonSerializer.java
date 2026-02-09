@@ -38,31 +38,15 @@ public class SensitiveJsonSerializer extends JsonSerializer<String> implements C
             return;
         }
         try {
-            switch (desensitizedType) {
-                case USERNAME:
-                    gen.writeString(desensitizeUsername(value));
-                    break;
-                case PASSWORD:
-                    gen.writeString(desensitizePassword(value));
-                    break;
-                case ID_CARD:
-                    gen.writeString(desensitizeIdCard(value));
-                    break;
-                case PHONE:
-                    gen.writeString(desensitizePhone(value));
-                    break;
-                case EMAIL:
-                    gen.writeString(desensitizeEmail(value));
-                    break;
-                case BANK_CARD:
-                    gen.writeString(desensitizeBankCard(value));
-                    break;
-                case CAR_LICENSE:
-                    gen.writeString(desensitizeCarLicense(value));
-                    break;
-                default:
-                    gen.writeString(value);
-            }
+            DesensitizedType type = desensitizedType;
+            if (type == DesensitizedType.USERNAME) gen.writeString(desensitizeUsername(value));
+            else if (type == DesensitizedType.PASSWORD) gen.writeString(desensitizePassword(value));
+            else if (type == DesensitizedType.ID_CARD) gen.writeString(desensitizeIdCard(value));
+            else if (type == DesensitizedType.PHONE) gen.writeString(desensitizePhone(value));
+            else if (type == DesensitizedType.EMAIL) gen.writeString(desensitizeEmail(value));
+            else if (type == DesensitizedType.BANK_CARD) gen.writeString(desensitizeBankCard(value));
+            else if (type == DesensitizedType.CAR_LICENSE) gen.writeString(desensitizeCarLicense(value));
+            else gen.writeString(value);
         } catch (Exception e) {
             gen.writeString(value);
         }

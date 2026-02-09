@@ -52,3 +52,13 @@ export function fetchSensitiveSettings() {
 export function saveSensitiveSettings(data: Partial<SensitiveSettings>) {
   return request.post<SensitiveSettings>({ url: '/system/sensitive/settings', data });
 }
+
+export function downloadSensitiveWordsTemplate() {
+  return request.get(
+    {
+      url: '/system/sensitive/words/template',
+      responseType: 'blob',
+    },
+    { isTransformResponse: false, isReturnNativeResponse: true },
+  );
+}

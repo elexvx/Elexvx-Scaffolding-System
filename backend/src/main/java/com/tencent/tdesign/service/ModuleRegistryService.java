@@ -34,6 +34,7 @@ public class ModuleRegistryService {
   private final DataSource dataSource;
   private final ResourceLoader resourceLoader;
   private final ModulePackageService modulePackageService;
+  private final ModuleBackendProcessManager moduleBackendProcessManager;
 
   public ModuleRegistryService(
     Environment environment,
@@ -41,7 +42,8 @@ public class ModuleRegistryService {
     ModuleDefinitionRegistry definitionRegistry,
     DataSource dataSource,
     ResourceLoader resourceLoader,
-    ModulePackageService modulePackageService
+    ModulePackageService modulePackageService,
+    ModuleBackendProcessManager moduleBackendProcessManager
   ) {
     this.environment = environment;
     this.registryMapper = registryMapper;
@@ -49,6 +51,7 @@ public class ModuleRegistryService {
     this.dataSource = dataSource;
     this.resourceLoader = resourceLoader;
     this.modulePackageService = modulePackageService;
+    this.moduleBackendProcessManager = moduleBackendProcessManager;
   }
 
   public List<ModuleDescriptor> listModules() {
@@ -97,8 +100,14 @@ public class ModuleRegistryService {
     if (!STATE_INSTALLED.equalsIgnoreCase(normalizeState(registry.getInstallState()))) {
       throw new IllegalArgumentException("模块未安装: " + moduleKey);
     }
+    if (enabled) {
+      moduleBackendProcessManager.ensureRunning(registry.getModuleKey());
+    }
     registry.setEnabled(enabled);
     registryMapper.update(registry);
+    if (!enabled) {
+      moduleBackendProcessManager.stop(registry.getModuleKey());
+    }
     return ModuleRegistryResponse.from(registry);
   }
 
@@ -112,6 +121,7 @@ public class ModuleRegistryService {
     ModuleInstallationContext context = new ModuleInstallationContext(dataSource, resourceLoader, modulePackageService.getExternalRoot());
     try {
       definition.initialize(context);
+      moduleBackendProcessManager.ensureDependenciesInstalled(registry.getModuleKey());
       registry.setInstallState(STATE_INSTALLED);
       registry.setInstalledAt(LocalDateTime.now());
       registry.setEnabled(true);
@@ -129,6 +139,7 @@ public class ModuleRegistryService {
     ModuleDefinition definition = requireDefinition(moduleKey);
     ModuleRegistry registry = getOrCreateRegistry(definition);
     ModuleInstallationContext context = new ModuleInstallationContext(dataSource, resourceLoader, modulePackageService.getExternalRoot());
+    moduleBackendProcessManager.stop(registry.getModuleKey());
     try {
       definition.uninstall(context);
       registry.setInstallState(STATE_UNINSTALLED);

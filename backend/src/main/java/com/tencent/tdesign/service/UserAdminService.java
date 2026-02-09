@@ -15,8 +15,10 @@ import com.tencent.tdesign.vo.PageResult;
 import com.tencent.tdesign.vo.UserListItem;
 import com.tencent.tdesign.annotation.AiFunction;
 import org.springframework.transaction.annotation.Transactional;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import org.springframework.security.crypto.bcrypt.BCrypt;
@@ -25,6 +27,13 @@ import org.springframework.stereotype.Service;
 @Service
 public class UserAdminService {
   private static final String ROOT_ADMIN_ACCOUNT = "admin";
+  private static final String DOC_TYPE_RESIDENT_ID_CARD = "resident_id_card";
+  private static final String DOC_TYPE_PASSPORT = "passport";
+  private static final java.util.Set<String> DOC_TYPE_RESIDENT_ID_CARD_ALIASES =
+    java.util.Set.of("resident_id_card", "id_card", "identity_card", "china_id_card", "居民身份证");
+  private static final java.util.Set<String> DOC_TYPE_PASSPORT_ALIASES = java.util.Set.of("passport", "护照");
+  private static final int[] RESIDENT_ID_CARD_WEIGHTS = { 7, 9, 10, 5, 8, 4, 2, 1, 6, 3, 7, 9, 10, 5, 8, 4, 2 };
+  private static final char[] RESIDENT_ID_CARD_CHECKSUM_CODES = { '1', '0', 'X', '9', '8', '7', '6', '5', '4', '3', '2' };
   private final UserMapper userMapper;
   private final RoleMapper roleMapper;
   private final AuthQueryDao authDao;
@@ -125,16 +134,31 @@ public class UserAdminService {
     u.setAccount(req.getAccount());
     u.setGuid(java.util.UUID.randomUUID().toString());
     u.setName(req.getName());
+    u.setNickname(req.getNickname());
+    u.setGender(req.getGender());
     u.setMobile(req.getMobile());
     u.setEmail(req.getEmail());
+    u.setIdType(req.getIdType());
     u.setIdCard(req.getIdCard());
+    u.setIdValidFrom(req.getIdValidFrom());
+    u.setIdValidTo(req.getIdValidTo());
     u.setSeat(req.getSeat());
     u.setEntity(req.getEntity());
     u.setLeader(req.getLeader());
     u.setPosition(req.getPosition());
     u.setJoinDay(req.getJoinDay());
     u.setTeam(req.getTeam());
+    u.setProvinceId(req.getProvinceId());
+    u.setProvince(req.getProvince());
+    u.setCityId(req.getCityId());
+    u.setCity(req.getCity());
+    u.setDistrictId(req.getDistrictId());
+    u.setDistrict(req.getDistrict());
+    u.setZipCode(req.getZipCode());
+    u.setAddress(req.getAddress());
     u.setStatus(req.getStatus() == null ? 1 : req.getStatus());
+
+    validateDocumentInfo(u);
 
     String pwd = (req.getPassword() == null || req.getPassword().isBlank()) ? "123456" : req.getPassword();
     // 创建账号时也使用统一密码规范校验
@@ -146,6 +170,7 @@ public class UserAdminService {
     List<String> roles = normalizedRoles.isEmpty() ? List.of("user") : normalizedRoles;
     ensureRolesExist(roles);
     authDao.replaceUserRoles(u.getId(), roles);
+    validateOrgDepartmentSelection(req.getOrgUnitIds(), req.getDepartmentIds());
     replaceOrgUnits(u.getId(), req.getOrgUnitIds());
     replaceDepartments(u.getId(), req.getDepartmentIds());
 
@@ -158,17 +183,62 @@ public class UserAdminService {
     UserEntity u = Optional.ofNullable(userMapper.selectById(id)).orElseThrow(() -> new IllegalArgumentException("用户不存在"));
     ensureManageableTarget(u, true);
     List<String> originalRoles = req.getRoles() != null ? authDao.findRoleNamesByUserId(id) : List.of();
+    boolean documentFieldsTouched = false;
+    if (req.getAccount() != null) {
+      String nextAccount = req.getAccount().trim();
+      if (nextAccount.isEmpty()) {
+        throw new IllegalArgumentException("账号不能为空");
+      }
+      if (!nextAccount.matches("^[a-zA-Z0-9_@.-]+$")) {
+        throw new IllegalArgumentException("账号包含非法字符");
+      }
+      if (!nextAccount.equals(u.getAccount())) {
+        UserEntity existing = userMapper.selectByAccount(nextAccount);
+        if (existing != null && !Objects.equals(existing.getId(), u.getId())) {
+          throw new IllegalArgumentException("账号已存在");
+        }
+      }
+      u.setAccount(nextAccount);
+    }
     if (req.getName() != null) u.setName(req.getName());
+    if (req.getNickname() != null) u.setNickname(req.getNickname());
+    if (req.getGender() != null) u.setGender(req.getGender());
     if (req.getMobile() != null && !SensitiveMaskUtil.isMasked(req.getMobile())) u.setMobile(req.getMobile());
     if (req.getEmail() != null && !SensitiveMaskUtil.isMasked(req.getEmail())) u.setEmail(req.getEmail());
-    if (req.getIdCard() != null && !SensitiveMaskUtil.isMasked(req.getIdCard())) u.setIdCard(req.getIdCard());
+    if (req.getIdCard() != null && !SensitiveMaskUtil.isMasked(req.getIdCard())) {
+      u.setIdCard(req.getIdCard());
+      documentFieldsTouched = true;
+    }
+    if (req.getIdType() != null) {
+      u.setIdType(req.getIdType());
+      documentFieldsTouched = true;
+    }
+    if (req.getIdValidFrom() != null) {
+      u.setIdValidFrom(req.getIdValidFrom());
+      documentFieldsTouched = true;
+    }
+    if (req.getIdValidTo() != null) {
+      u.setIdValidTo(req.getIdValidTo());
+      documentFieldsTouched = true;
+    }
     if (req.getSeat() != null) u.setSeat(req.getSeat());
     if (req.getEntity() != null) u.setEntity(req.getEntity());
     if (req.getLeader() != null) u.setLeader(req.getLeader());
     if (req.getPosition() != null) u.setPosition(req.getPosition());
     if (req.getJoinDay() != null) u.setJoinDay(req.getJoinDay());
     if (req.getTeam() != null) u.setTeam(req.getTeam());
+    if (req.getProvinceId() != null) u.setProvinceId(req.getProvinceId());
+    if (req.getProvince() != null) u.setProvince(req.getProvince());
+    if (req.getCityId() != null) u.setCityId(req.getCityId());
+    if (req.getCity() != null) u.setCity(req.getCity());
+    if (req.getDistrictId() != null) u.setDistrictId(req.getDistrictId());
+    if (req.getDistrict() != null) u.setDistrict(req.getDistrict());
+    if (req.getZipCode() != null) u.setZipCode(req.getZipCode());
+    if (req.getAddress() != null) u.setAddress(req.getAddress());
     if (req.getStatus() != null) u.setStatus(req.getStatus());
+    if (documentFieldsTouched) {
+      validateDocumentInfo(u);
+    }
     ensureGuid(u);
     saveUser(u);
 
@@ -185,6 +255,12 @@ public class UserAdminService {
           authTokenService.removeUserTokens(id);
         }
       }
+    }
+    if (req.getOrgUnitIds() != null || req.getDepartmentIds() != null) {
+      List<Long> nextOrgUnitIds = req.getOrgUnitIds() != null ? req.getOrgUnitIds() : orgUnitMapper.selectIdsByUserId(id);
+      List<Long> nextDepartmentIds =
+        req.getDepartmentIds() != null ? req.getDepartmentIds() : userDepartmentMapper.selectDepartmentIdsByUserId(id);
+      validateOrgDepartmentSelection(nextOrgUnitIds, nextDepartmentIds);
     }
     if (req.getOrgUnitIds() != null) {
       replaceOrgUnits(id, req.getOrgUnitIds());
@@ -217,6 +293,82 @@ public class UserAdminService {
     saveUser(u);
     operationLogService.log("UPDATE", "用户管理", "重置密码: " + u.getAccount());
     return true;
+  }
+
+  private String normalizeIdCard(String idCard) {
+    if (idCard == null) return "";
+    return idCard.trim().toUpperCase();
+  }
+
+  private String normalizeDocumentType(String idType) {
+    if (idType == null) return null;
+    String normalized = idType.trim();
+    if (normalized.isEmpty()) return null;
+    String lower = normalized.toLowerCase(Locale.ROOT);
+    if (DOC_TYPE_RESIDENT_ID_CARD_ALIASES.contains(lower) || DOC_TYPE_RESIDENT_ID_CARD_ALIASES.contains(normalized)) {
+      return DOC_TYPE_RESIDENT_ID_CARD;
+    }
+    if (DOC_TYPE_PASSPORT_ALIASES.contains(lower) || DOC_TYPE_PASSPORT_ALIASES.contains(normalized)) {
+      return DOC_TYPE_PASSPORT;
+    }
+    return lower;
+  }
+
+  private void validateDocumentInfo(UserEntity user) {
+    String idType = normalizeDocumentType(user.getIdType());
+    String idCard = normalizeIdCard(user.getIdCard());
+    user.setIdType(idType);
+    user.setIdCard(idCard.isBlank() ? null : idCard);
+
+    if (idType == null && !idCard.isBlank()) {
+      throw new IllegalArgumentException("证件号码已填写，请先选择证件类型");
+    }
+
+    if (!idCard.isBlank()) {
+      switch (idType) {
+        case DOC_TYPE_RESIDENT_ID_CARD -> validateResidentIdCard(idCard);
+        case DOC_TYPE_PASSPORT -> validatePassport(idCard);
+        default -> throw new IllegalArgumentException("不支持的证件类型: " + idType);
+      }
+    }
+
+    LocalDate validFrom = user.getIdValidFrom();
+    LocalDate validTo = user.getIdValidTo();
+    if (validFrom != null && validTo != null && validTo.isBefore(validFrom)) {
+      throw new IllegalArgumentException("证件有效期止不能早于证件有效期起");
+    }
+  }
+
+  private void validateResidentIdCard(String idCard) {
+    if (!idCard.matches("^[1-9]\\d{16}[0-9X]$")) {
+      throw new IllegalArgumentException("居民身份证号码格式不正确");
+    }
+    String birth = idCard.substring(6, 14);
+    try {
+      LocalDate.parse(birth, java.time.format.DateTimeFormatter.BASIC_ISO_DATE);
+    } catch (Exception ex) {
+      throw new IllegalArgumentException("居民身份证号码中的出生日期不合法");
+    }
+    if (!isValidResidentIdCardChecksum(idCard)) {
+      throw new IllegalArgumentException("居民身份证号码校验位不正确");
+    }
+  }
+
+  private boolean isValidResidentIdCardChecksum(String idCard) {
+    int sum = 0;
+    for (int i = 0; i < 17; i++) {
+      char ch = idCard.charAt(i);
+      if (ch < '0' || ch > '9') return false;
+      sum += (ch - '0') * RESIDENT_ID_CARD_WEIGHTS[i];
+    }
+    char expected = RESIDENT_ID_CARD_CHECKSUM_CODES[sum % 11];
+    return expected == idCard.charAt(17);
+  }
+
+  private void validatePassport(String passportNo) {
+    if (!passportNo.matches("^[A-Z0-9]{5,17}$")) {
+      throw new IllegalArgumentException("护照号码格式不正确");
+    }
   }
 
   private List<String> normalizeRoles(List<String> roles) {
@@ -282,18 +434,39 @@ public class UserAdminService {
     item.setGuid(u.getGuid());
     item.setAccount(u.getAccount());
     item.setName(u.getName());
+    item.setNickname(u.getNickname());
+    item.setGender(u.getGender());
     item.setMobile(u.getMobile());
     item.setEmail(u.getEmail());
+    item.setIdType(u.getIdType());
     item.setIdCard(u.getIdCard());
+    item.setIdValidFrom(u.getIdValidFrom());
+    item.setIdValidTo(u.getIdValidTo());
     item.setSeat(u.getSeat());
     item.setEntity(u.getEntity());
     item.setLeader(u.getLeader());
     item.setPosition(u.getPosition());
     item.setJoinDay(u.getJoinDay());
     item.setTeam(u.getTeam());
+    item.setProvinceId(u.getProvinceId());
+    item.setProvince(u.getProvince());
+    item.setCityId(u.getCityId());
+    item.setCity(u.getCity());
+    item.setDistrictId(u.getDistrictId());
+    item.setDistrict(u.getDistrict());
+    item.setZipCode(u.getZipCode());
+    item.setAddress(u.getAddress());
     item.setStatus(u.getStatus());
     item.setCreatedAt(u.getCreatedAt());
     return item;
+  }
+
+  private void validateOrgDepartmentSelection(List<Long> orgUnitIds, List<Long> departmentIds) {
+    boolean hasOrg = orgUnitIds != null && orgUnitIds.stream().anyMatch(Objects::nonNull);
+    boolean hasDepartment = departmentIds != null && departmentIds.stream().anyMatch(Objects::nonNull);
+    if (hasOrg && hasDepartment) {
+      throw new IllegalArgumentException("已选择机构时不能选择部门");
+    }
   }
 
   private void replaceOrgUnits(Long userId, List<Long> orgUnitIds) {

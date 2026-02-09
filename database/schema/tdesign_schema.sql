@@ -420,6 +420,8 @@ CREATE TABLE `ui_layout_settings`  (
   `is_header_fixed` tinyint NULL DEFAULT NULL,
   `is_use_tabs_router` tinyint NULL DEFAULT NULL,
   `show_header` tinyint NULL DEFAULT NULL,
+  `header_github_url` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
+  `header_help_url` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
   PRIMARY KEY (`id`) USING BTREE
 ) ENGINE = InnoDB AUTO_INCREMENT = 2 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
 

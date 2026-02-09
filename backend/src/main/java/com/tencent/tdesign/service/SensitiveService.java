@@ -8,6 +8,7 @@ import com.tencent.tdesign.entity.SensitiveWord;
 import com.tencent.tdesign.mapper.SensitivePageSettingMapper;
 import com.tencent.tdesign.mapper.SensitiveSettingMapper;
 import com.tencent.tdesign.mapper.SensitiveWordMapper;
+import com.tencent.tdesign.util.ExcelExportUtil;
 import com.tencent.tdesign.util.PermissionUtil;
 import com.tencent.tdesign.vo.PageResult;
 import com.tencent.tdesign.vo.SensitiveImportResult;
@@ -37,6 +38,7 @@ import org.apache.poi.xssf.eventusermodel.XSSFReader;
 import org.apache.poi.xssf.eventusermodel.XSSFSheetXMLHandler;
 import org.apache.poi.xssf.model.StylesTable;
 import org.apache.poi.openxml4j.opc.OPCPackage;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.util.StringUtils;
@@ -146,20 +148,31 @@ public class SensitiveService {
 
   public void downloadTemplate(jakarta.servlet.http.HttpServletResponse response) {
     PermissionUtil.check("system:SystemSensitive:query");
-    try (Workbook workbook = new org.apache.poi.xssf.usermodel.XSSFWorkbook()) {
-      Sheet sheet = workbook.createSheet("Sensitive words");
-      Row header = sheet.createRow(0);
-      header.createCell(0).setCellValue("Sensitive word");
-      
-      // Sample rows to guide users.
-      sheet.createRow(1).createCell(0).setCellValue("example-word-1");
-      sheet.createRow(2).createCell(0).setCellValue("example-word-2");
+    Workbook workbook = new XSSFWorkbook();
+    try {
+      Sheet sheet = workbook.createSheet("敏感词模板");
+      var headerStyle = ExcelExportUtil.createHeaderStyle(workbook);
+      var bodyStyle = ExcelExportUtil.createBodyStyle(workbook);
+      String[] headers = new String[] { "敏感词" };
+      ExcelExportUtil.writeHeaderRow(sheet, 0, headers, headerStyle);
 
-      response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-      response.setHeader("Content-Disposition", "attachment; filename=sensitive_words_template.xlsx");
-      workbook.write(response.getOutputStream());
-    } catch (Exception e) {
-      throw new RuntimeException("生成模板失败: " + e.getMessage());
+      Row row1 = sheet.createRow(1);
+      row1.createCell(0).setCellValue("示例敏感词1");
+      ExcelExportUtil.applyRowCellStyle(row1, headers.length, bodyStyle);
+      Row row2 = sheet.createRow(2);
+      row2.createCell(0).setCellValue("示例敏感词2");
+      ExcelExportUtil.applyRowCellStyle(row2, headers.length, bodyStyle);
+
+      sheet.autoSizeColumn(0);
+      int width = Math.min(Math.max(sheet.getColumnWidth(0) + 512, 18 * 256), 60 * 256);
+      sheet.setColumnWidth(0, width);
+
+      ExcelExportUtil.writeXlsxToResponse(response, workbook, "sensitive_words_template.xlsx");
+    } finally {
+      try {
+        workbook.close();
+      } catch (Exception ignored) {
+      }
     }
   }
 
@@ -360,6 +373,12 @@ public class SensitiveService {
     String normalized = normalizeWord(value);
     if (!StringUtils.hasText(normalized)) {
       return;
+    }
+    if (index == 1) {
+      String header = normalized.replace(" ", "");
+      if ("Sensitiveword".equalsIgnoreCase(header) || "敏感词".equals(header)) {
+        return;
+      }
     }
     stats.total++;
     if (normalized.length() > MAX_WORD_LENGTH) {

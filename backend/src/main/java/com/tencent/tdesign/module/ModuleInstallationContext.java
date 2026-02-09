@@ -11,6 +11,7 @@ import javax.sql.DataSource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.datasource.DataSourceUtils;
 import org.springframework.jdbc.datasource.init.ScriptUtils;
 
 public class ModuleInstallationContext {
@@ -71,20 +72,26 @@ public class ModuleInstallationContext {
     if (!resource.exists()) {
       throw new IllegalArgumentException("安装脚本不存在: " + resourcePath);
     }
-    try (Connection connection = dataSource.getConnection()) {
+    Connection connection = DataSourceUtils.getConnection(dataSource);
+    try {
       ScriptUtils.executeSqlScript(connection, resource);
-    } catch (SQLException ex) {
-      throw new IllegalArgumentException("执行模块脚本失败: " + ex.getMessage());
+    } catch (Exception ex) {
+      throw new IllegalArgumentException("执行模块脚本失败: " + ex.getMessage(), ex);
+    } finally {
+      DataSourceUtils.releaseConnection(connection, dataSource);
     }
   }
 
   public void executeSqlResourceIfExists(String resourcePath) {
     Resource resource = resourceLoader.getResource(resourcePath);
     if (!resource.exists()) return;
-    try (Connection connection = dataSource.getConnection()) {
+    Connection connection = DataSourceUtils.getConnection(dataSource);
+    try {
       ScriptUtils.executeSqlScript(connection, resource);
-    } catch (SQLException ex) {
-      throw new IllegalArgumentException("执行模块脚本失败: " + ex.getMessage());
+    } catch (Exception ex) {
+      throw new IllegalArgumentException("执行模块脚本失败: " + ex.getMessage(), ex);
+    } finally {
+      DataSourceUtils.releaseConnection(connection, dataSource);
     }
   }
 

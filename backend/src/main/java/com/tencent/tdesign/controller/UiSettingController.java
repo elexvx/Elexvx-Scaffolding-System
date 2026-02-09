@@ -84,6 +84,8 @@ public class UiSettingController {
     response.setDarkStartTime(setting.getDarkStartTime());
     response.setMode(setting.getMode());
     response.setBrandTheme(setting.getBrandTheme());
+    response.setHeaderGithubUrl(setting.getHeaderGithubUrl());
+    response.setHeaderHelpUrl(setting.getHeaderHelpUrl());
     response.setUserAgreement(setting.getUserAgreement());
     response.setPrivacyAgreement(setting.getPrivacyAgreement());
     response.setSmsEnabled(Boolean.TRUE.equals(verificationSetting.getSmsEnabled()) && smsModuleAvailable);
@@ -164,6 +166,8 @@ public class UiSettingController {
     response.setIsHeaderFixed(setting.getIsHeaderFixed());
     response.setIsUseTabsRouter(setting.getIsUseTabsRouter());
     response.setShowHeader(setting.getShowHeader());
+    response.setHeaderGithubUrl(setting.getHeaderGithubUrl());
+    response.setHeaderHelpUrl(setting.getHeaderHelpUrl());
     response.setBrandTheme(setting.getBrandTheme());
     response.setUserAgreement(setting.getUserAgreement());
     response.setPrivacyAgreement(setting.getPrivacyAgreement());

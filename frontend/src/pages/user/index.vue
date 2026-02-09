@@ -1,44 +1,39 @@
 <template>
   <div class="user-center-container">
     <div class="user-center-grid">
-      <div class="user-center-left">
-        <t-card :bordered="false" class="user-info-card" :loading="profileLoading">
-          <div class="user-info-header">
-            <t-upload
-              action="/api/system/file/upload?page=user-profile"
-              name="file"
-              :show-file-list="false"
-              :headers="uploadHeaders"
-              theme="custom"
-              @success="handleAvatarSuccess"
-              @fail="handleAvatarFail"
-            >
-              <t-avatar size="100px" :image="profile.avatar" class="user-avatar">
-                <template v-if="!profile.avatar" #icon>
-                  <t-icon name="user" />
-                </template>
-                <div class="avatar-edit-overlay"><t-icon name="edit" /></div>
-              </t-avatar>
-            </t-upload>
-            <div class="user-name">{{ profile.name || '-' }}</div>
-            <div class="user-introduction">{{ profile.introduction || '欢迎完善个人信息' }}</div>
-          </div>
-          <div class="user-info-detail">
-            <div class="detail-item"><t-icon name="mail" /><span>{{ profile.email || '待补充' }}</span></div>
-            <div class="detail-item"><t-icon name="call" /><span>{{ profile.mobile || '待补充' }}</span></div>
-            <div class="detail-item"><t-icon name="location" /><span>{{ fullAddress || '待补充' }}</span></div>
-            <div class="detail-item"><t-icon name="usergroup" /><span>{{ profile.team || '待补充' }}</span></div>
-          </div>
-        </t-card>
-      </div>
-
       <div class="user-center-right">
         <div class="summary-grid">
-          <t-card :bordered="false" class="summary-card" :loading="profileLoading">
-            <div class="summary-user-name">{{ profile.name || '-' }}</div>
-            <div class="summary-row">账号：{{ profile.account || '-' }}</div>
-            <div class="summary-row">角色：{{ formatList(displayedRoles) }}</div>
-            <div class="summary-row">所属部门：{{ formatList(displayedOrgUnits) }}</div>
+          <t-card :bordered="false" class="user-info-card user-info-card--inline" :loading="profileLoading">
+            <div class="user-inline-left">
+              <t-upload
+                action="/api/system/file/upload?page=user-profile"
+                name="file"
+                :show-file-list="false"
+                :headers="uploadHeaders"
+                theme="custom"
+                @success="handleAvatarSuccess"
+                @fail="handleAvatarFail"
+              >
+                <t-avatar size="72px" :image="profile.avatar" class="user-avatar">
+                  <template v-if="!profile.avatar" #icon>
+                    <t-icon name="user" />
+                  </template>
+                  <div class="avatar-edit-overlay"><t-icon name="edit" /></div>
+                </t-avatar>
+              </t-upload>
+              <div class="user-inline-name">{{ profile.name || '-' }}</div>
+              <div class="user-inline-left-meta">
+                <div class="user-inline-row">角色：{{ formatList(displayedRoles) }}</div>
+                <div class="user-inline-row">所属部门：{{ formatList(displayedOrgUnits) }}</div>
+                <div class="user-inline-row">团队：{{ profile.team || '待补充' }}</div>
+              </div>
+            </div>
+            <div class="user-inline-right">
+              <div class="user-inline-row">账号：<span>{{ displayBasic.account || '-' }}</span></div>
+              <div class="user-inline-row"><t-icon name="mail" /><span>{{ displayBasic.email || '待补充' }}</span></div>
+              <div class="user-inline-row"><t-icon name="call" /><span>{{ displayBasic.mobile || '待补充' }}</span></div>
+              <div class="user-inline-row user-inline-row--full"><t-icon name="location" /><span>{{ displayBasic.address || '待补充' }}</span></div>
+            </div>
           </t-card>
 
           <t-card :bordered="false" class="summary-card" :loading="profileLoading">
@@ -67,42 +62,73 @@
           </t-card>
         </div>
 
-        <t-card title="基本信息" :bordered="false" class="user-setting-card" :loading="profileLoading">
+        <t-card :bordered="false" class="user-setting-card" :loading="profileLoading">
+          <template #title>
+            <div class="sensitive-title">
+              <span>基本信息</span>
+              <span
+                class="sensitive-toggle"
+                role="button"
+                tabindex="0"
+                @click.stop="toggleBasicMasked"
+                @keydown.enter.stop.prevent="toggleBasicMasked"
+              >
+                <t-icon :name="basicMasked ? 'browse-off' : 'browse'" />
+              </span>
+            </div>
+          </template>
           <template #actions>
-            <t-button theme="primary" variant="text" @click="openEditDrawer"><t-icon name="edit" />编辑</t-button>
+            <t-button theme="primary" variant="text" @click="openBasicEditDrawer"><t-icon name="edit" />编辑</t-button>
           </template>
           <t-descriptions :column="2" layout="horizontal" class="user-profile-descriptions">
             <t-descriptions-item label="姓名">{{ profile.name || '待补充' }}</t-descriptions-item>
+            <t-descriptions-item label="昵称">{{ profile.nickname || '待补充' }}</t-descriptions-item>
             <t-descriptions-item label="性别">{{ genderLabel || '待补充' }}</t-descriptions-item>
-            <t-descriptions-item label="手机号码">{{ profile.mobile || '待补充' }}</t-descriptions-item>
-            <t-descriptions-item label="电子邮箱">{{ profile.email || '待补充' }}</t-descriptions-item>
-            <t-descriptions-item label="地址" :span="2">{{ fullAddress || '待补充' }}</t-descriptions-item>
+            <t-descriptions-item label="手机号码">{{ displayBasic.mobile || '待补充' }}</t-descriptions-item>
+            <t-descriptions-item label="电子邮箱">{{ displayBasic.email || '待补充' }}</t-descriptions-item>
+            <t-descriptions-item label="邮编">{{ profile.zipCode || '待补充' }}</t-descriptions-item>
+            <t-descriptions-item label="地址" :span="2">{{ displayBasic.address || '待补充' }}</t-descriptions-item>
           </t-descriptions>
         </t-card>
 
-        <t-card title="证件信息" :bordered="false" class="user-setting-card" :loading="profileLoading" style="margin-top: 24px">
+        <t-card :bordered="false" class="user-setting-card" :loading="profileLoading">
+          <template #title>
+            <div class="sensitive-title">
+              <span>证件信息</span>
+              <span
+                class="sensitive-toggle"
+                role="button"
+                tabindex="0"
+                @click.stop="toggleDocumentMasked"
+                @keydown.enter.stop.prevent="toggleDocumentMasked"
+              >
+                <t-icon :name="documentMasked ? 'browse-off' : 'browse'" />
+              </span>
+            </div>
+          </template>
+          <template #actions>
+            <t-button theme="primary" variant="text" @click="openDocumentEditDrawer"><t-icon name="edit" />编辑</t-button>
+          </template>
           <t-descriptions :column="2" layout="horizontal" class="user-profile-descriptions">
             <t-descriptions-item label="证件类型">{{ documentTypeLabel || '待补充' }}</t-descriptions-item>
-            <t-descriptions-item label="证件号码">{{ profile.idCard || '待补充' }}</t-descriptions-item>
+            <t-descriptions-item label="证件号码">{{ displayDocument.idCard || '待补充' }}</t-descriptions-item>
             <t-descriptions-item label="证件有效期起">{{ profile.idValidFrom || '待补充' }}</t-descriptions-item>
             <t-descriptions-item label="证件有效期止">{{ profile.idValidTo || '待补充' }}</t-descriptions-item>
           </t-descriptions>
         </t-card>
 
-        <confirm-drawer v-model:visible="editProfileVisible" header="编辑个人信息" :size="drawerSize">
+        <confirm-drawer v-model:visible="basicEditVisible" header="编辑基本信息" :size="drawerSize">
           <t-form
-            ref="profileFormRef"
+            ref="basicProfileFormRef"
             class="drawer-form--single"
             :data="profileForm"
-            :rules="profileRules"
+            :rules="basicProfileRules"
             label-align="right"
             label-width="120px"
             layout="vertical"
-            @submit="handleUpdateProfile"
+            @submit="handleUpdateBasicProfile"
           >
             <t-row :gutter="[24, 24]">
-              <t-col :xs="24" :sm="12"><t-form-item label="角色"><t-input :value="formatList(displayedRoles)" readonly /></t-form-item></t-col>
-              <t-col :xs="24" :sm="12"><t-form-item label="所属部门"><t-input :value="formatList(displayedOrgUnits)" readonly /></t-form-item></t-col>
               <t-col :xs="24" :sm="12"><t-form-item label="姓名" name="name"><t-input v-model="profileForm.name" placeholder="请输入姓名" /></t-form-item></t-col>
               <t-col :xs="24" :sm="12"><t-form-item label="性别" name="gender"><t-select v-model="profileForm.gender" :options="genderOptions" placeholder="请选择性别" clearable /></t-form-item></t-col>
               <t-col :xs="24" :sm="12"><t-form-item label="昵称" name="nickname"><t-input v-model="profileForm.nickname" placeholder="请输入昵称" /></t-form-item></t-col>
@@ -124,6 +150,28 @@
               </t-col>
               <t-col :xs="24" :sm="12"><t-form-item label="邮编" name="zipCode"><t-input v-model="profileForm.zipCode" placeholder="请输入邮编" /></t-form-item></t-col>
               <t-col :xs="24" :sm="12"><t-form-item label="详细地址" name="address"><t-input v-model="profileForm.address" placeholder="请输入详细地址" /></t-form-item></t-col>
+            </t-row>
+          </t-form>
+          <template #footer>
+            <t-space class="tdesign-starter-action-bar">
+              <t-button variant="outline" @click="basicEditVisible = false">取消</t-button>
+              <t-button theme="primary" :loading="updatingProfile" @click="basicProfileFormRef?.submit()">保存</t-button>
+            </t-space>
+          </template>
+        </confirm-drawer>
+
+        <confirm-drawer v-model:visible="documentEditVisible" header="编辑证件信息" :size="drawerSize">
+          <t-form
+            ref="documentProfileFormRef"
+            class="drawer-form--single"
+            :data="profileForm"
+            :rules="documentProfileRules"
+            label-align="right"
+            label-width="120px"
+            layout="vertical"
+            @submit="handleUpdateDocumentProfile"
+          >
+            <t-row :gutter="[24, 24]">
               <t-col :xs="24" :sm="12"><t-form-item label="证件类型" name="idType"><t-select v-model="profileForm.idType" :options="documentTypeOptions" clearable filterable placeholder="请选择证件类型" /></t-form-item></t-col>
               <t-col :xs="24" :sm="12"><t-form-item label="证件号码" name="idCard"><t-input v-model="profileForm.idCard" :placeholder="documentNoPlaceholder" /></t-form-item></t-col>
               <t-col :xs="24" :sm="12">
@@ -136,22 +184,12 @@
                   <t-date-picker v-model="profileForm.idValidTo" clearable format="YYYY-MM-DD" value-type="YYYY-MM-DD" style="width: 100%" />
                 </t-form-item>
               </t-col>
-              <t-col :xs="24" :sm="12">
-                <t-form-item label="个人介绍" name="introduction">
-                  <t-textarea
-                    v-model="profileForm.introduction"
-                    placeholder="请输入个人简介"
-                    :autosize="{ minRows: 3, maxRows: 5 }"
-                    class="introduction-textarea"
-                  />
-                </t-form-item>
-              </t-col>
             </t-row>
           </t-form>
           <template #footer>
             <t-space class="tdesign-starter-action-bar">
-              <t-button variant="outline" @click="editProfileVisible = false">取消</t-button>
-              <t-button theme="primary" :loading="updatingProfile" @click="profileFormRef?.submit()">保存</t-button>
+              <t-button variant="outline" @click="documentEditVisible = false">取消</t-button>
+              <t-button theme="primary" :loading="updatingProfile" @click="documentProfileFormRef?.submit()">保存</t-button>
             </t-space>
           </template>
         </confirm-drawer>
@@ -223,8 +261,71 @@ const updatingProfile = ref(false);
 
 const uploadHeaders = computed(() => ({ Authorization: userStore.token }));
 const profile = ref<UserProfile>({} as UserProfile);
+const basicMasked = ref(true);
+const documentMasked = ref(true);
 
-const profileFormRef = ref<FormInstanceFunctions>();
+const maskMiddle = (value: string, prefixKeep: number, suffixKeep: number, maskChar = '*') => {
+  const text = (value || '').trim();
+  if (!text) return '';
+  if (text.includes('*')) return text;
+  const keepHead = Math.max(0, prefixKeep);
+  const keepTail = Math.max(0, suffixKeep);
+  if (text.length <= keepHead + keepTail) return maskChar.repeat(Math.max(4, text.length));
+  const maskedLen = Math.max(4, text.length - keepHead - keepTail);
+  return `${text.slice(0, keepHead)}${maskChar.repeat(maskedLen)}${text.slice(text.length - keepTail)}`;
+};
+
+const maskPhone = (value?: string) => {
+  const text = (value || '').trim();
+  if (!text) return '';
+  const digits = text.replace(/\D/g, '');
+  if (digits.length === 11) return maskMiddle(digits, 3, 4);
+  return maskMiddle(text, 3, 2);
+};
+
+const maskEmail = (value?: string) => {
+  const text = (value || '').trim();
+  if (!text) return '';
+  if (text.includes('*')) return text;
+  const at = text.indexOf('@');
+  if (at <= 1) return text;
+  return `${text.slice(0, 1)}****${text.slice(at)}`;
+};
+
+const maskIdCard = (value?: string) => {
+  const text = (value || '').trim();
+  if (!text) return '';
+  if (text.includes('*')) return text;
+  if (text.length >= 8) return maskMiddle(text, 4, 4);
+  return maskMiddle(text, 1, 1);
+};
+
+const maskAddress = (value?: string) => {
+  const text = (value || '').trim();
+  if (!text) return '';
+  if (text.includes('*')) return text;
+  if (text.length <= 6) return `${text[0]}****`;
+  return `${text.slice(0, 6)}****`;
+};
+
+const maskAccount = (value?: string) => {
+  const text = (value || '').trim();
+  if (!text) return '';
+  if (text.includes('*')) return text;
+  if (text.length <= 4) return maskMiddle(text, 1, 0);
+  return maskMiddle(text, 2, 2);
+};
+
+const toggleBasicMasked = () => {
+  basicMasked.value = !basicMasked.value;
+};
+
+const toggleDocumentMasked = () => {
+  documentMasked.value = !documentMasked.value;
+};
+
+const basicProfileFormRef = ref<FormInstanceFunctions>();
+const documentProfileFormRef = ref<FormInstanceFunctions>();
 const profileForm = reactive({
   name: '',
   nickname: '',
@@ -243,7 +344,6 @@ const profileForm = reactive({
   districtId: null as number | null,
   zipCode: '',
   address: '',
-  introduction: '',
   tags: '',
 });
 
@@ -322,6 +422,34 @@ const fullAddress = computed(() => {
   const address = (profile.value.address || '').trim();
   const parts = [province, city, district, address].filter(Boolean);
   return parts.filter((part, idx) => idx === 0 || part !== parts[idx - 1]).join('');
+});
+
+const displayBasic = computed(() => {
+  if (!basicMasked.value) {
+    return {
+      account: (profile.value.account || '').trim(),
+      mobile: (profile.value.mobile || '').trim(),
+      email: (profile.value.email || '').trim(),
+      address: fullAddress.value,
+    };
+  }
+  return {
+    account: maskAccount(profile.value.account),
+    mobile: maskPhone(profile.value.mobile),
+    email: maskEmail(profile.value.email),
+    address: maskAddress(fullAddress.value),
+  };
+});
+
+const displayDocument = computed(() => {
+  if (!documentMasked.value) {
+    return {
+      idCard: (profile.value.idCard || '').trim(),
+    };
+  }
+  return {
+    idCard: maskIdCard(profile.value.idCard),
+  };
 });
 const fallbackCompleteness = computed(() => {
   const missing = new Set<string>();
@@ -545,9 +673,12 @@ const handleAreaChange = (_value: any, context: any) => {
   areaValue.value = pathNodes.map((item: any) => item.value);
 };
 
-const profileRules: Record<string, FormRule[]> = {
+const basicProfileRules: Record<string, FormRule[]> = {
   name: [{ required: true, message: '请输入姓名', type: 'error' }],
   email: [{ email: true, message: '请输入正确的邮箱地址', type: 'warning' }],
+};
+
+const documentProfileRules: Record<string, FormRule[]> = {
   idType: [{ validator: (val: string) => !profileForm.idCard?.trim() || Boolean(normalizeDocumentType(val)), message: '已填写证件号码时，请先选择证件类型', type: 'error' }],
   idCard: [{ validator: (val: string) => validateDocumentNumber(profileForm.idType, val), message: '证件号码格式与证件类型不匹配', type: 'error' }],
   idValidTo: [{ validator: (val: string) => validateDocumentDateRange(profileForm.idValidFrom, val), message: '证件有效期止不能早于证件有效期起', type: 'error' }],
@@ -586,7 +717,7 @@ const fetchProfile = async () => {
       idType: normalizeDocumentType(res.idType), idCard: res.idCard || '', idValidFrom: res.idValidFrom || '', idValidTo: res.idValidTo || '',
       seat: res.seat || '', provinceId: res.provinceId ?? null, province: res.province || '', cityId: res.cityId ?? null,
       city: res.city || '', districtId: res.districtId ?? null, district: res.district || '', zipCode: res.zipCode || '', address: res.address || '',
-      introduction: res.introduction || '', tags: res.tags || '',
+      tags: res.tags || '',
     });
     await syncAreaFromProfile(res);
   } catch {
@@ -611,7 +742,8 @@ const fetchLoginLogs = async (account?: string) => {
   }
 };
 
-const editProfileVisible = ref(false);
+const basicEditVisible = ref(false);
+const documentEditVisible = ref(false);
 const isMobile = ref(false);
 const drawerSize = computed(() => (isMobile.value ? '100%' : '760px'));
 const updateIsMobile = () => {
@@ -619,8 +751,8 @@ const updateIsMobile = () => {
   isMobile.value = window.innerWidth <= 768;
 };
 
-const openEditDrawer = async () => {
-  editProfileVisible.value = true;
+const openBasicEditDrawer = async () => {
+  basicEditVisible.value = true;
   try {
     await loadDictionaries(true);
     areaOptions.value = [];
@@ -630,11 +762,53 @@ const openEditDrawer = async () => {
   }
 };
 
-const handleUpdateProfile = async (context: SubmitContext) => {
+const openDocumentEditDrawer = async () => {
+  documentEditVisible.value = true;
+  try {
+    await loadDictionaries(true);
+  } catch (error) {
+    console.error('Load dictionaries failed:', error);
+  }
+};
+
+const handleUpdateBasicProfile = async (context: SubmitContext) => {
   if (context.validateResult !== true) return;
 
   const payload: UserProfileUpdate = {
-    ...profileForm,
+    name: profileForm.name?.trim() || '',
+    nickname: profileForm.nickname?.trim() || '',
+    gender: profileForm.gender || '',
+    mobile: profileForm.mobile?.trim() || '',
+    email: profileForm.email?.trim() || '',
+    provinceId: profileForm.provinceId,
+    province: profileForm.province || '',
+    cityId: profileForm.cityId,
+    city: profileForm.city || '',
+    districtId: profileForm.districtId,
+    district: profileForm.district || '',
+    zipCode: profileForm.zipCode?.trim() || '',
+    address: profileForm.address?.trim() || '',
+  };
+
+  updatingProfile.value = true;
+  try {
+    await updateMyProfile(payload);
+    MessagePlugin.success('个人资料更新成功');
+    basicEditVisible.value = false;
+    await fetchProfile();
+  } catch (error: any) {
+    const raw = String(error?.message || '个人资料更新失败');
+    const humanMsg = raw.replace(/\s*\[\d{3}\]\s*$/, '').trim();
+    MessagePlugin.error(humanMsg || '个人资料更新失败');
+  } finally {
+    updatingProfile.value = false;
+  }
+};
+
+const handleUpdateDocumentProfile = async (context: SubmitContext) => {
+  if (context.validateResult !== true) return;
+
+  const payload: UserProfileUpdate = {
     idType: normalizeDocumentType(profileForm.idType) || '',
     idCard: profileForm.idCard?.trim() || '',
     idValidFrom: profileForm.idValidFrom || undefined,
@@ -644,13 +818,13 @@ const handleUpdateProfile = async (context: SubmitContext) => {
   updatingProfile.value = true;
   try {
     await updateMyProfile(payload);
-    MessagePlugin.success('个人资料更新成功');
-    editProfileVisible.value = false;
+    MessagePlugin.success('证件信息更新成功');
+    documentEditVisible.value = false;
     await fetchProfile();
   } catch (error: any) {
-    const raw = String(error?.message || '个人资料更新失败');
+    const raw = String(error?.message || '证件信息更新失败');
     const humanMsg = raw.replace(/\s*\[\d{3}\]\s*$/, '').trim();
-    MessagePlugin.error(humanMsg || '个人资料更新失败');
+    MessagePlugin.error(humanMsg || '证件信息更新失败');
   } finally {
     updatingProfile.value = false;
   }
@@ -707,19 +881,28 @@ onUnmounted(() => {
 
 <style lang="less" scoped>
 .user-center-container {
+  --user-center-gap: var(--td-starter-gap-lg);
+
   .user-center-grid {
     display: grid;
-    grid-template-columns: minmax(280px, 340px) minmax(0, 1fr);
-    gap: 24px;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--user-center-gap);
     align-items: start;
     width: 100%;
   }
 
+  .user-center-right {
+    display: flex;
+    flex-direction: column;
+    gap: var(--user-center-gap);
+    min-width: 0;
+  }
+
   .summary-grid {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 24px;
-    margin-bottom: 24px;
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+    gap: var(--user-center-gap);
+    align-items: stretch;
   }
 
   .summary-card,
@@ -728,55 +911,77 @@ onUnmounted(() => {
     width: 100%;
   }
 
+  .summary-card,
+  .user-info-card {
+    height: 100%;
+  }
+
   .summary-card {
-    :deep(.t-card__body) { padding: 24px; }
     .summary-user-name { font: var(--td-font-title-large); font-weight: 600; color: var(--td-text-color-primary); }
     .summary-row { margin-top: 8px; color: var(--td-text-color-secondary); }
-    .score-layout { display: flex; align-items: center; gap: 20px; justify-content: space-between; }
+    .score-layout { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 24px; align-items: center; }
     .score-ring { width: 132px; height: 132px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
     .score-ring-inner { width: 106px; height: 106px; border-radius: 50%; background: var(--td-bg-color-container); display: flex; flex-direction: column; align-items: center; justify-content: center; }
     .score-value { font: var(--td-font-title-large); color: var(--td-brand-color); font-weight: 600; }
     .score-label { margin-top: 4px; font: var(--td-font-body-small); color: var(--td-text-color-secondary); }
-    .score-list { display: flex; flex-direction: column; gap: 8px; }
+    .score-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 16px; }
     .score-subtotal { display: flex; justify-content: space-between; color: var(--td-text-color-primary); font-weight: 600; }
-    .score-list-item { display: flex; align-items: center; gap: 8px; color: var(--td-text-color-secondary); }
+    .score-list-item { display: flex; align-items: center; gap: 8px; min-width: 0; color: var(--td-text-color-secondary); }
     .score-list-item .t-icon { color: var(--td-warning-color); }
     .score-list-item.done .t-icon { color: var(--td-success-color); }
   }
   .user-info-card {
     overflow: hidden;
-    .user-info-header {
+    .user-avatar { border: 4px solid var(--td-bg-color-container); box-shadow: 0 4px 12px rgb(0 0 0 / 8%); position: relative; cursor: pointer; }
+    .avatar-edit-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      color: #fff;
+      background: rgb(0 0 0 / 40%);
+      opacity: 0;
+    }
+    .user-avatar:hover .avatar-edit-overlay { opacity: 1; }
+  }
+
+  .user-info-card--inline {
+    :deep(.t-card__body) { display: grid; grid-template-columns: minmax(320px, 1.15fr) minmax(0, 1fr); align-items: stretch; gap: 24px; }
+    .user-inline-left {
+      display: grid;
+      grid-template-columns: 80px minmax(0, 1fr);
+      grid-template-rows: auto auto;
+      column-gap: 16px;
+      row-gap: 8px;
+      align-items: center;
+      text-align: left;
+    }
+    .user-inline-left > :first-child { grid-row: 1 / span 2; }
+    .user-inline-name { margin-top: 0; font: var(--td-font-title-large); font-weight: 600; color: var(--td-text-color-primary); }
+    .user-inline-left-meta { margin-top: 0; display: grid; gap: 6px; color: var(--td-text-color-secondary); }
+    .user-inline-left-meta .user-inline-row { justify-content: flex-start; }
+    .user-inline-right {
       display: flex;
       flex-direction: column;
-      align-items: center;
-      padding: 48px 24px 32px;
-      text-align: center;
-      .user-avatar { border: 4px solid var(--td-bg-color-container); box-shadow: 0 4px 12px rgb(0 0 0 / 8%); position: relative; cursor: pointer; }
-      .avatar-edit-overlay {
-        position: absolute;
-        inset: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 50%;
-        color: #fff;
-        background: rgb(0 0 0 / 40%);
-        opacity: 0;
-      }
-      .user-avatar:hover .avatar-edit-overlay { opacity: 1; }
-      .user-name { margin-top: 12px; font: var(--td-font-title-large); font-weight: 600; }
-      .user-introduction { margin-top: 8px; color: var(--td-text-color-secondary); }
+      gap: 12px;
+      min-width: 0;
+      padding-top: 6px;
+      padding-left: 24px;
+      border-left: 1px solid var(--td-border-level-1-color);
+      color: var(--td-text-color-secondary);
     }
-    .user-info-detail {
-      padding: 16px 24px 24px;
-      border-top: 1px solid var(--td-border-level-1-color);
-      .detail-item { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; color: var(--td-text-color-secondary); }
-    }
+    .user-inline-row { display: flex; align-items: center; gap: 10px; min-width: 0; }
+    .user-inline-row--full { grid-column: 1 / -1; }
+    .user-inline-row > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   }
 
   .user-setting-card {
-    :deep(.t-card__header) { padding: 18px 24px; border-bottom: 1px solid var(--td-border-level-1-color); }
-    :deep(.t-card__body) { padding: 24px; }
+    :deep(.t-card__header) { border-bottom: 1px solid var(--td-border-level-1-color); }
+    .sensitive-title { display: flex; align-items: center; gap: 8px; }
+    .sensitive-toggle { cursor: pointer; color: var(--td-text-color-secondary); line-height: 0; display: inline-flex; }
+    .sensitive-toggle:hover { color: var(--td-text-color-primary); }
     .form-submit {
       padding-top: 16px;
       :deep(.t-form__controls-content) { display: flex; justify-content: flex-end; }
@@ -785,7 +990,6 @@ onUnmounted(() => {
       :deep(.t-form__controls) { flex: 1; min-width: 0; }
       :deep(.t-input) { width: 100%; }
     }
-    .introduction-textarea { width: 100%; }
     .user-profile-descriptions {
       :deep(.t-descriptions__row) td {
         padding: 10px 0;
@@ -803,18 +1007,40 @@ onUnmounted(() => {
     }
   }
 
-  @media (width <= 1200px) {
+  @media (max-width: 1200px) {
     .summary-grid { grid-template-columns: 1fr; }
   }
 
-  @media (width <= 768px) {
-    .user-center-grid { grid-template-columns: 1fr; gap: 16px; }
-    .summary-grid { gap: 16px; margin-bottom: 16px; }
-    .summary-card .score-layout { align-items: flex-start; flex-direction: column; }
-    .user-info-card .user-info-header { padding: 24px 16px; }
-    .user-info-card .user-info-detail { padding: 8px 16px 16px; }
-    .user-setting-card :deep(.t-card__header) { padding: 14px 16px; }
-    .user-setting-card :deep(.t-card__body) { padding: 16px; }
+  @media (max-width: 768px) {
+    --user-center-gap: var(--td-starter-gap-md);
+
+    .user-center-grid { grid-template-columns: 1fr; }
+    .summary-card .score-layout { grid-template-columns: 1fr; align-items: flex-start; }
+    .summary-card .score-list { grid-template-columns: 1fr; }
+    .user-info-card--inline :deep(.t-card__body) { grid-template-columns: 1fr; }
+    .user-info-card--inline .user-inline-left {
+      grid-template-columns: 1fr;
+      grid-template-rows: auto;
+      justify-items: center;
+      text-align: center;
+    }
+    .user-info-card--inline .user-inline-left > :first-child { grid-row: auto; }
+    .user-info-card--inline .user-inline-left-meta { justify-items: center; }
+    .user-info-card--inline .user-inline-left-meta .user-inline-row { justify-content: center; }
+    .user-info-card--inline .user-inline-right {
+      min-width: 0;
+      padding-top: 0;
+      padding-left: 0;
+      border-left: none;
+      text-align: left;
+    }
+    .user-info-card--inline .user-inline-row--full { grid-column: auto; }
+    .user-info-card--inline .user-inline-row { align-items: flex-start; }
+    .user-info-card--inline .user-inline-row > span {
+      white-space: normal;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
   }
 }
 </style>

@@ -127,6 +127,6 @@ public class SystemDictController {
   @GetMapping("/items/template")
   public void downloadTemplate(jakarta.servlet.http.HttpServletResponse response) {
     PermissionUtil.check("system:dict:query");
-    dictionaryService.downloadTemplate(response);
+    dictionaryService.downloadTemplateXlsx(response);
   }
 }

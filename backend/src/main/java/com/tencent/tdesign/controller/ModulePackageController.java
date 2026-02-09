@@ -2,7 +2,7 @@ package com.tencent.tdesign.controller;
 
 import com.tencent.tdesign.module.ModuleDefinition;
 import com.tencent.tdesign.module.ModuleDefinitionRegistry;
-import com.tencent.tdesign.module.ModulePackageManifest;
+import com.tencent.tdesign.service.ModuleBackendProcessManager;
 import com.tencent.tdesign.service.ModulePackageService;
 import com.tencent.tdesign.service.ModuleRegistryService;
 import com.tencent.tdesign.util.PermissionUtil;
@@ -31,15 +31,18 @@ public class ModulePackageController {
   private final ModuleDefinitionRegistry definitionRegistry;
   private final ModulePackageService modulePackageService;
   private final ModuleRegistryService moduleRegistryService;
+  private final ModuleBackendProcessManager moduleBackendProcessManager;
 
   public ModulePackageController(
     ModuleDefinitionRegistry definitionRegistry,
     ModulePackageService modulePackageService,
-    ModuleRegistryService moduleRegistryService
+    ModuleRegistryService moduleRegistryService,
+    ModuleBackendProcessManager moduleBackendProcessManager
   ) {
     this.definitionRegistry = definitionRegistry;
     this.modulePackageService = modulePackageService;
     this.moduleRegistryService = moduleRegistryService;
+    this.moduleBackendProcessManager = moduleBackendProcessManager;
   }
 
   @GetMapping("/{moduleKey}/package")
@@ -60,7 +63,20 @@ public class ModulePackageController {
   @PostMapping("/package/install")
   public ApiResponse<ModuleRegistryResponse> uploadAndInstall(@RequestParam("file") MultipartFile file) {
     PermissionUtil.check(PERM_UPDATE);
-    ModulePackageManifest manifest = modulePackageService.saveAndExtract(file);
-    return ApiResponse.success(moduleRegistryService.installModule(manifest.getKey()));
+    ModulePackageService.StagedModulePackage staged = modulePackageService.stagePackage(file);
+    ModulePackageService.CommitResult commit = modulePackageService.commitStagedPackage(staged);
+    String key = staged.manifest().getKey();
+    try {
+      ModuleRegistryResponse resp = moduleRegistryService.installModule(key);
+      moduleBackendProcessManager.ensureRunning(key);
+      return ApiResponse.success(resp);
+    } catch (Exception ex) {
+      moduleBackendProcessManager.stop(key);
+      modulePackageService.rollbackCommit(commit);
+      try {
+        moduleRegistryService.uninstallModule(key);
+      } catch (Exception ignored) {}
+      throw ex;
+    }
   }
 }
