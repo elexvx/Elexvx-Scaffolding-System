@@ -13,6 +13,7 @@ import com.tencent.tdesign.dto.ForgotPasswordRequest;
 import com.tencent.tdesign.dto.RoleSwitchRequest;
 import com.tencent.tdesign.annotation.RepeatSubmit;
 import com.tencent.tdesign.service.AuthService;
+import com.tencent.tdesign.service.SecurityRateLimitService;
 import com.tencent.tdesign.vo.ApiResponse;
 import com.tencent.tdesign.vo.LoginResponse;
 import com.tencent.tdesign.vo.SmsSendResponse;
@@ -31,14 +32,24 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/auth")
 public class AuthController {
   private final AuthService authService;
+  private final SecurityRateLimitService rateLimitService;
 
-  public AuthController(AuthService authService) {
+  public AuthController(AuthService authService, SecurityRateLimitService rateLimitService) {
     this.authService = authService;
+    this.rateLimitService = rateLimitService;
   }
 
   @PostMapping("/login")
   public ApiResponse<LoginResponse> login(@RequestBody @Valid LoginRequest req) {
-    return ApiResponse.success(authService.login(req));
+    rateLimitService.checkLoginAttempt(req.getAccount());
+    try {
+      LoginResponse response = authService.login(req);
+      rateLimitService.clearLoginFailures(req.getAccount());
+      return ApiResponse.success(response);
+    } catch (IllegalArgumentException ex) {
+      rateLimitService.recordLoginFailure(req.getAccount());
+      throw new IllegalArgumentException("账号或密码错误");
+    }
   }
 
   @PostMapping("/login/sms")
@@ -54,12 +65,14 @@ public class AuthController {
   @PostMapping("/sms/send")
   @RepeatSubmit
   public ApiResponse<SmsSendResponse> sendSms(@RequestBody @Valid SmsSendRequest req) {
+    rateLimitService.checkVerificationSendQuota(req.getPhone(), "sms");
     return ApiResponse.success(authService.sendSmsCode(req));
   }
 
   @PostMapping("/email/send")
   @RepeatSubmit
   public ApiResponse<SmsSendResponse> sendEmail(@RequestBody @Valid EmailSendRequest req) {
+    rateLimitService.checkVerificationSendQuota(req.getEmail(), "email");
     return ApiResponse.success(authService.sendEmailCode(req));
   }
 

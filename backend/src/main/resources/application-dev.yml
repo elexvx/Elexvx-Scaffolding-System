@@ -1,0 +1,11 @@
+tdesign:
+  web:
+    expose-uploads: true
+    cors:
+      allowed-origin-patterns: "*"
+
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true

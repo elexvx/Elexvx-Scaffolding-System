@@ -72,3 +72,47 @@ mvn -DskipTests package
 - 架构说明：`docs/ARCHITECTURE.md`
 - 类图/时序图：`docs/DIAGRAMS.md`
 - 模块包规范：`docs/MODULE_PACKAGE.md`
+
+## 生产安全基线（新增默认）
+
+后端在 `prod` 环境默认采用“安全优先”配置：
+
+- `TDESIGN_SECURITY_FIELD_SECRET`：**必填**，至少 32 bytes；未配置时启动失败。
+- `TDESIGN_CORS_ALLOWED_ORIGINS`：**必填**，仅允许显式白名单域名（禁止 `*`）。
+- `FILE_TOKEN_SECRET`：建议必填，文件下载 token 使用 AES/GCM 并带过期时间（默认 600 秒）。
+- `tdesign.web.expose-uploads=false`：生产默认不暴露 `/uploads/**` 静态目录。
+- `springdoc.api-docs.enabled=false`、`springdoc.swagger-ui.enabled=false`：生产默认关闭 API 文档端点。
+- `tdesign.file.upload.max-file-size-mb=100`：上传大小默认 100MB，可按业务下调/上调。
+- 登录与短信/邮箱发送接口启用 Redis 限流（IP + 账号/邮箱/手机号维度）。
+
+参考生产配置：
+
+```yaml
+spring:
+  profiles:
+    active: prod
+
+tdesign:
+  security:
+    field-secret: ${TDESIGN_SECURITY_FIELD_SECRET}
+    rate-limit:
+      login-per-minute: 10
+      login-fail-threshold: 5
+      sms-email-per-minute: 3
+      sms-email-per-day: 20
+  web:
+    expose-uploads: false
+    cors:
+      allowed-origin-patterns: ${TDESIGN_CORS_ALLOWED_ORIGINS}
+  file:
+    token-secret: ${FILE_TOKEN_SECRET}
+    token-ttl-seconds: 600
+    upload:
+      max-file-size-mb: 100
+
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+```

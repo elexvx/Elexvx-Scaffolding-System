@@ -19,13 +19,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/system/file")
 public class FileUploadController {
   private static final Logger log = LoggerFactory.getLogger(FileUploadController.class);
-  private static final long MAX_FILE_SIZE = 10L * 1024 * 1024 * 1024;
   private static final Set<String> ALLOWED_EXTENSIONS = Set.of(
     "pdf",
     "doc",
@@ -44,10 +44,16 @@ public class FileUploadController {
   );
   private final ObjectStorageService storageService;
   private final FileChunkUploadService chunkUploadService;
+  private final long maxFileSizeBytes;
 
-  public FileUploadController(ObjectStorageService storageService, FileChunkUploadService chunkUploadService) {
+  public FileUploadController(
+    ObjectStorageService storageService,
+    FileChunkUploadService chunkUploadService,
+    @Value("${tdesign.file.upload.max-file-size-mb:100}") long maxFileSizeMb
+  ) {
     this.storageService = storageService;
     this.chunkUploadService = chunkUploadService;
+    this.maxFileSizeBytes = Math.max(1, maxFileSizeMb) * 1024 * 1024;
   }
 
   @PostMapping("/upload")
@@ -62,8 +68,8 @@ public class FileUploadController {
 
     try {
       String original = file.getOriginalFilename();
-      if (file.getSize() > MAX_FILE_SIZE) {
-        return ApiResponse.failure(413, "上传文件过大，请上传 10GB 以内文件");
+      if (file.getSize() > maxFileSizeBytes) {
+        return ApiResponse.failure(413, "上传文件过大");
       }
       String ext = fileExtension(original);
       if (ext == null || !ALLOWED_EXTENSIONS.contains(ext)) {
@@ -75,7 +81,7 @@ public class FileUploadController {
       return ApiResponse.success(Map.of("url", url));
     } catch (Exception e) {
       log.error("文件上传过程中发生错误", e);
-      return ApiResponse.failure(500, "文件保存失败: " + e.getMessage());
+      return ApiResponse.failure(500, "文件保存失败，请稍后重试");
     }
   }
 

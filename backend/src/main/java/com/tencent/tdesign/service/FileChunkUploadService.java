@@ -33,6 +33,7 @@ import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Stream;
+import java.util.regex.Pattern;
 
 @Service
 public class FileChunkUploadService {
@@ -42,6 +43,7 @@ public class FileChunkUploadService {
   private static final String DEFAULT_FOLDER = "business";
   private static final String META_FILE = "session.json";
   private static final int MAX_FINGERPRINT_LENGTH = 512;
+  private static final Pattern UPLOAD_ID_PATTERN = Pattern.compile("^[A-Za-z0-9_-]{20,100}$");
 
   private final ObjectStorageService storageService;
   private final ObjectMapper objectMapper;
@@ -214,7 +216,18 @@ public class FileChunkUploadService {
   }
 
   private Path sessionDir(String uploadId) {
-    return chunkRoot.resolve(uploadId);
+    validateUploadId(uploadId);
+    Path dir = chunkRoot.resolve(uploadId).normalize();
+    if (!dir.startsWith(chunkRoot)) {
+      throw new IllegalArgumentException("非法上传会话");
+    }
+    return dir;
+  }
+
+  private void validateUploadId(String uploadId) {
+    if (!StringUtils.hasText(uploadId) || !UPLOAD_ID_PATTERN.matcher(uploadId).matches()) {
+      throw new IllegalArgumentException("非法 uploadId");
+    }
   }
 
   private InputStream openCombinedStream(Path dir, int totalChunks) throws IOException {

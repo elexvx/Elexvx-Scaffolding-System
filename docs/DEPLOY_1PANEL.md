@@ -133,3 +133,16 @@
 *   **跨域问题**：通过 Nginx 反向代理 `/api` 可以完美解决跨域问题，请确保代理配置正确。
 *   **数据库连接失败**：请检查 Docker 容器间的网络互通性。如果使用 `127.0.0.1` 无法连接，尝试使用 1Panel 提供的数据库容器 IP 或服务名。
 *   **前端 404**：刷新页面报 404 是 SPA 应用的通病，请务必在 Nginx 配置中添加 `try_files $uri $uri/ /index.html;`。
+
+## 4. 生产安全必填环境变量
+
+请在后端容器/应用中至少配置以下变量：
+
+- `SPRING_PROFILES_ACTIVE=prod`
+- `TDESIGN_SECURITY_FIELD_SECRET=<32bytes以上随机密钥>`
+- `TDESIGN_CORS_ALLOWED_ORIGINS=https://finance.example.com,https://admin.example.com`
+- `FILE_TOKEN_SECRET=<高强度随机密钥>`
+- （可选）`TDESIGN_FILE_TOKEN_TTL_SECONDS=600`
+- （可选）`TDESIGN_UPLOAD_MAX_FILE_SIZE_MB=100`
+
+未配置 `TDESIGN_SECURITY_FIELD_SECRET` 或在 `prod` 下未配置 CORS 白名单时，服务会启动失败（Fail Fast）。

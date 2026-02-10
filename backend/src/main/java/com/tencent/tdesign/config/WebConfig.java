@@ -25,12 +25,15 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class WebConfig implements WebMvcConfigurer {
   private final String corsAllowedOriginPatterns;
   private final ModulePackageService modulePackageService;
+  private final boolean exposeUploads;
 
   public WebConfig(
-    @Value("${tdesign.web.cors.allowed-origin-patterns:*}") String corsAllowedOriginPatterns,
+    @Value("${tdesign.web.cors.allowed-origin-patterns:}") String corsAllowedOriginPatterns,
+    @Value("${tdesign.web.expose-uploads:false}") boolean exposeUploads,
     ModulePackageService modulePackageService
   ) {
     this.corsAllowedOriginPatterns = corsAllowedOriginPatterns;
+    this.exposeUploads = exposeUploads;
     this.modulePackageService = modulePackageService;
   }
 
@@ -47,7 +50,7 @@ public class WebConfig implements WebMvcConfigurer {
     config.setMaxAge(3600L);
     UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
     source.registerCorsConfiguration("/**", config);
-    
+
     FilterRegistrationBean<CorsFilter> registration = new FilterRegistrationBean<>(new CorsFilter(source));
     registration.setAsyncSupported(true);
     registration.setOrder(Ordered.HIGHEST_PRECEDENCE);
@@ -69,34 +72,36 @@ public class WebConfig implements WebMvcConfigurer {
 
   @Override
   public void addResourceHandlers(@NonNull ResourceHandlerRegistry registry) {
-    Path uploadDir = Paths.get(System.getProperty("user.dir"), "uploads");
-    try {
-      Files.createDirectories(uploadDir);
-      Files.createDirectories(uploadDir.resolve("system"));
-      Files.createDirectories(uploadDir.resolve("business"));
-    } catch (Exception ignored) {}
-    String base = "file:" + uploadDir.toAbsolutePath().toString() + "/";
-    registry.addResourceHandler("/uploads/system/**").addResourceLocations(base + "system/");
-    registry.addResourceHandler("/uploads/business/**").addResourceLocations(base + "business/");
+    if (exposeUploads) {
+      Path uploadDir = Paths.get(System.getProperty("user.dir"), "uploads");
+      try {
+        Files.createDirectories(uploadDir);
+        Files.createDirectories(uploadDir.resolve("system"));
+        Files.createDirectories(uploadDir.resolve("business"));
+      } catch (Exception ignored) {}
+      String base = "file:" + uploadDir.toAbsolutePath() + "/";
+      registry.addResourceHandler("/uploads/system/**").addResourceLocations(base + "system/");
+      registry.addResourceHandler("/uploads/business/**").addResourceLocations(base + "business/");
+    }
 
     Path moduleFrontend = modulePackageService.getFrontendDir();
     try {
       Files.createDirectories(moduleFrontend);
     } catch (Exception ignored) {}
-    String moduleBase = "file:" + moduleFrontend.toAbsolutePath().toString() + "/";
+    String moduleBase = "file:" + moduleFrontend.toAbsolutePath() + "/";
     registry.addResourceHandler("/modules/**").addResourceLocations(moduleBase);
   }
 
   private List<String> splitCsv(String raw) {
-    if (raw == null) return List.of("*");
+    if (raw == null) return List.of();
     String cleaned = raw.trim();
-    if (cleaned.isEmpty()) return List.of("*");
+    if (cleaned.isEmpty()) return List.of();
     String[] parts = cleaned.split(",");
     List<String> out = new ArrayList<>();
     for (String p : parts) {
       String v = p == null ? "" : p.trim();
       if (!v.isEmpty()) out.add(v);
     }
-    return out.isEmpty() ? List.of("*") : out;
+    return out;
   }
 }

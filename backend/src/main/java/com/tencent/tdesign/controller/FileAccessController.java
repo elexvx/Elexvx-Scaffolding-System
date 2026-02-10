@@ -1,15 +1,20 @@
 package com.tencent.tdesign.controller;
 
+import com.tencent.tdesign.security.AuthContext;
 import com.tencent.tdesign.service.FileTokenService;
 import com.tencent.tdesign.service.ObjectStorageService;
+import com.tencent.tdesign.service.OperationLogService;
+import com.tencent.tdesign.service.PermissionFacade;
 import java.io.InputStream;
 import java.util.Objects;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.CacheControl;
+import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -17,23 +22,34 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.concurrent.TimeUnit;
-
 @RestController
 @RequestMapping("/files")
 public class FileAccessController {
   private final FileTokenService tokenService;
   private final ObjectStorageService storageService;
+  private final AuthContext authContext;
+  private final PermissionFacade permissionFacade;
+  private final OperationLogService operationLogService;
 
-  public FileAccessController(FileTokenService tokenService, ObjectStorageService storageService) {
+  public FileAccessController(
+    FileTokenService tokenService,
+    ObjectStorageService storageService,
+    AuthContext authContext,
+    PermissionFacade permissionFacade,
+    OperationLogService operationLogService
+  ) {
     this.tokenService = tokenService;
     this.storageService = storageService;
+    this.authContext = authContext;
+    this.permissionFacade = permissionFacade;
+    this.operationLogService = operationLogService;
   }
 
   @RequestMapping(value = "/{token}", method = RequestMethod.HEAD)
   public ResponseEntity<Void> head(@PathVariable("token") String token) {
     try {
       FileTokenService.TokenPayload payload = tokenService.decrypt(token);
+      authorize(payload);
       ObjectStorageService.FileMeta meta = storageService.stat(payload);
       HttpHeaders headers = new HttpHeaders();
       if (meta.getContentType() != null && !meta.getContentType().isBlank()) {
@@ -43,8 +59,10 @@ public class FileAccessController {
         headers.setContentLength(meta.getContentLength());
       }
       headers.set(HttpHeaders.ACCEPT_RANGES, "bytes");
-      headers.setCacheControl(CacheControl.maxAge(30, TimeUnit.DAYS).cachePublic());
+      headers.setCacheControl(CacheControl.noStore());
       return new ResponseEntity<>(headers, HttpStatus.OK);
+    } catch (AccessDeniedException e) {
+      return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
     } catch (Exception e) {
       return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
     }
@@ -57,6 +75,7 @@ public class FileAccessController {
   ) {
     try {
       FileTokenService.TokenPayload payload = tokenService.decrypt(token);
+      authorize(payload);
 
       if (rangeHeader != null && !rangeHeader.isBlank() && rangeHeader.startsWith("bytes=")) {
         ObjectStorageService.FileMeta meta = storageService.stat(payload);
@@ -71,14 +90,8 @@ public class FileAccessController {
           }
           ObjectStorageService.FileStream stream = storageService.openStream(payload, range.start(), range.end());
           HttpHeaders headers = new HttpHeaders();
-          String contentType = stream.getContentType();
-          if (contentType != null && !contentType.isBlank()) {
-            headers.setContentType(MediaType.parseMediaType(contentType));
-          }
-          headers.set(HttpHeaders.ACCEPT_RANGES, "bytes");
+          writeDownloadHeaders(headers, stream.getContentType(), stream.getContentLength(), true);
           headers.set(HttpHeaders.CONTENT_RANGE, "bytes " + range.start() + "-" + range.end() + "/" + total);
-          headers.setContentLength(stream.getContentLength());
-          headers.setCacheControl(CacheControl.maxAge(30, TimeUnit.DAYS).cachePublic());
           InputStream inputStream = stream.getInputStream();
           return new ResponseEntity<>(
             new InputStreamResource(Objects.requireNonNull(inputStream)),
@@ -90,24 +103,41 @@ public class FileAccessController {
 
       ObjectStorageService.FileStream stream = storageService.openStream(payload);
       HttpHeaders headers = new HttpHeaders();
-      String contentType = stream.getContentType();
-      if (contentType != null && !contentType.isBlank()) {
-        headers.setContentType(MediaType.parseMediaType(contentType));
-      }
-      if (stream.getContentLength() >= 0) {
-        headers.setContentLength(stream.getContentLength());
-      }
-      headers.set(HttpHeaders.ACCEPT_RANGES, "bytes");
-      headers.setCacheControl(CacheControl.maxAge(30, TimeUnit.DAYS).cachePublic());
+      writeDownloadHeaders(headers, stream.getContentType(), stream.getContentLength(), false);
       InputStream inputStream = stream.getInputStream();
       return new ResponseEntity<>(
         new InputStreamResource(Objects.requireNonNull(inputStream)),
         headers,
         HttpStatus.OK
       );
+    } catch (AccessDeniedException e) {
+      return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
     } catch (Exception e) {
       return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
     }
+  }
+
+  private void authorize(FileTokenService.TokenPayload payload) {
+    long userId = authContext.requireUserId();
+    boolean hasDownloadPermission = permissionFacade.getEffectivePermissions(userId).contains("system:ConsoleDownload:query");
+    boolean isAdmin = permissionFacade.isAdminAccount(userId);
+    if (!isAdmin && !hasDownloadPermission) {
+      operationLogService.log("FILE_ACCESS_DENY", "文件访问", "拒绝访问对象: " + payload.getObjectKey());
+      throw new AccessDeniedException("权限不足");
+    }
+    operationLogService.log("FILE_ACCESS", "文件访问", "访问对象: " + payload.getObjectKey());
+  }
+
+  private void writeDownloadHeaders(HttpHeaders headers, String contentType, long contentLength, boolean partial) {
+    if (contentType != null && !contentType.isBlank()) {
+      headers.setContentType(MediaType.parseMediaType(contentType));
+    }
+    if (contentLength >= 0) {
+      headers.setContentLength(contentLength);
+    }
+    headers.set(HttpHeaders.ACCEPT_RANGES, "bytes");
+    headers.setContentDisposition(ContentDisposition.attachment().build());
+    headers.setCacheControl(CacheControl.noStore());
   }
 
   private record ByteRange(long start, long end) {
@@ -136,12 +166,10 @@ public class FileAccessController {
 
       long start = Long.parseLong(left);
       long end = right.isEmpty() ? (total - 1) : Long.parseLong(right);
-      if (start < 0) return null;
-      if (end < start) return null;
-      if (start >= total) return null;
+      if (start < 0 || end < start || start >= total) return null;
       if (end >= total) end = total - 1;
       return new ByteRange(start, end);
-    } catch (NumberFormatException e) {
+    } catch (NumberFormatException ex) {
       return null;
     }
   }

@@ -66,10 +66,18 @@ tdesign:
     version: ${TDESIGN_SYSTEM_VERSION:1.0.0}
     update-check-url: ${TDESIGN_UPDATE_CHECK_URL:}
   file:
-    token-secret: ${FILE_TOKEN_SECRET:tdesign-file-token-secret} # 文件下载/预览的签名密钥
+    token-secret: ${FILE_TOKEN_SECRET:} # 文件下载/预览的签名密钥（生产必填）
+    token-ttl-seconds: ${TDESIGN_FILE_TOKEN_TTL_SECONDS:600}
+    upload:
+      max-file-size-mb: ${TDESIGN_UPLOAD_MAX_FILE_SIZE_MB:100}
   security:
     captcha:
       enabled: true # 是否启用验证码（登录流程）s
+    rate-limit:
+      login-per-minute: 10
+      login-fail-threshold: 5
+      sms-email-per-minute: 3
+      sms-email-per-day: 20
   modules:
     sms:
       enabled: true # 是否启用短信模块
@@ -89,6 +97,10 @@ tdesign:
   netty:
     enabled: false # 是否启用 Netty Socket 服务
     port: 9092 # Netty Socket 端口
+  web:
+    expose-uploads: false
+    cors:
+      allowed-origin-patterns: ""
 
 aj:
   captcha:
@@ -98,4 +110,11 @@ aj:
     aes-status: true # 是否启用 AES 加密
     interference-options: 2 # 干扰项强度
 
-tdesign.security.field-secret: ${TDESIGN_SECURITY_FIELD_SECRET:tdesign-field-secret-change-me}
+tdesign.security.field-secret: ${TDESIGN_SECURITY_FIELD_SECRET:}
+
+
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
