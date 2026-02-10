@@ -69,7 +69,7 @@ tdesign:
     token-secret: ${FILE_TOKEN_SECRET:tdesign-file-token-secret} # 文件下载/预览的签名密钥
   security:
     captcha:
-      enabled: true # 是否启用验证码（登录流程）
+      enabled: true # 是否启用验证码（登录流程）s
   modules:
     sms:
       enabled: true # 是否启用短信模块

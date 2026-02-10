@@ -102,7 +102,7 @@ public class UiSettingService {
     UiLegalSetting legal = legalMapper.selectTop();
     if (legal != null) {
       out.setUserAgreement(legal.getUserAgreement());
-      out.setPrivacyAgredssement(legal.getPrivacyAgreement());
+      out.setPrivacyAgreement(legal.getPrivacyAgreement());
     }
 
     UiSystemSetting system = systemMapper.selectTop();
