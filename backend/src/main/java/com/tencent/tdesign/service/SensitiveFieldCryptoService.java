@@ -8,15 +8,12 @@ import java.util.Base64;
 import javax.crypto.Cipher;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 @Service
 public class SensitiveFieldCryptoService {
-  private static final Logger log = LoggerFactory.getLogger(SensitiveFieldCryptoService.class);
   private static final String PREFIX = "ENC:";
   private static final byte VERSION = 1;
   private static final int IV_LENGTH = 12;
@@ -28,8 +25,10 @@ public class SensitiveFieldCryptoService {
   public SensitiveFieldCryptoService(@Value("${tdesign.security.field-secret:}") String secret) {
     String effective = secret == null ? "" : secret.trim();
     if (!StringUtils.hasText(effective)) {
-      effective = "tdesign-field-secret";
-      log.warn("Sensitive field secret is empty; using default. Set tdesign.security.field-secret to override.");
+      throw new IllegalStateException("tdesign.security.field-secret 未配置，服务拒绝启动");
+    }
+    if (effective.getBytes(StandardCharsets.UTF_8).length < 32) {
+      throw new IllegalStateException("tdesign.security.field-secret 强度不足，要求至少 32 bytes");
     }
     this.key = new SecretKeySpec(sha256(effective), "AES");
   }
@@ -47,7 +46,6 @@ public class SensitiveFieldCryptoService {
     try {
       return decrypt(payload);
     } catch (Exception e) {
-      log.warn("Failed to decrypt sensitive field: {}", e.getMessage());
       return value;
     }
   }

@@ -20,6 +20,10 @@
     <include refid="BaseSelect" />
     WHERE id = #{id}
   </select>
+  <select id="selectByFileUrl" resultType="com.tencent.tdesign.entity.FileResource">
+    <include refid="BaseSelect" />
+    WHERE file_url = #{fileUrl}
+  </select>
 
   <select id="selectPage" resultType="com.tencent.tdesign.entity.FileResource">
     <include refid="BaseSelect" />

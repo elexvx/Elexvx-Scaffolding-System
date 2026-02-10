@@ -6,6 +6,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
+import java.time.Instant;
 import java.util.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,10 +27,12 @@ public class FileTokenService {
   private final SecretKeySpec key;
   private final SecureRandom random = new SecureRandom();
   private final String publicPrefix;
+  private final long tokenTtlSeconds;
 
   public FileTokenService(
     @Value("${tdesign.file.token-secret:}") String secret,
-    @Value("${server.servlet.context-path:/api}") String contextPath
+    @Value("${server.servlet.context-path:/api}") String contextPath,
+    @Value("${tdesign.file.token-ttl-seconds:600}") long tokenTtlSeconds
   ) {
     String effective = (secret == null) ? "" : secret.trim();
     if (effective.isEmpty()) {
@@ -41,6 +44,7 @@ public class FileTokenService {
     } else {
       this.key = new SecretKeySpec(sha256(effective), "AES");
     }
+    this.tokenTtlSeconds = Math.max(60, tokenTtlSeconds);
     String prefix = (contextPath == null) ? "" : contextPath.trim();
     if (prefix.isEmpty() || "/".equals(prefix)) {
       prefix = "";
@@ -49,7 +53,8 @@ public class FileTokenService {
   }
 
   public String buildAccessUrl(StorageSetting.Provider provider, String objectKey) {
-    String token = encrypt(new TokenPayload(provider, objectKey));
+    long expiresAt = Instant.now().plusSeconds(tokenTtlSeconds).getEpochSecond();
+    String token = encrypt(new TokenPayload(provider, objectKey, expiresAt));
     return publicPrefix + token;
   }
 
@@ -89,7 +94,13 @@ public class FileTokenService {
       cipher.init(Cipher.DECRYPT_MODE, key, new GCMParameterSpec(128, iv));
       byte[] plain = cipher.doFinal(encrypted);
       String payload = new String(plain, StandardCharsets.UTF_8);
-      return TokenPayload.fromToken(payload);
+      TokenPayload parsed = TokenPayload.fromToken(payload);
+      if (parsed.isExpired()) {
+        throw new IllegalArgumentException("File token expired");
+      }
+      return parsed;
+    } catch (IllegalArgumentException e) {
+      throw e;
     } catch (Exception e) {
       throw new IllegalArgumentException("Invalid file token");
     }
@@ -124,13 +135,15 @@ public class FileTokenService {
   public static class TokenPayload {
     private final StorageSetting.Provider provider;
     private final String objectKey;
+    private final long expiresAt;
 
-    public TokenPayload(StorageSetting.Provider provider, String objectKey) {
+    public TokenPayload(StorageSetting.Provider provider, String objectKey, long expiresAt) {
       if (provider == null || objectKey == null || objectKey.isBlank()) {
         throw new IllegalArgumentException("Invalid token payload");
       }
       this.provider = provider;
       this.objectKey = objectKey;
+      this.expiresAt = expiresAt;
     }
 
     public StorageSetting.Provider getProvider() {
@@ -141,21 +154,30 @@ public class FileTokenService {
       return objectKey;
     }
 
+    public long getExpiresAt() {
+      return expiresAt;
+    }
+
+    public boolean isExpired() {
+      return Instant.now().getEpochSecond() >= expiresAt;
+    }
+
     private String toToken() {
       String encodedKey = Base64.getUrlEncoder().withoutPadding()
         .encodeToString(objectKey.getBytes(StandardCharsets.UTF_8));
-      return "v1|" + provider.name() + "|" + encodedKey;
+      return "v1|" + provider.name() + "|" + expiresAt + "|" + encodedKey;
     }
 
     private static TokenPayload fromToken(String raw) {
-      String[] parts = raw.split("\\|", 3);
-      if (parts.length != 3 || !"v1".equals(parts[0])) {
+      String[] parts = raw.split("\\|", 4);
+      if (parts.length != 4 || !"v1".equals(parts[0])) {
         throw new IllegalArgumentException("Invalid token payload");
       }
       StorageSetting.Provider provider = StorageSetting.Provider.valueOf(parts[1]);
-      byte[] decoded = Base64.getUrlDecoder().decode(parts[2]);
+      long expiresAt = Long.parseLong(parts[2]);
+      byte[] decoded = Base64.getUrlDecoder().decode(parts[3]);
       String key = new String(decoded, StandardCharsets.UTF_8);
-      return new TokenPayload(provider, key);
+      return new TokenPayload(provider, key, expiresAt);
     }
   }
 }
