@@ -1,0 +1,105 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - "**"
+    tags-ignore:
+      - "**"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build_test_sca_sbom:
+    name: Build / Test / SCA / SBOM
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Backend tests
+        working-directory: backend
+        run: mvn -B -ntp test
+
+      - name: Backend dependency vulnerability scan (OWASP Dependency-Check)
+        uses: dependency-check/Dependency-Check_Action@v3.0.0
+        env:
+          JAVA_HOME: /opt/jdk
+        with:
+          project: backend
+          path: ./backend
+          format: JSON
+          out: reports/dependency-check
+          args: >-
+            --failOnCVSS 7
+            --enableRetired
+
+      - name: Frontend install
+        working-directory: frontend
+        run: npm ci
+
+      - name: Frontend build
+        working-directory: frontend
+        run: npm run build
+
+      - name: Frontend dependency vulnerability scan (npm audit)
+        working-directory: frontend
+        run: npm audit --audit-level=high
+
+      - name: Generate backend SBOM (CycloneDX)
+        working-directory: backend
+        run: >-
+          mvn -B -ntp -DskipTests
+          org.cyclonedx:cyclonedx-maven-plugin:2.8.2:makeAggregateBom
+          -DoutputFormat=json
+          -DschemaVersion=1.5
+          -DoutputName=sbom-backend
+          -Dcyclonedx.skipAttach=true
+
+      - name: Generate frontend SBOM (CycloneDX)
+        working-directory: frontend
+        run: >-
+          npx --yes @cyclonedx/cyclonedx-npm
+          --package-lock-only
+          --spec-version 1.5
+          --output-format JSON
+          --output-file ../sbom-frontend.json
+
+      - name: Collect SBOMs
+        run: |
+          mkdir -p artifacts/sbom
+          cp backend/target/sbom-backend.json artifacts/sbom/sbom-backend.json
+          cp sbom-frontend.json artifacts/sbom/sbom-frontend.json
+
+      - name: Upload SBOM artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-cyclonedx
+          if-no-files-found: error
+          retention-days: 30
+          path: artifacts/sbom/*
+

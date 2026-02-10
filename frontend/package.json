@@ -23,7 +23,7 @@
     "@vueuse/core": "^12.3.0",
     "@wangeditor/editor": "^5.1.23",
     "@wangeditor/editor-for-vue": "^5.1.12",
-    "axios": "^1.12.2",
+    "axios": "^1.13.5",
     "crypto-js": "^4.2.0",
     "dayjs": "^1.11.13",
     "dompurify": "^3.2.6",
