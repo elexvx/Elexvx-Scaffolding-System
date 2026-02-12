@@ -1,12 +1,16 @@
 server:
-  port: 8080 # 服务端口，默认 8080
+  # 服务端口（HTTP）
+  port: 8080 # 默认 8080
   servlet:
-    context-path: /api # 应用上下文路径，前端接口统一以 /api 开头
+    # 应用上下文路径（统一前缀），前端接口统一以 /api 开头
+    context-path: /api
 
 spring:
+  # Spring Boot 启动相关配置
   main:
-    banner-mode: console # 控制台显示 Banner
-    log-startup-info: false # 是否打印启动信息日志
+    banner-mode: console # Banner 输出方式：console/off/log
+    log-startup-info: false # 是否打印启动信息
+  # 数据源配置（默认 MySQL，可通过环境变量覆盖）
   datasource:
     # 数据库连接 URL（可通过 TDESIGN_DB_URL 覆盖）
     url: ${TDESIGN_DB_URL:jdbc:mysql://localhost:3306/tdesign?createDatabaseIfNotExist=true&useSSL=false&useUnicode=true&characterEncoding=UTF-8&connectionCollation=utf8mb4_0900_ai_ci&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true}
@@ -18,14 +22,18 @@ spring:
     driver-class-name: ${TDESIGN_DB_DRIVER:com.mysql.cj.jdbc.Driver}
     # 数据库连接池类型（使用 Druid）
     type: com.alibaba.druid.pool.DruidDataSource
+  # Flyway 数据库迁移配置
   flyway:
     enabled: false # 是否启用 Flyway 数据库迁移
+  # Web/Servlet 相关配置
   servlet:
+    # 文件上传（Multipart）配置
     multipart:
       # 单个文件大小限制
       max-file-size: 20MB
       # 单次请求总文件大小限制
       max-request-size: 20MB
+  # Spring Data 模块配置
   data:
     redis:
       repositories:
@@ -37,8 +45,9 @@ mybatis:
   configuration:
     map-underscore-to-camel-case: true # 开启下划线到驼峰转换
 
-# 自定义配置
+# 自定义业务配置（tdesign.*）
 tdesign:
+  # 数据库能力（根据 tdesign.db.type 选择模板覆盖 spring.datasource.*）
   db:
     # 数据库类型（mysql/postgresql/oracle/sqlserver）
     type: ${TDESIGN_DB_TYPE:mysql}
@@ -46,41 +55,62 @@ tdesign:
     dialect: ${TDESIGN_DB_DIALECT:mysql}
     # 连接模板（按需替换 spring.datasource.*）
     templates:
+      # MySQL 连接模板
       mysql:
         url: jdbc:mysql://localhost:3306/tdesign?createDatabaseIfNotExist=true&useSSL=false&useUnicode=true&characterEncoding=UTF-8&connectionCollation=utf8mb4_0900_ai_ci&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
         driver-class-name: com.mysql.cj.jdbc.Driver
         dialect: mysql
+      # PostgreSQL 连接模板
       postgresql:
         url: jdbc:postgresql://localhost:5432/tdesign
         driver-class-name: org.postgresql.Driver
         dialect: postgresql
+      # Oracle 连接模板
       oracle:
         url: jdbc:oracle:thin:@localhost:1521/tdesign
         driver-class-name: oracle.jdbc.OracleDriver
         dialect: oracle
+      # SQLServer 连接模板
       sqlserver:
         url: jdbc:sqlserver://localhost:1433;databaseName=tdesign;encrypt=false
         driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
         dialect: sqlserver
+  # 系统基础信息
   system:
+    # 系统版本号（用于前端展示/接口返回等）
     version: ${TDESIGN_SYSTEM_VERSION:1.0.0}
+    # 版本更新检查地址（可为空）
     update-check-url: ${TDESIGN_UPDATE_CHECK_URL:}
+  # 文件能力（上传/下载/预览）
   file:
-    token-secret: ${FILE_TOKEN_SECRET:} # 文件下载/预览的签名密钥（生产必填）
+    # 文件下载/预览 token 的签名密钥（生产必填）
+    token-secret: ${FILE_TOKEN_SECRET:}
+    # 文件 token 有效期（秒）
     token-ttl-seconds: ${TDESIGN_FILE_TOKEN_TTL_SECONDS:600}
+    # 上传配置
     upload:
+      # 上传单文件最大大小（MB）
       max-file-size-mb: ${TDESIGN_UPLOAD_MAX_FILE_SIZE_MB:100}
+  # 安全相关配置（验证码/限流等）
   security:
     captcha:
-      enabled: true # 是否启用验证码（登录流程）s
+      enabled: true # 是否启用验证码（登录流程）
     rate-limit:
+      # 登录接口每分钟最大请求数
       login-per-minute: 10
+      # 登录失败次数阈值（达到后触发锁定/验证码等策略）
       login-fail-threshold: 5
+      # 短信/邮件发送每分钟最大次数
       sms-email-per-minute: 3
+      # 短信/邮件发送每日最大次数
       sms-email-per-day: 20
+  # 插件系统（PF4J）配置
   plugins:
+    # 是否启用插件系统（默认关闭）
     enabled: ${TDESIGN_PLUGINS_ENABLED:false}
+    # 插件包目录（相对路径通常在项目 data 目录下）
     package-dir: ${TDESIGN_PLUGINS_PACKAGE_DIR:data/plugins}
+  # 可选业务模块开关
   modules:
     sms:
       enabled: true # 是否启用短信模块
@@ -88,8 +118,7 @@ tdesign:
       enabled: true # 是否启用邮箱模块
     captcha:
       enabled: true # 是否启用验证码模块
-  # Redis 配置
-  # 用于 Redis 监控与缓存（可选）
+  # Redis 配置（用于限流/缓存/幂等等能力）
   redis:
     enabled: true # 是否启用 Redis 相关能力
     host: 127.0.0.1 # Redis 服务器地址
@@ -97,14 +126,19 @@ tdesign:
     password: "" # Redis 密码（没有可留空）
     timeout: 2000 # 连接超时时间（毫秒）
     database: 0 # 使用的数据库索引
+  # Netty Socket 服务配置（如需 WebSocket/自定义 TCP 服务等）
   netty:
     enabled: false # 是否启用 Netty Socket 服务
     port: 9092 # Netty Socket 端口
+  # Web 层相关配置（跨域/资源暴露等）
   web:
+    # 是否暴露 uploads 目录直链访问（默认 false，建议通过受控接口访问）
     expose-uploads: false
     cors:
+      # 允许跨域的 Origin 匹配规则（空表示不额外放开）
       allowed-origin-patterns: ""
 
+# 验证码组件（Anji Captcha）配置
 aj:
   captcha:
     cache-type: local # 验证码缓存方式
@@ -113,11 +147,13 @@ aj:
     aes-status: true # 是否启用 AES 加密
     interference-options: 2 # 干扰项强度
 
-tdesign.security.field-secret: ${TDESIGN_SECURITY_FIELD_SECRET:}
+# 字段加解密密钥（用于敏感字段脱敏/加密场景；生产建议通过环境变量覆盖）
+tdesign.security.field-secret: ${TDESIGN_SECURITY_FIELD_SECRET:YSKBHJF1DASDGRFUHGDSAUOFIIAO1234567890AB}
 
 
+# 接口文档（SpringDoc OpenAPI/Swagger UI）配置
 springdoc:
   api-docs:
-    enabled: true
+    enabled: true # 是否启用 OpenAPI JSON 文档
   swagger-ui:
-    enabled: true
+    enabled: true # 是否启用 Swagger UI 页面

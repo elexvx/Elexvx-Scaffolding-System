@@ -272,6 +272,14 @@ public class MenuItemService {
   }
 
   @Transactional
+  public boolean ensureConsolePrintMenuSeeded() {
+    if (menuItemMapper.count() == 0) return false;
+    if (menuItemMapper.selectByRouteName("ConsolePrint") != null) return false;
+    seedDefaultSidebarMenus(false);
+    return true;
+  }
+
+  @Transactional
   public boolean reorder(MenuItemReorderRequest req) {
     List<MenuItemReorderRequest.Item> items = req.getItems();
     Set<Long> ids = new HashSet<>();
@@ -1443,6 +1451,26 @@ public class MenuItemService {
           true,
           0,
           "create,update,delete,query"
+        )
+      );
+      list.add(
+        new SeedNode(
+          "console",
+          null,
+          "PAGE",
+          "print",
+          "ConsolePrint",
+          "/console/print/index",
+          null,
+          "Print Center",
+          "Print Center",
+          "print",
+          false,
+          null,
+          false,
+          true,
+          1,
+          "query"
         )
       );
       return list;

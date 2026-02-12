@@ -5,7 +5,7 @@ import javax.xml.transform.Result;
 import javax.xml.transform.Source;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.stream.StreamResult;
+import javax.xml.transform.sax.SAXResult;
 import javax.xml.transform.stream.StreamSource;
 import org.apache.fop.apps.FOUserAgent;
 import org.apache.fop.apps.Fop;
@@ -17,11 +17,11 @@ import org.springframework.stereotype.Component;
 public class XslFoRenderer {
   public byte[] render(Source foTemplate) {
     try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-      FopFactory fopFactory = FopFactory.newDefaultInstance();
+      FopFactory fopFactory = FopFactory.newInstance(new java.io.File(".").toURI());
       FOUserAgent foUserAgent = fopFactory.newFOUserAgent();
       Fop fop = fopFactory.newFop(MimeConstants.MIME_PDF, foUserAgent, out);
       Transformer transformer = TransformerFactory.newInstance().newTransformer();
-      Result result = new StreamResult(fop.getDefaultHandler());
+      Result result = new SAXResult(fop.getDefaultHandler());
       transformer.transform(foTemplate, result);
       return out.toByteArray();
     } catch (Exception ex) {

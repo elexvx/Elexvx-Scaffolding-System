@@ -39,8 +39,21 @@ public class WebConfig implements WebMvcConfigurer {
 
   @Bean
   public FilterRegistrationBean<CorsFilter> corsFilterRegistration() {
+    List<String> allowedPatterns = splitCsv(corsAllowedOriginPatterns);
+    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+    FilterRegistrationBean<CorsFilter> registration = new FilterRegistrationBean<>(new CorsFilter(source));
+    registration.setAsyncSupported(true);
+    registration.setOrder(Ordered.HIGHEST_PRECEDENCE);
+
+    // Keep CORS disabled when no whitelist is configured.
+    // In this mode we expect same-origin access through reverse proxy (/api).
+    if (allowedPatterns.isEmpty()) {
+      registration.setEnabled(false);
+      return registration;
+    }
+
     CorsConfiguration config = new CorsConfiguration();
-    for (String pattern : splitCsv(corsAllowedOriginPatterns)) {
+    for (String pattern : allowedPatterns) {
       config.addAllowedOriginPattern(pattern);
     }
     config.addAllowedHeader("*");
@@ -48,12 +61,7 @@ public class WebConfig implements WebMvcConfigurer {
     config.setAllowCredentials(false);
     config.addExposedHeader("Content-Disposition");
     config.setMaxAge(3600L);
-    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
     source.registerCorsConfiguration("/**", config);
-
-    FilterRegistrationBean<CorsFilter> registration = new FilterRegistrationBean<>(new CorsFilter(source));
-    registration.setAsyncSupported(true);
-    registration.setOrder(Ordered.HIGHEST_PRECEDENCE);
     return registration;
   }
 

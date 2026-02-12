@@ -36,9 +36,9 @@ public class PluginLifecycleService {
     flyway.migrate();
     states.put(id, PluginLifecycleState.INSTALLED);
 
-    String pluginPath = pluginManager.loadPlugin(artifact.packageFile().toString());
-    PluginWrapper wrapper = pluginManager.getPlugin(pluginPath);
-    pluginManager.startPlugin(pluginPath);
+    String loadedPluginId = pluginManager.loadPlugin(artifact.packageFile());
+    PluginWrapper wrapper = pluginManager.getPlugin(loadedPluginId);
+    pluginManager.startPlugin(loadedPluginId);
     states.put(id, PluginLifecycleState.ENABLED);
     return new PluginStatusResponse(id, artifact.manifest().getVersion(), states.get(id).name(), wrapper.getDescriptor().getPluginDescription());
   }

@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/captcha")
+@RequestMapping({"/captcha", "/auth/captcha"})
 public class AjCaptchaController {
   private final com.anji.captcha.service.CaptchaService captchaService;
 

@@ -188,7 +188,7 @@ const getPicture = async () => {
         secretKey?: string;
       };
     }>(
-      { url: '/captcha/get', data: { captchaType: props.captchaType } },
+      { url: '/auth/captcha/get', data: { captchaType: props.captchaType } },
       { isTransformResponse: false, withToken: false },
     );
 
@@ -268,7 +268,7 @@ const end = async () => {
       repData?: { token?: string };
     }>(
       {
-        url: '/captcha/check',
+        url: '/auth/captcha/check',
         data: {
           captchaType: props.captchaType,
           pointJson,
