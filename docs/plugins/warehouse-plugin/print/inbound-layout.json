@@ -1,0 +1,7 @@
+{
+  "page": "A4",
+  "elements": [
+    {"type": "text", "x": 50, "y": 780, "value": "仓库入库单"},
+    {"type": "qrcode", "x": 450, "y": 740, "field": "inboundNo"}
+  ]
+}

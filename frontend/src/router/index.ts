@@ -38,6 +38,11 @@ const defaultRouterList: Array<RouteRecordRaw> = [
     component: () => import('@/pages/login/index.vue'),
   },
   {
+    path: '/plugin-center',
+    name: 'PluginCenter',
+    component: () => import('@/views/plugin-center/index.vue'),
+  },
+  {
     path: '/',
     redirect: '/user/index',
   },

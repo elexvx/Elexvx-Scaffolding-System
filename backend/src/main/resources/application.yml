@@ -78,6 +78,9 @@ tdesign:
       login-fail-threshold: 5
       sms-email-per-minute: 3
       sms-email-per-day: 20
+  plugins:
+    enabled: ${TDESIGN_PLUGINS_ENABLED:false}
+    package-dir: ${TDESIGN_PLUGINS_PACKAGE_DIR:data/plugins}
   modules:
     sms:
       enabled: true # 是否启用短信模块
