@@ -1,0 +1,7 @@
+[
+  {
+    "path": "/plugins/warehouse/inbound",
+    "name": "WarehouseInbound",
+    "meta": {"title": "仓储入库单", "permission": "plugin:warehouse:view"}
+  }
+]

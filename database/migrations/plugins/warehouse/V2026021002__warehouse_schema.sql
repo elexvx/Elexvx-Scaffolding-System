@@ -1,0 +1,2 @@
+-- 与 backend/src/main/resources/db/migration/plugins/warehouse/V2026021002__warehouse_schema.sql 同步
+-- 插件启用时使用 Flyway 在 plug_warehouse schema 中执行
