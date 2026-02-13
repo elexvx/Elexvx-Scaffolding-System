@@ -56,10 +56,10 @@ jobs:
           project: backend
           path: ./backend
           format: JSON
-          out: reports/dependency-check
           args: >-
             --failOnCVSS 7
             --enableRetired
+            --out reports/dependency-check
 
       - name: Frontend install
         working-directory: frontend
