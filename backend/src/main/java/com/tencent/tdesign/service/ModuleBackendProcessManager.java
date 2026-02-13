@@ -12,16 +12,19 @@ import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
 @Service
 public class ModuleBackendProcessManager {
   private static final DateTimeFormatter LOG_TS = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
   private final ModulePackageService modulePackageService;
+  private final Environment environment;
   private final Map<String, RunningProcess> running = new ConcurrentHashMap<>();
 
-  public ModuleBackendProcessManager(ModulePackageService modulePackageService) {
+  public ModuleBackendProcessManager(ModulePackageService modulePackageService, Environment environment) {
     this.modulePackageService = modulePackageService;
+    this.environment = environment;
   }
 
   public boolean isRunning(String moduleKey) {
@@ -111,8 +114,18 @@ public class ModuleBackendProcessManager {
     pb.directory(dir.toFile());
     pb.redirectErrorStream(true);
     pb.redirectOutput(ProcessBuilder.Redirect.appendTo(logFile.toFile()));
-    pb.environment().put("PORT", String.valueOf(port));
-    pb.environment().put("MODULE_KEY", key);
+    Map<String, String> env = pb.environment();
+    env.put("PORT", String.valueOf(port));
+    env.put("MODULE_KEY", key);
+    env.put("TDESIGN_DB_URL", getEnv("spring.datasource.url", ""));
+    env.put("TDESIGN_DB_USER", getEnv("spring.datasource.username", ""));
+    env.put("TDESIGN_DB_PASSWORD", getEnv("spring.datasource.password", ""));
+    env.put("TDESIGN_DB_DRIVER", getEnv("spring.datasource.driver-class-name", ""));
+    env.put("TDESIGN_DB_TYPE", getEnv("tdesign.db.type", "mysql"));
+    String contextPath = getEnv("server.servlet.context-path", "/api");
+    if (!contextPath.startsWith("/")) contextPath = "/" + contextPath;
+    int serverPort = parsePort(getEnv("server.port", "8080"), 8080);
+    env.put("TDESIGN_CORE_API_BASE", "http://127.0.0.1:" + serverPort + contextPath);
 
     try {
       Process process = pb.start();
@@ -173,6 +186,19 @@ public class ModuleBackendProcessManager {
 
   private String normalizeKey(String moduleKey) {
     return String.valueOf(moduleKey == null ? "" : moduleKey).trim().toLowerCase(Locale.ROOT);
+  }
+
+  private String getEnv(String key, String defaultValue) {
+    String v = environment.getProperty(key);
+    return v == null || v.isBlank() ? defaultValue : v.trim();
+  }
+
+  private int parsePort(String value, int defaultValue) {
+    try {
+      return Integer.parseInt(value);
+    } catch (Exception ignored) {
+      return defaultValue;
+    }
   }
 
   private record RunningProcess(Process process, int port) {}
