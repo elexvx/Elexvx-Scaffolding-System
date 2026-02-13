@@ -4,6 +4,7 @@ import com.tencent.tdesign.print.PrintDefinition;
 import com.tencent.tdesign.print.PrintJobRequest;
 import com.tencent.tdesign.print.PrintService;
 import com.tencent.tdesign.vo.ApiResponse;
+import jakarta.servlet.http.HttpServletRequest;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
@@ -34,13 +35,16 @@ public class PrintController {
   }
 
   @PostMapping("/jobs")
-  public ApiResponse<Map<String, String>> create(@RequestBody PrintJobRequest request) {
-    return ApiResponse.success(Map.of("jobId", printService.createJob(request)));
+  public ApiResponse<Map<String, String>> create(@RequestBody PrintJobRequest request, HttpServletRequest servletRequest) {
+    String authToken = String.valueOf(servletRequest.getHeader("Authorization") == null ? "" : servletRequest.getHeader("Authorization"));
+    return ApiResponse.success(Map.of("jobId", printService.createJob(request, authToken)));
   }
 
   @GetMapping("/jobs/{jobId}/file")
-  public ResponseEntity<ByteArrayResource> download(@PathVariable String jobId) {
-    byte[] file = printService.load(jobId);
+  public ResponseEntity<ByteArrayResource> download(@PathVariable String jobId, HttpServletRequest servletRequest) {
+    String authToken = String.valueOf(servletRequest.getHeader("Authorization") == null ? "" : servletRequest.getHeader("Authorization"));
+    String requestBaseUrl = servletRequest.getScheme() + "://" + servletRequest.getServerName() + ":" + servletRequest.getServerPort();
+    byte[] file = printService.load(jobId, authToken, requestBaseUrl);
     HttpHeaders headers = new HttpHeaders();
     headers.setCacheControl("no-store");
     headers.setContentType(MediaType.APPLICATION_PDF);

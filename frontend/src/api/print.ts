@@ -13,13 +13,18 @@ export interface PrintTemplateItem {
 }
 
 export interface RenderHtmlPayload {
-  templateId: number;
+  templateId?: number;
+  templateKey?: string;
   version?: number;
   data: Record<string, unknown>;
 }
 
 export function fetchPrintTemplates(params: { bizType?: string; enabled?: number }) {
   return request.get<PrintTemplateItem[]>({ url: '/module-api/print/templates', params });
+}
+
+export function fetchTemplateVersions(templateId: number) {
+  return request.get<Array<{ version: number; published: number; created_at: string }>>({ url: `/module-api/print/templates/${templateId}/versions` });
 }
 
 export function renderPrintHtml(data: RenderHtmlPayload) {
@@ -30,8 +35,16 @@ export function renderPrintPdf(data: RenderHtmlPayload & { bizType?: string; biz
   return request.post<{ fileUrl: string; jobId: number }>({ url: '/module-api/print/render/pdf', data });
 }
 
-export function fetchPrintJobs(params: { bizType?: string; bizId?: string }) {
-  return request.get<any[]>({ url: '/module-api/print/jobs', params });
+export function fetchPrintJobs(params: {
+  page?: number;
+  pageSize?: number;
+  bizType?: string;
+  bizId?: string;
+  templateId?: number;
+  createdAtFrom?: string;
+  createdAtTo?: string;
+}) {
+  return request.get<{ items: any[]; total: number; page: number; pageSize: number }>({ url: '/module-api/print/jobs', params });
 }
 
 // backward-compatible exports for existing console page
