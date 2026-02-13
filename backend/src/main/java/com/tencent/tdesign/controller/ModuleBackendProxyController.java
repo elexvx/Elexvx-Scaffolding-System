@@ -9,8 +9,11 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.time.Duration;
 import java.util.Enumeration;
 import java.util.Locale;
+import java.util.Set;
+import java.util.regex.Pattern;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -18,9 +21,20 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/module-api")
 public class ModuleBackendProxyController {
+  private static final Pattern MODULE_KEY_PATTERN = Pattern.compile("^[a-z0-9-]+$");
+  private static final Set<String> BLOCKED_REQUEST_HEADERS = Set.of(
+    "host", "content-length", "transfer-encoding", "connection", "keep-alive", "proxy-authenticate", "proxy-authorization", "te", "trailer", "upgrade"
+  );
+  private static final Set<String> BLOCKED_RESPONSE_HEADERS = Set.of(
+    "content-length", "transfer-encoding", "connection", "keep-alive", "proxy-authenticate", "proxy-authorization", "te", "trailer", "upgrade"
+  );
+
   private final ModuleRegistryService moduleRegistryService;
   private final ModuleBackendProcessManager processManager;
-  private final HttpClient httpClient = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL).build();
+  private final HttpClient httpClient = HttpClient.newBuilder()
+    .followRedirects(HttpClient.Redirect.NORMAL)
+    .connectTimeout(Duration.ofSeconds(10))
+    .build();
 
   public ModuleBackendProxyController(ModuleRegistryService moduleRegistryService, ModuleBackendProcessManager processManager) {
     this.moduleRegistryService = moduleRegistryService;
@@ -30,6 +44,12 @@ public class ModuleBackendProxyController {
   @RequestMapping("/{moduleKey}/**")
   public void proxy(@PathVariable String moduleKey, HttpServletRequest request, HttpServletResponse response) throws IOException {
     String key = normalizeKey(moduleKey);
+    if (!MODULE_KEY_PATTERN.matcher(key).matches()) {
+      response.setStatus(400);
+      response.getWriter().write("非法 moduleKey");
+      return;
+    }
+
     moduleRegistryService.assertModuleAvailable(key);
     processManager.ensureRunning(key);
     int port = processManager.getPort(key);
@@ -46,13 +66,19 @@ public class ModuleBackendProxyController {
     String query = request.getQueryString();
     String target = "http://127.0.0.1:" + port + "/" + rest + (query == null || query.isBlank() ? "" : "?" + query);
 
-    HttpRequest.Builder builder = HttpRequest.newBuilder().uri(URI.create(target)).method(request.getMethod(), buildBodyPublisher(request));
+    String method = String.valueOf(request.getMethod()).toUpperCase(Locale.ROOT);
+    Duration timeout = timeoutFor(method, rest);
+    HttpRequest.Builder builder = HttpRequest.newBuilder()
+      .uri(URI.create(target))
+      .timeout(timeout)
+      .method(method, buildBodyPublisher(request));
+
     Enumeration<String> headerNames = request.getHeaderNames();
     while (headerNames.hasMoreElements()) {
       String name = headerNames.nextElement();
       if (name == null) continue;
       String lower = name.toLowerCase(Locale.ROOT);
-      if ("host".equals(lower) || "content-length".equals(lower)) continue;
+      if (BLOCKED_REQUEST_HEADERS.contains(lower)) continue;
       Enumeration<String> values = request.getHeaders(name);
       while (values.hasMoreElements()) {
         String v = values.nextElement();
@@ -61,18 +87,19 @@ public class ModuleBackendProxyController {
     }
 
     try {
-      HttpResponse<byte[]> proxied = httpClient.send(builder.build(), HttpResponse.BodyHandlers.ofByteArray());
+      HttpResponse<java.io.InputStream> proxied = httpClient.send(builder.build(), HttpResponse.BodyHandlers.ofInputStream());
       response.setStatus(proxied.statusCode());
       for (var header : proxied.headers().map().entrySet()) {
         String name = header.getKey();
         if (name == null) continue;
-        String lower = name.toLowerCase(Locale.ROOT);
-        if ("transfer-encoding".equals(lower)) continue;
+        if (BLOCKED_RESPONSE_HEADERS.contains(name.toLowerCase(Locale.ROOT))) continue;
         for (String v : header.getValue()) {
           response.addHeader(name, v);
         }
       }
-      response.getOutputStream().write(proxied.body());
+      try (java.io.InputStream body = proxied.body()) {
+        body.transferTo(response.getOutputStream());
+      }
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       response.setStatus(502);
@@ -86,9 +113,13 @@ public class ModuleBackendProxyController {
   private HttpRequest.BodyPublisher buildBodyPublisher(HttpServletRequest request) throws IOException {
     String method = String.valueOf(request.getMethod()).toUpperCase(Locale.ROOT);
     if ("GET".equals(method) || "HEAD".equals(method)) return HttpRequest.BodyPublishers.noBody();
-    byte[] body = request.getInputStream().readAllBytes();
-    if (body.length == 0) return HttpRequest.BodyPublishers.noBody();
-    return HttpRequest.BodyPublishers.ofByteArray(body);
+    return HttpRequest.BodyPublishers.ofInputStream(request::getInputStream);
+  }
+
+  private Duration timeoutFor(String method, String restPath) {
+    String path = String.valueOf(restPath == null ? "" : restPath).toLowerCase(Locale.ROOT);
+    if (path.contains("/render/pdf") || "POST".equals(method)) return Duration.ofSeconds(30);
+    return Duration.ofSeconds(15);
   }
 
   private String normalizeKey(String moduleKey) {
