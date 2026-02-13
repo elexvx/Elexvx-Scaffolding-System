@@ -1,5 +1,5 @@
 <template>
-  <t-layout :class="`${prefix}-layout`">
+  <t-layout :class="layoutCls">
     <t-tabs
       v-if="settingStore.isUseTabsRouter"
       drag-sort
@@ -96,6 +96,11 @@ const suppressTabChange = ref(false);
 const tabNavigating = ref(false);
 
 const { locale } = useLocale();
+
+const layoutCls = computed(() => [
+  `${prefix}-layout`,
+  { [`${prefix}-layout-with-fixed-header`]: settingStore.isHeaderFixed && settingStore.showHeader },
+]);
 
 const normalizeTabValue = (path: string) => String(path || '').split(/[?#]/)[0];
 const getTabValue = (tab: TRouterInfo) => normalizeTabValue(tab.path);

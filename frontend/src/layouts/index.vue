@@ -4,7 +4,7 @@
       <t-layout key="side" :class="mainLayoutCls">
         <t-aside><layout-side-nav /></t-aside>
         <t-layout>
-          <t-header v-if="settingStore.showHeader"><layout-header /></t-header>
+          <t-header v-if="settingStore.showHeader" :class="headerCls"><layout-header /></t-header>
           <t-content><layout-content /></t-content>
         </t-layout>
       </t-layout>
@@ -12,7 +12,7 @@
 
     <template v-else>
       <t-layout key="no-side">
-        <t-header v-if="settingStore.showHeader"><layout-header /> </t-header>
+        <t-header v-if="settingStore.showHeader" :class="headerCls"><layout-header /> </t-header>
         <t-layout :class="mainLayoutCls">
           <layout-side-nav />
           <layout-content />
@@ -48,6 +48,10 @@ const mainLayoutCls = computed(() => [
     't-layout--with-sider': settingStore.showSidebar,
   },
 ]);
+
+const headerCls = computed(() => ({
+  [`${prefix}-layout-header-fixed`]: settingStore.isHeaderFixed,
+}));
 
 const appendNewRoute = () => {
   if (tabsRouterStore.isSyncing || tabsRouterStore.isLocked) return;

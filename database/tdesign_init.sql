@@ -161,12 +161,7 @@ CREATE TABLE `operation_logs`  (
 -- ----------------------------
 -- Records of operation_logs
 -- ----------------------------
-INSERT INTO `operation_logs` VALUES (379, 'LOGIN', '登录', '用户登录', 1, 'admin', '127.0.0.1', 'Windows 设备', 'Windows 10', 'Edge', '2026-01-23 03:36:20', 'e59c3cd1-3b52-47c7-bf88-fad5b2281827');
-INSERT INTO `operation_logs` VALUES (380, 'DELETE', '公告管理', '删除公告: AI技术在医疗领域的创新应用与发展前景', 1, 'admin', '127.0.0.1', 'Windows 设备', 'Windows 10', 'Edge', '2026-01-23 03:36:57', 'e59c3cd1-3b52-47c7-bf88-fad5b2281827');
-INSERT INTO `operation_logs` VALUES (381, 'DELETE', '公告管理', '删除公告: 大数据分析助力企业决策的实践案例', 1, 'admin', '127.0.0.1', 'Windows 设备', 'Windows 10', 'Edge', '2026-01-23 03:36:59', 'e59c3cd1-3b52-47c7-bf88-fad5b2281827');
-INSERT INTO `operation_logs` VALUES (382, 'DELETE', '公告管理', '删除公告: 区块链技术在供应链管理中的应用', 1, 'admin', '127.0.0.1', 'Windows 设备', 'Windows 10', 'Edge', '2026-01-23 03:37:01', 'e59c3cd1-3b52-47c7-bf88-fad5b2281827');
-INSERT INTO `operation_logs` VALUES (383, 'WITHDRAW', '公告管理', '更改公告状态: 云计算技术发展趋势与未来展望', 1, 'admin', '127.0.0.1', 'Windows 设备', 'Windows 10', 'Edge', '2026-01-23 03:37:03', 'e59c3cd1-3b52-47c7-bf88-fad5b2281827');
-INSERT INTO `operation_logs` VALUES (384, 'DELETE', '公告管理', '删除公告: 云计算技术发展趋势与未来展望', 1, 'admin', '127.0.0.1', 'Windows 设备', 'Windows 10', 'Edge', '2026-01-23 03:37:10', 'e59c3cd1-3b52-47c7-bf88-fad5b2281827');
+INSERT INTO `operation_logs` VALUES (1, 'LOGIN', '登录', '用户登录', 1, 'admin', '127.0.0.1', 'Windows 设备', 'Windows 10', 'Edge', '2026-01-23 03:36:20', 'e59c3cd1-3b52-47c7-bf88-fad5b2281827');
 
 -- ----------------------------
 -- Table structure for role_menus
@@ -603,7 +598,7 @@ CREATE TABLE `ui_brand_settings`  (
 -- ----------------------------
 -- Records of ui_brand_settings
 -- ----------------------------
-INSERT INTO `ui_brand_settings` VALUES (1, 'Elexvx 脚手架系统', '1.0', '', '', NULL, '');
+INSERT INTO `ui_brand_settings` VALUES (1, 'Elexvx 脚手架系统', 'V2.0.0.20260211-Alpha', '', '', NULL, '');
 
 -- ----------------------------
 -- Table structure for ui_footer_settings

@@ -264,8 +264,10 @@ const toggleThemeMode = async () => {
     position: fixed;
     top: 0;
     z-index: 1001;
+    height: var(--td-starter-header-height);
 
     :deep(.t-head-menu__inner) {
+      height: var(--td-starter-header-height);
       padding-right: var(--td-comp-margin-xl);
     }
 
