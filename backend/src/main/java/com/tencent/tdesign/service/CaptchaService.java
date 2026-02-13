@@ -7,12 +7,11 @@ import com.tencent.tdesign.vo.CaptchaResult;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
+import com.github.benmanes.caffeine.cache.Cache;
 import java.time.Instant;
 import java.util.Base64;
-import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 import javax.imageio.ImageIO;
 import org.springframework.stereotype.Service;
 
@@ -21,22 +20,37 @@ public class CaptchaService {
   private static final String CAPTCHA_TYPE_IMAGE = "image";
   private static final String CAPTCHA_TYPE_DRAG = "drag";
 
-  private static class Entry {
-    String code;
-    long expiresAt;
+  public static class CaptchaEntry {
+    private final String code;
+    private final long expiresAt;
+
+    public CaptchaEntry(String code, long expiresAt) {
+      this.code = code;
+      this.expiresAt = expiresAt;
+    }
+
+    public String getCode() {
+      return code;
+    }
+
+    public long getExpiresAt() {
+      return expiresAt;
+    }
   }
 
   private static final int CAPTCHA_EXPIRES_SECONDS = 120;
-  private final Map<String, Entry> store = new ConcurrentHashMap<>();
+  private final Cache<String, CaptchaEntry> store;
   private final Random random = new Random();
   private final SecuritySettingService securitySettingService;
   private final com.anji.captcha.service.CaptchaService ajCaptchaService;
 
   public CaptchaService(
       SecuritySettingService securitySettingService,
-      com.anji.captcha.service.CaptchaService ajCaptchaService) {
+      com.anji.captcha.service.CaptchaService ajCaptchaService,
+      VerificationCacheService verificationCacheService) {
     this.securitySettingService = securitySettingService;
     this.ajCaptchaService = ajCaptchaService;
+    this.store = verificationCacheService.captchaCache();
   }
 
   public CaptchaResult generate() {
@@ -69,10 +83,11 @@ public class CaptchaService {
     String image = CAPTCHA_TYPE_DRAG.equals(type)
         ? renderDragBackground(dragWidth, dragHeight)
         : renderImageCaptcha(code, 120, 40, noiseLines);
-    Entry e = new Entry();
-    e.code = code.toLowerCase();
-    e.expiresAt = Instant.now().plusSeconds(CAPTCHA_EXPIRES_SECONDS).toEpochMilli();
-    store.put(id, e);
+    CaptchaEntry entry = new CaptchaEntry(
+      code.toLowerCase(),
+      Instant.now().plusSeconds(CAPTCHA_EXPIRES_SECONDS).toEpochMilli()
+    );
+    store.put(id, entry);
     CaptchaResult result = new CaptchaResult(id, image, CAPTCHA_EXPIRES_SECONDS);
     result.setType(type);
     result.setWidth(CAPTCHA_TYPE_DRAG.equals(type) ? dragWidth : 120);
@@ -97,13 +112,11 @@ public class CaptchaService {
       ResponseModel response = ajCaptchaService.verification(captchaVO);
       return response != null && response.isSuccess();
     }
-    Entry e = store.get(id);
-    if (e == null)
-      return false;
-    store.remove(id);
-    if (Instant.now().toEpochMilli() > e.expiresAt)
-      return false;
-    return e.code.equalsIgnoreCase(input == null ? "" : input.trim().toLowerCase());
+    CaptchaEntry entry = store.getIfPresent(id);
+    if (entry == null) return false;
+    store.invalidate(id);
+    if (Instant.now().toEpochMilli() > entry.getExpiresAt()) return false;
+    return entry.getCode().equalsIgnoreCase(input == null ? "" : input.trim().toLowerCase());
   }
 
   private String randomCode(int len) {

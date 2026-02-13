@@ -123,7 +123,7 @@ public class MenuItemService {
     e.setEnabled(s.enabled);
     e.setOrderNo(s.orderNo);
     e.setActions(s.actions);
-    return saveMenuItem(e);
+    return saveSeedMenuItem(e);
   }
 
   @Transactional
@@ -785,6 +785,19 @@ public class MenuItemService {
     String normalized = title.trim();
     if (normalized.isEmpty()) return true;
     return PLACEHOLDER_TITLE_PATTERN.matcher(normalized).matches();
+  }
+
+
+  private MenuItemEntity saveSeedMenuItem(MenuItemEntity menuItem) {
+    try {
+      return saveMenuItem(menuItem);
+    } catch (DataIntegrityViolationException ex) {
+      MenuItemEntity existing = menuItemMapper.selectByRouteName(menuItem.getRouteName());
+      if (existing != null) {
+        return existing;
+      }
+      throw ex;
+    }
   }
 
   private MenuItemEntity saveMenuItem(MenuItemEntity menuItem) {

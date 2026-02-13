@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tencent.tdesign.dto.FileUploadInitRequest;
 import com.tencent.tdesign.security.AuthContext;
 import com.tencent.tdesign.vo.FileUploadSessionResponse;
+import jakarta.annotation.PreDestroy;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -32,6 +33,9 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 import java.util.regex.Pattern;
 
@@ -43,6 +47,7 @@ public class FileChunkUploadService {
   private static final String DEFAULT_FOLDER = "business";
   private static final String META_FILE = "session.json";
   private static final int MAX_FINGERPRINT_LENGTH = 512;
+  private static final long SESSION_TTL_MILLIS = 30 * 60 * 1000L;
   private static final Pattern UPLOAD_ID_PATTERN = Pattern.compile("^[A-Za-z0-9_-]{20,100}$");
 
   private final ObjectStorageService storageService;
@@ -51,6 +56,11 @@ public class FileChunkUploadService {
   private final ConcurrentMap<String, Object> sessionLocks = new ConcurrentHashMap<>();
   private final AuthContext authContext;
   private final byte[] uploadIdSalt;
+  private final ScheduledExecutorService cleanupExecutor = Executors.newSingleThreadScheduledExecutor(r -> {
+    Thread thread = new Thread(r, "chunk-upload-cleaner");
+    thread.setDaemon(true);
+    return thread;
+  });
 
   public FileChunkUploadService(
     ObjectStorageService storageService,
@@ -72,6 +82,13 @@ public class FileChunkUploadService {
     } catch (IOException e) {
       throw new IllegalStateException("无法创建分片缓存目录", e);
     }
+    cleanupExpiredSessions();
+    cleanupExecutor.scheduleAtFixedRate(this::cleanupExpiredSessions, 10, 10, TimeUnit.MINUTES);
+  }
+
+  @PreDestroy
+  public void shutdownCleanupExecutor() {
+    cleanupExecutor.shutdownNow();
   }
 
   public FileUploadSessionResponse initSession(FileUploadInitRequest request) {
@@ -115,6 +132,7 @@ public class FileChunkUploadService {
     }
     synchronized (lockFor(uploadId)) {
       session.markChunkUploaded(chunkIndex);
+      session.touch();
       persistSession(session, dir);
     }
   }
@@ -130,10 +148,11 @@ public class FileChunkUploadService {
     try (InputStream stream = openCombinedStream(dir, session.totalChunks)) {
       String url = storageService.uploadStream(stream, session.fileSize, session.fileName, folder, page);
       deleteSessionDir(dir);
-      sessionLocks.remove(uploadId);
       return url;
     } catch (IOException e) {
       throw new IllegalStateException("组合分片并上传失败", e);
+    } finally {
+      sessionLocks.remove(uploadId);
     }
   }
 
@@ -175,6 +194,7 @@ public class FileChunkUploadService {
         existing.setFileSize(fileSize);
         existing.setChunkSize(chunkSize);
         existing.recalculateTotalChunks();
+        existing.touch();
         persistSession(existing, dir);
       }
       return existing;
@@ -186,6 +206,13 @@ public class FileChunkUploadService {
     UploadSession session = loadSessionIfExists(dir);
     if (session == null) {
       throw new IllegalArgumentException("上传会话不存在: " + uploadId);
+    }
+    if (isExpired(session)) {
+      synchronized (lockFor(uploadId)) {
+        deleteSessionDir(dir);
+        sessionLocks.remove(uploadId);
+      }
+      throw new IllegalArgumentException("上传会话已过期: " + uploadId);
     }
     return session;
   }
@@ -319,6 +346,30 @@ public class FileChunkUploadService {
     }
   }
 
+
+  private void cleanupExpiredSessions() {
+    try (Stream<Path> stream = Files.list(chunkRoot)) {
+      stream.filter(Files::isDirectory).forEach(this::cleanupIfExpired);
+    } catch (IOException ignored) {
+    }
+  }
+
+  private void cleanupIfExpired(Path dir) {
+    String uploadId = dir.getFileName() == null ? "" : dir.getFileName().toString();
+    if (uploadId.isBlank() || !UPLOAD_ID_PATTERN.matcher(uploadId).matches()) return;
+    synchronized (lockFor(uploadId)) {
+      UploadSession session = loadSessionIfExists(dir);
+      if (session != null && isExpired(session)) {
+        deleteSessionDir(dir);
+        sessionLocks.remove(uploadId);
+      }
+    }
+  }
+
+  private boolean isExpired(UploadSession session) {
+    return System.currentTimeMillis() - session.getUpdatedAt() > SESSION_TTL_MILLIS;
+  }
+
   @JsonIgnoreProperties(ignoreUnknown = true)
   @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
   @SuppressWarnings("unused")
@@ -403,6 +454,14 @@ public class FileChunkUploadService {
 
     public void markChunkUploaded(int index) {
       uploadedChunks.add(index);
+      updatedAt = Instant.now().toEpochMilli();
+    }
+
+    public long getUpdatedAt() {
+      return updatedAt;
+    }
+
+    public void touch() {
       updatedAt = Instant.now().toEpochMilli();
     }
   }
