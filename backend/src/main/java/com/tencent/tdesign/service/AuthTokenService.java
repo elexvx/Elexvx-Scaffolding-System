@@ -58,11 +58,19 @@ public class AuthTokenService {
 
   public void removeToken(String token) {
     AuthSession session = getSession(token);
+    if (session != null) {
+      removeUserToken(session.getUserId(), token);
+      return;
+    }
     redisTemplate.delete(tokenKey(token));
     redisTemplate.opsForSet().remove(ALL_TOKENS_KEY, token);
-    if (session != null) {
-      redisTemplate.opsForSet().remove(userKey(session.getUserId()), token);
-    }
+  }
+
+  public void removeUserToken(long userId, String token) {
+    if (token == null || token.isBlank()) return;
+    redisTemplate.delete(tokenKey(token));
+    redisTemplate.opsForSet().remove(ALL_TOKENS_KEY, token);
+    redisTemplate.opsForSet().remove(userKey(userId), token);
   }
 
   public void removeUserTokens(long userId) {
@@ -71,8 +79,7 @@ public class AuthTokenService {
       for (Object tokenObj : tokens) {
         if (tokenObj == null) continue;
         String token = String.valueOf(tokenObj);
-        redisTemplate.delete(tokenKey(token));
-        redisTemplate.opsForSet().remove(ALL_TOKENS_KEY, token);
+        removeUserToken(userId, token);
       }
     }
     redisTemplate.delete(userKey(userId));

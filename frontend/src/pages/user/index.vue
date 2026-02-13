@@ -45,17 +45,35 @@
                 </div>
               </div>
               <div class="score-list">
-                <div class="score-subtotal">
-                  <span>基本信息</span>
-                  <strong>{{ basicInfoScore }}%</strong>
+                <div class="score-column">
+                  <div class="score-subtotal">
+                    <span>基本信息</span>
+                    <strong>{{ basicInfoScore }}%</strong>
+                  </div>
+                  <div
+                    v-for="item in basicCompletenessItems"
+                    :key="item.key"
+                    class="score-list-item"
+                    :class="{ done: item.done }"
+                  >
+                    <t-icon :name="item.done ? 'check-circle-filled' : 'add-circle'" />
+                    <span>{{ item.label }}</span>
+                  </div>
                 </div>
-                <div class="score-subtotal">
-                  <span>证件信息</span>
-                  <strong>{{ documentInfoScore }}%</strong>
-                </div>
-                <div v-for="item in completenessItems" :key="item.key" class="score-list-item" :class="{ done: item.done }">
-                  <t-icon :name="item.done ? 'check-circle-filled' : 'add-circle'" />
-                  <span>{{ item.label }}</span>
+                <div class="score-column">
+                  <div class="score-subtotal">
+                    <span>证件信息</span>
+                    <strong>{{ documentInfoScore }}%</strong>
+                  </div>
+                  <div
+                    v-for="item in documentCompletenessItems"
+                    :key="item.key"
+                    class="score-list-item"
+                    :class="{ done: item.done }"
+                  >
+                    <t-icon :name="item.done ? 'check-circle-filled' : 'add-circle'" />
+                    <span>{{ item.label }}</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -497,14 +515,28 @@ const scoreRingStyle = computed(() => {
   return { background: `conic-gradient(var(--td-brand-color) ${safe * 3.6}deg, var(--td-bg-color-component) 0deg)` };
 });
 
-const completenessItems = computed(() => {
+const buildCompletenessItem = (key: string, label: string, missing: Set<string>) => ({
+  key,
+  label,
+  done: !missing.has(key),
+});
+
+const basicCompletenessItems = computed(() => {
   const missing = new Set(incompleteItems.value);
   return [
-    { key: 'mobile', label: '手机号码已填写', done: !missing.has('mobile') },
-    { key: 'email', label: '邮箱地址已填写', done: !missing.has('email') },
-    { key: 'address', label: '个人住址已填写', done: !missing.has('address') },
-    { key: 'idType', label: '证件类型已填写', done: !missing.has('idType') },
-    { key: 'idCard', label: '证件号码已填写', done: !missing.has('idCard') },
+    buildCompletenessItem('mobile', '手机号码已填写', missing),
+    buildCompletenessItem('email', '邮箱地址已填写', missing),
+    buildCompletenessItem('address', '个人住址已填写', missing),
+  ];
+});
+
+const documentCompletenessItems = computed(() => {
+  const missing = new Set(incompleteItems.value);
+  return [
+    buildCompletenessItem('idType', '证件类型已填写', missing),
+    buildCompletenessItem('idCard', '证件号码已填写', missing),
+    buildCompletenessItem('idValidFrom', '证件有效期起已填写', missing),
+    buildCompletenessItem('idValidTo', '证件有效期止已填写', missing),
   ];
 });
 
@@ -924,7 +956,8 @@ onUnmounted(() => {
     .score-ring-inner { width: 106px; height: 106px; border-radius: 50%; background: var(--td-bg-color-container); display: flex; flex-direction: column; align-items: center; justify-content: center; }
     .score-value { font: var(--td-font-title-large); color: var(--td-brand-color); font-weight: 600; }
     .score-label { margin-top: 4px; font: var(--td-font-body-small); color: var(--td-text-color-secondary); }
-    .score-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 16px; }
+    .score-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: start; }
+    .score-column { display: grid; gap: 10px; min-width: 0; }
     .score-subtotal { display: flex; justify-content: space-between; color: var(--td-text-color-primary); font-weight: 600; }
     .score-list-item { display: flex; align-items: center; gap: 8px; min-width: 0; color: var(--td-text-color-secondary); }
     .score-list-item .t-icon { color: var(--td-warning-color); }

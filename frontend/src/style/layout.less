@@ -92,14 +92,16 @@
     overflow-y: auto;
     min-height: 0;
 
-    &-tabs-nav {
+    &-layout-tabs-nav {
       max-width: 100%;
-      position: fixed;
       overflow: visible;
       z-index: 100;
-    }
-    &-tabs-nav + .@{starter-prefix}-content-layout {
-      padding-top: var(--td-comp-paddingTB-xxl);
+      flex-shrink: 0;
+
+      .t-tabs__content {
+        display: none;
+        height: 0;
+      }
     }
 
     &::-webkit-scrollbar {
