@@ -107,12 +107,12 @@
   </div>
 </template>
 <script setup lang="ts">
-import * as echarts from 'echarts';
 import debounce from 'lodash/debounce';
 import type { PrimaryTableCol } from 'tdesign-vue-next';
 import { MessagePlugin } from 'tdesign-vue-next';
 import { computed, nextTick, onActivated, onDeactivated, onMounted, onUnmounted, ref } from 'vue';
 
+import { initEChart, type EChartsInstance } from '@/utils/echarts';
 import { request } from '@/utils/request';
 
 interface RedisInfo {
@@ -166,8 +166,8 @@ interface MetricPoint {
 const history = ref<MetricPoint[]>([]);
 const memoryChartRef = ref<HTMLDivElement>();
 const opsChartRef = ref<HTMLDivElement>();
-let memoryChart: echarts.ECharts | null = null;
-let opsChart: echarts.ECharts | null = null;
+let memoryChart: EChartsInstance | null = null;
+let opsChart: EChartsInstance | null = null;
 
 const safeInt = (v?: string | number) => {
   if (v == null) return 0;
@@ -369,10 +369,10 @@ const renderCharts = () => {
   const opsData = history.value.map((p) => Number(p.ops.toFixed(2)));
 
   if (memoryChartRef.value && !memoryChart) {
-    memoryChart = echarts.init(memoryChartRef.value);
+    memoryChart = initEChart(memoryChartRef.value);
   }
   if (opsChartRef.value && !opsChart) {
-    opsChart = echarts.init(opsChartRef.value);
+    opsChart = initEChart(opsChartRef.value);
   }
 
   memoryChart?.setOption({

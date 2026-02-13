@@ -52,9 +52,7 @@ function getViewModulesByDir() {
 
   const modules = import.meta.glob([
     '/src/pages/**/*.vue',
-    '/src/pages/**/*.tsx',
     '/src/views/**/*.vue',
-    '/src/views/**/*.tsx',
   ]) as Record<string, ViewModuleLoader>;
 
   const byDir: Record<ViewDir, Map<string, ViewModuleLoader>> = {
@@ -63,7 +61,7 @@ function getViewModulesByDir() {
   };
 
   Object.entries(modules).forEach(([file, loader]) => {
-    const match = file.match(/^\/src\/(pages|views)\/(.+)\.(vue|tsx)$/i);
+    const match = file.match(/^\/src\/(pages|views)\/(.+)\.vue$/i);
     if (!match) return;
     const dir = match[1].toLowerCase() as ViewDir;
     const normalized = match[2];
@@ -79,7 +77,7 @@ function normalizeRouteComponentPath(component: string): { dirHint?: ViewDir; no
   if (!path) return { normalized: '' };
 
   path = path.replace(/\\/g, '/');
-  path = path.replace(/\.(vue|tsx)$/i, '');
+  path = path.replace(/\.vue$/i, '');
 
   if (path.startsWith('/')) path = path.slice(1);
   if (path.startsWith('src/')) path = path.slice('src/'.length);

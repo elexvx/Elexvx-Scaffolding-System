@@ -10,6 +10,7 @@ import com.tencent.tdesign.vo.NotificationResponse;
 import com.tencent.tdesign.vo.NotificationSummary;
 import com.tencent.tdesign.vo.PageResult;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -122,14 +123,15 @@ public class NotificationService {
     int safeSize = Math.min(Math.max(size, 1), 200);
     int offset = safePage * safeSize;
     List<String> statuses = StringUtils.hasText(status)
-      ? java.util.Arrays.asList(status.split(","))
+      ? Arrays.asList(status.split(","))
       : List.of("draft", "published", "withdrawn");
-    List<Notification> rows = mapper.selectPageByStatus(statuses, offset, safeSize);
-    long total = mapper.countByStatus(statuses);
-    List<NotificationResponse> list = rows.stream()
-      .filter(n -> matches(n, keyword, priority))
-      .map(NotificationResponse::from)
-      .toList();
+    String keywordLike = StringUtils.hasText(keyword)
+      ? "%" + keyword.trim().toLowerCase() + "%"
+      : null;
+    String normalizedPriority = StringUtils.hasText(priority) ? priority.trim().toLowerCase() : null;
+    List<Notification> rows = mapper.selectPage(statuses, keywordLike, normalizedPriority, offset, safeSize);
+    long total = mapper.count(statuses, keywordLike, normalizedPriority);
+    List<NotificationResponse> list = rows.stream().map(NotificationResponse::from).toList();
     return new PageResult<>(list, total);
   }
 
@@ -142,17 +144,6 @@ public class NotificationService {
       .sorted(Comparator.comparing(Notification::getPublishAt, Comparator.nullsLast(LocalDateTime::compareTo)).reversed())
       .map(NotificationSummary::from)
       .toList();
-  }
-
-  private boolean matches(Notification n, String keyword, String priority) {
-    boolean matchKeyword = true;
-    if (StringUtils.hasText(keyword)) {
-      String lower = keyword.toLowerCase();
-      matchKeyword = n.getTitle().toLowerCase().contains(lower)
-        || (n.getSummary() != null && n.getSummary().toLowerCase().contains(lower));
-    }
-    boolean matchPriority = !StringUtils.hasText(priority) || priority.equalsIgnoreCase(n.getPriority());
-    return matchKeyword && matchPriority;
   }
 
   private void apply(Notification target, NotificationUpsertRequest req) {

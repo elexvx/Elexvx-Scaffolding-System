@@ -2,6 +2,7 @@ package com.tencent.tdesign.service;
 
 import com.tencent.tdesign.vo.ConcurrentLoginDecisionEvent;
 import com.tencent.tdesign.vo.ConcurrentLoginEvent;
+import com.github.benmanes.caffeine.cache.Cache;
 import jakarta.annotation.PreDestroy;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -31,18 +32,23 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
  * </ul>
  */
 public class ConcurrentLoginService {
-  private static final long PENDING_TTL_MS = 2 * 60 * 1000L;
+  public static final long PENDING_TTL_MS = 2 * 60 * 1000L;
   private static final long LOGIN_HEARTBEAT_INTERVAL_SECONDS = 15L;
   private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
   private final Map<Long, CopyOnWriteArrayList<SseEmitter>> loginEmitters = new ConcurrentHashMap<>();
   private final Map<SseEmitter, ScheduledFuture<?>> loginHeartbeatTasks = new ConcurrentHashMap<>();
-  private final Map<String, PendingLogin> pendingLogins = new ConcurrentHashMap<>();
+  private final Cache<String, PendingLogin> pendingLogins;
   private final ScheduledExecutorService heartbeatExecutor = Executors.newSingleThreadScheduledExecutor(r -> {
     Thread thread = new Thread(r, "concurrent-login-sse-heartbeat");
     thread.setDaemon(true);
     return thread;
   });
+
+
+  public ConcurrentLoginService(VerificationCacheService verificationCacheService) {
+    this.pendingLogins = verificationCacheService.pendingLoginCache();
+  }
 
   @PreDestroy
   /**
@@ -141,7 +147,7 @@ public class ConcurrentLoginService {
       throw new IllegalArgumentException("等待确认已失效，请重新登录");
     }
     if (pending.isExpired()) {
-      pendingLogins.remove(requestId);
+      pendingLogins.invalidate(requestId);
       throw new IllegalArgumentException("等待确认已过期，请重新登录");
     }
 
@@ -169,7 +175,7 @@ public class ConcurrentLoginService {
       throw new IllegalArgumentException("无权处理该登录请求");
     }
     if (pending.isExpired()) {
-      pendingLogins.remove(requestId);
+      pendingLogins.invalidate(requestId);
       throw new IllegalArgumentException("等待确认已过期，请重新登录");
     }
     if (pending.decision != Decision.PENDING) {
@@ -191,7 +197,7 @@ public class ConcurrentLoginService {
       throw new IllegalArgumentException("等待确认已失效，请重新登录");
     }
     if (pending.isExpired()) {
-      pendingLogins.remove(requestId);
+      pendingLogins.invalidate(requestId);
       throw new IllegalArgumentException("等待确认已过期，请重新登录");
     }
     if (pending.decision == Decision.REJECTED) {
@@ -200,7 +206,7 @@ public class ConcurrentLoginService {
     if (pending.decision != Decision.APPROVED) {
       throw new IllegalArgumentException("等待对方确认中");
     }
-    pendingLogins.remove(requestId);
+    pendingLogins.invalidate(requestId);
     return pending;
   }
 
@@ -282,7 +288,7 @@ public class ConcurrentLoginService {
   }
 
   private PendingLogin getPending(String requestId) {
-    return pendingLogins.get(requestId);
+    return pendingLogins.getIfPresent(requestId);
   }
 
   public static class PendingLogin {

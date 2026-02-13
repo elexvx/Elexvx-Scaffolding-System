@@ -39,10 +39,16 @@ public class ObjectStorageService {
 
   private final StorageSettingMapper mapper;
   private final FileTokenService fileTokenService;
+  private final ObjectStorageClientManager clientManager;
 
-  public ObjectStorageService(StorageSettingMapper mapper, FileTokenService fileTokenService) {
+  public ObjectStorageService(
+    StorageSettingMapper mapper,
+    FileTokenService fileTokenService,
+    ObjectStorageClientManager clientManager
+  ) {
     this.mapper = mapper;
     this.fileTokenService = fileTokenService;
+    this.clientManager = clientManager;
   }
 
   public StorageSettingResponse currentSetting() {
@@ -54,6 +60,7 @@ public class ObjectStorageService {
     apply(setting, req, true);
     validate(setting, true);
     StorageSetting saved = saveSetting(setting);
+    clientManager.invalidateAll();
     log.info("Object storage settings updated. provider={}, bucket={}", saved.getProvider(), saved.getBucket());
     return saved;
   }
@@ -212,14 +219,14 @@ public class ObjectStorageService {
       if (idx > -1) ext = originalName.substring(idx);
     }
     String datePath = LocalDate.now().toString();
-    String name = UUID.randomUUID().toString().replaceAll("-", "");
+    String name = UUID.randomUUID().toString().replace("-", "");
     String prefix = setting.getPathPrefix();
     StringBuilder sb = new StringBuilder();
     if (isNotBlank(prefix)) sb.append(prefix).append('/');
     sb.append(folder);
     if (isNotBlank(page)) sb.append('/').append(page);
     sb.append('/').append(datePath).append('/').append(name).append(ext);
-    return sb.toString().replaceAll("/+", "/");
+    return sb.toString().replace("//", "/");
   }
 
   private void uploadLocalStream(StorageSetting setting, InputStream stream, String objectKey) throws IOException {
@@ -232,28 +239,18 @@ public class ObjectStorageService {
 
   private void uploadAliyunStream(StorageSetting setting, InputStream stream, String objectKey) throws IOException {
     String endpoint = formatEndpoint(setting.getEndpoint());
-    OSS client = new OSSClientBuilder().build(endpoint, setting.getAccessKey(), setting.getSecretKey());
-    try {
-      client.putObject(setting.getBucket(), objectKey, stream);
-    } finally {
-      safeShutdown(client);
-    }
+    OSS client = clientManager.getAliyunClient(setting, endpoint);
+    client.putObject(setting.getBucket(), objectKey, stream);
   }
 
   private void uploadTencentStream(StorageSetting setting, InputStream stream, String objectKey, long size) throws IOException {
-    ClientConfig config = new ClientConfig(new Region(setting.getRegion()));
-    config.setHttpProtocol(HttpProtocol.https);
-    COSClient client = new COSClient(new com.qcloud.cos.auth.BasicCOSCredentials(setting.getAccessKey(), setting.getSecretKey()), config);
-    try {
-      ObjectMetadata metadata = new ObjectMetadata();
-      if (size >= 0) {
-        metadata.setContentLength(size);
-      }
-      PutObjectRequest request = new PutObjectRequest(setting.getBucket(), objectKey, stream, metadata);
-      client.putObject(request);
-    } finally {
-      client.shutdown();
+    COSClient client = clientManager.getTencentClient(setting);
+    ObjectMetadata metadata = new ObjectMetadata();
+    if (size >= 0) {
+      metadata.setContentLength(size);
     }
+    PutObjectRequest request = new PutObjectRequest(setting.getBucket(), objectKey, stream, metadata);
+    client.putObject(request);
   }
 
   public FileStream openStream(FileTokenService.TokenPayload payload) throws IOException {
@@ -330,7 +327,7 @@ public class ObjectStorageService {
 
   private FileStream openAliyunStream(StorageSetting setting, String objectKey, Long start, Long end) throws IOException {
     String endpoint = formatEndpoint(setting.getEndpoint());
-    OSS client = new OSSClientBuilder().build(endpoint, setting.getAccessKey(), setting.getSecretKey());
+    OSS client = clientManager.getAliyunClient(setting, endpoint);
     if (start == null && end == null) {
       OSSObject object = client.getObject(setting.getBucket(), objectKey);
       long length = object.getObjectMetadata() == null ? -1 : object.getObjectMetadata().getContentLength();
@@ -340,7 +337,7 @@ public class ObjectStorageService {
           object.close();
         } catch (Exception ignore) {
         }
-        safeShutdown(client);
+  
       });
       return FileStream.full(input, length, defaultContentType(contentType, objectKey));
     }
@@ -357,15 +354,13 @@ public class ObjectStorageService {
         object.close();
       } catch (Exception ignore) {
       }
-      safeShutdown(client);
+
     });
     return FileStream.range(input, range.length(), total, defaultContentType(contentType, objectKey));
   }
 
   private FileStream openTencentStream(StorageSetting setting, String objectKey, Long start, Long end) throws IOException {
-    ClientConfig config = new ClientConfig(new Region(setting.getRegion()));
-    config.setHttpProtocol(HttpProtocol.https);
-    COSClient client = new COSClient(new com.qcloud.cos.auth.BasicCOSCredentials(setting.getAccessKey(), setting.getSecretKey()), config);
+    COSClient client = clientManager.getTencentClient(setting);
     if (start == null && end == null) {
       COSObject object = client.getObject(setting.getBucket(), objectKey);
       long length = object.getObjectMetadata() == null ? -1 : object.getObjectMetadata().getContentLength();
@@ -375,7 +370,7 @@ public class ObjectStorageService {
           object.close();
         } catch (Exception ignore) {
         }
-        client.shutdown();
+
       });
       return FileStream.full(input, length, defaultContentType(contentType, objectKey));
     }
@@ -409,29 +404,23 @@ public class ObjectStorageService {
 
   private FileMeta statAliyun(StorageSetting setting, String objectKey) {
     String endpoint = formatEndpoint(setting.getEndpoint());
-    OSS client = new OSSClientBuilder().build(endpoint, setting.getAccessKey(), setting.getSecretKey());
+    OSS client = clientManager.getAliyunClient(setting, endpoint);
     try {
       com.aliyun.oss.model.ObjectMetadata meta = client.getObjectMetadata(setting.getBucket(), objectKey);
       long size = meta == null ? -1 : meta.getContentLength();
       String contentType = meta == null ? null : meta.getContentType();
       return new FileMeta(size, defaultContentType(contentType, objectKey));
     } finally {
-      safeShutdown(client);
+
     }
   }
 
   private FileMeta statTencent(StorageSetting setting, String objectKey) {
-    ClientConfig config = new ClientConfig(new Region(setting.getRegion()));
-    config.setHttpProtocol(HttpProtocol.https);
-    COSClient client = new COSClient(new com.qcloud.cos.auth.BasicCOSCredentials(setting.getAccessKey(), setting.getSecretKey()), config);
-    try {
-      ObjectMetadata meta = client.getObjectMetadata(setting.getBucket(), objectKey);
-      long size = meta == null ? -1 : meta.getContentLength();
-      String contentType = meta == null ? null : meta.getContentType();
-      return new FileMeta(size, defaultContentType(contentType, objectKey));
-    } finally {
-      client.shutdown();
-    }
+    COSClient client = clientManager.getTencentClient(setting);
+    ObjectMetadata meta = client.getObjectMetadata(setting.getBucket(), objectKey);
+    long size = meta == null ? -1 : meta.getContentLength();
+    String contentType = meta == null ? null : meta.getContentType();
+    return new FileMeta(size, defaultContentType(contentType, objectKey));
   }
 
   private Range normalizeRange(Long start, Long end, long totalLength) {
@@ -589,7 +578,7 @@ public class ObjectStorageService {
 
   private void testAliyun(StorageSetting setting) {
     String endpoint = formatEndpoint(setting.getEndpoint());
-    OSS client = new OSSClientBuilder().build(endpoint, setting.getAccessKey(), setting.getSecretKey());
+    OSS client = clientManager.getAliyunClient(setting, endpoint);
     try {
       if (!client.doesBucketExist(setting.getBucket())) {
         throw new IllegalArgumentException("阿里云 OSS Bucket 不存在: " + setting.getBucket());
@@ -598,14 +587,12 @@ public class ObjectStorageService {
       log.warn("Object storage service A test failed", e);
       throw new IllegalArgumentException("阿里云 OSS 连接失败: " + e.getMessage());
     } finally {
-      safeShutdown(client);
+
     }
   }
 
   private void testTencent(StorageSetting setting) {
-    ClientConfig config = new ClientConfig(new Region(setting.getRegion()));
-    config.setHttpProtocol(HttpProtocol.https);
-    COSClient client = new COSClient(new com.qcloud.cos.auth.BasicCOSCredentials(setting.getAccessKey(), setting.getSecretKey()), config);
+    COSClient client = clientManager.getTencentClient(setting);
     try {
       if (!client.doesBucketExist(setting.getBucket())) {
         throw new IllegalArgumentException("腾讯云 COS Bucket 不存在: " + setting.getBucket());

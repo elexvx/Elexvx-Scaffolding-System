@@ -6,8 +6,18 @@ import org.apache.ibatis.annotations.Param;
 
 public interface NotificationMapper {
   Notification selectById(@Param("id") Long id);
-  List<Notification> selectPageByStatus(@Param("statuses") List<String> statuses, @Param("offset") int offset, @Param("limit") int limit);
-  long countByStatus(@Param("statuses") List<String> statuses);
+  List<Notification> selectPage(
+    @Param("statuses") List<String> statuses,
+    @Param("keywordLike") String keywordLike,
+    @Param("priority") String priority,
+    @Param("offset") int offset,
+    @Param("limit") int limit
+  );
+  long count(
+    @Param("statuses") List<String> statuses,
+    @Param("keywordLike") String keywordLike,
+    @Param("priority") String priority
+  );
   List<Notification> selectLatestPublished(@Param("limit") int limit);
   int insert(Notification entity);
   int update(Notification entity);

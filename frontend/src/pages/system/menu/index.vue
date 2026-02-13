@@ -342,7 +342,7 @@ const renderIconValue = (_h: any, ctx: { value?: unknown }) => {
   );
 };
 
-const viewModules = import.meta.glob('../../**/*.vue');
+const viewModules = import.meta.glob('/src/pages/**/*.vue');
 const pageComponentOptions = computed<SelectOption[]>(() => {
   return Object.keys(viewModules)
     .map((k) => k.replace(/^\.\.\//, '/').replace(/\.vue$/, ''))

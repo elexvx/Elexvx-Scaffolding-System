@@ -81,6 +81,9 @@ tdesign:
     version: ${TDESIGN_SYSTEM_VERSION:1.0.0}
     # 版本更新检查地址（可为空）
     update-check-url: ${TDESIGN_UPDATE_CHECK_URL:}
+  menu:
+    maintenance:
+      enabled: ${TDESIGN_MENU_MAINTENANCE_ENABLED:true}
   # 文件能力（上传/下载/预览）
   file:
     # 文件下载/预览 token 的签名密钥（生产必填）
@@ -157,3 +160,4 @@ springdoc:
     enabled: true # 是否启用 OpenAPI JSON 文档
   swagger-ui:
     enabled: true # 是否启用 Swagger UI 页面
+

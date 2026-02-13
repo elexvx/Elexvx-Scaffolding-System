@@ -18,14 +18,7 @@ public class MenuController {
   @GetMapping("/get-menu-list-i18n")
   public ApiResponse<MenuListResult> getMenuList() {
     try {
-      try { menuItemService.ensureOrgManagementMenuSeeded(); } catch (Exception ignored) {}
-      try { menuItemService.ensureConsolePrintMenuSeeded(); } catch (Exception ignored) {}
-      // 清理已合并的旧页面路由
-      try { menuItemService.removeObsoleteWatermarkRoute(); } catch (Exception ignored) {}
       if (menuItemService.isConfigured()) {
-        try { menuItemService.removeObsoleteTeamRoute(); } catch (Exception ignored) {}
-        try { menuItemService.removeObsoletePrintRoute(); } catch (Exception ignored) {}
-        try { menuItemService.removeObsoleteNotificationRoute(); } catch (Exception ignored) {}
         return ApiResponse.success(new MenuListResult(menuItemService.getMenuRoutesForCurrentUser()));
       }
     } catch (Exception ignored) {
