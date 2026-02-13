@@ -86,6 +86,7 @@ public class SecurityConfig {
       .authorizeHttpRequests(auth -> auth
         .dispatcherTypeMatchers(DispatcherType.ASYNC, DispatcherType.ERROR).permitAll()
         .requestMatchers(
+          "/modules/**",
           "/auth/login",
           "/auth/login/sms",
           "/auth/login/email",
