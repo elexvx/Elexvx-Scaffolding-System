@@ -213,7 +213,7 @@ const handleRemove = (options: TTabRemoveOptions) => {
 const renderTitle = (title?: string | Record<string, string>) => {
   return resolveRouteTitle(title, locale.value, '');
 };
-const handleRefresh = (route: TRouterInfo, routeIdx: number) => {
+const handleRefresh = (route: TRouterInfo, _routeIdx: number) => {
   const tabPath = getTabValue(route);
   tabsRouterStore.beginTabRefresh(tabPath);
   nextTick(() => {
