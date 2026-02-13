@@ -44,7 +44,7 @@ public class FileTokenService {
     } else {
       this.key = new SecretKeySpec(sha256(effective), "AES");
     }
-    this.tokenTtlSeconds = Math.max(60, tokenTtlSeconds);
+    this.tokenTtlSeconds = Math.max(1, tokenTtlSeconds);
     String prefix = (contextPath == null) ? "" : contextPath.trim();
     if (prefix.isEmpty() || "/".equals(prefix)) {
       prefix = "";
