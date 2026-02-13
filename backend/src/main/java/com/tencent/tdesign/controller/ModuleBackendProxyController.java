@@ -5,6 +5,7 @@ import com.tencent.tdesign.service.ModuleRegistryService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -110,10 +111,16 @@ public class ModuleBackendProxyController {
     }
   }
 
-  private HttpRequest.BodyPublisher buildBodyPublisher(HttpServletRequest request) throws IOException {
+  private HttpRequest.BodyPublisher buildBodyPublisher(HttpServletRequest request) {
     String method = String.valueOf(request.getMethod()).toUpperCase(Locale.ROOT);
     if ("GET".equals(method) || "HEAD".equals(method)) return HttpRequest.BodyPublishers.noBody();
-    return HttpRequest.BodyPublishers.ofInputStream(request::getInputStream);
+    return HttpRequest.BodyPublishers.ofInputStream(() -> {
+      try {
+        return request.getInputStream();
+      } catch (IOException e) {
+        throw new UncheckedIOException(e);
+      }
+    });
   }
 
   private Duration timeoutFor(String method, String restPath) {
