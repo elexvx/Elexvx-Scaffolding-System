@@ -6,7 +6,6 @@
       theme="card"
       :class="`${prefix}-layout-tabs-nav`"
       :value="currentTabValue"
-      :style="{ position: 'sticky', top: 0, width: '100%' }"
       @change="(value) => handleChangeCurrentTab(value as string)"
       @remove="handleRemove"
       @drag-sort="handleDragend"
@@ -214,7 +213,7 @@ const handleRemove = (options: TTabRemoveOptions) => {
 const renderTitle = (title?: string | Record<string, string>) => {
   return resolveRouteTitle(title, locale.value, '');
 };
-const handleRefresh = (route: TRouterInfo, routeIdx: number) => {
+const handleRefresh = (route: TRouterInfo, _routeIdx: number) => {
   const tabPath = getTabValue(route);
   tabsRouterStore.beginTabRefresh(tabPath);
   nextTick(() => {

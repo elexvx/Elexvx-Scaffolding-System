@@ -29,10 +29,18 @@
               </div>
             </div>
             <div class="user-inline-right">
-              <div class="user-inline-row">账号：<span>{{ displayBasic.account || '-' }}</span></div>
-              <div class="user-inline-row"><t-icon name="mail" /><span>{{ displayBasic.email || '待补充' }}</span></div>
-              <div class="user-inline-row"><t-icon name="call" /><span>{{ displayBasic.mobile || '待补充' }}</span></div>
-              <div class="user-inline-row user-inline-row--full"><t-icon name="location" /><span>{{ displayBasic.address || '待补充' }}</span></div>
+              <div class="user-inline-row">
+                账号：<span>{{ displayBasic.account || '-' }}</span>
+              </div>
+              <div class="user-inline-row">
+                <t-icon name="mail" /><span>{{ displayBasic.email || '待补充' }}</span>
+              </div>
+              <div class="user-inline-row">
+                <t-icon name="call" /><span>{{ displayBasic.mobile || '待补充' }}</span>
+              </div>
+              <div class="user-inline-row user-inline-row--full">
+                <t-icon name="location" /><span>{{ displayBasic.address || '待补充' }}</span>
+              </div>
             </div>
           </t-card>
 
@@ -125,7 +133,9 @@
             </div>
           </template>
           <template #actions>
-            <t-button theme="primary" variant="text" @click="openDocumentEditDrawer"><t-icon name="edit" />编辑</t-button>
+            <t-button theme="primary" variant="text" @click="openDocumentEditDrawer"
+              ><t-icon name="edit" />编辑</t-button
+            >
           </template>
           <t-descriptions :column="2" layout="horizontal" class="user-profile-descriptions">
             <t-descriptions-item label="证件类型">{{ documentTypeLabel || '待补充' }}</t-descriptions-item>
@@ -147,11 +157,30 @@
             @submit="handleUpdateBasicProfile"
           >
             <t-row :gutter="[24, 24]">
-              <t-col :xs="24" :sm="12"><t-form-item label="姓名" name="name"><t-input v-model="profileForm.name" placeholder="请输入姓名" /></t-form-item></t-col>
-              <t-col :xs="24" :sm="12"><t-form-item label="性别" name="gender"><t-select v-model="profileForm.gender" :options="genderOptions" placeholder="请选择性别" clearable /></t-form-item></t-col>
-              <t-col :xs="24" :sm="12"><t-form-item label="昵称" name="nickname"><t-input v-model="profileForm.nickname" placeholder="请输入昵称" /></t-form-item></t-col>
-              <t-col :xs="24" :sm="12"><t-form-item label="手机号码" name="mobile"><t-input v-model="profileForm.mobile" placeholder="请输入手机号码" /></t-form-item></t-col>
-              <t-col :xs="24" :sm="12"><t-form-item label="电子邮箱" name="email"><t-input v-model="profileForm.email" placeholder="请输入邮箱" /></t-form-item></t-col>
+              <t-col :xs="24" :sm="12"
+                ><t-form-item label="姓名" name="name"
+                  ><t-input v-model="profileForm.name" placeholder="请输入姓名" /></t-form-item
+              ></t-col>
+              <t-col :xs="24" :sm="12"
+                ><t-form-item label="性别" name="gender"
+                  ><t-select
+                    v-model="profileForm.gender"
+                    :options="genderOptions"
+                    placeholder="请选择性别"
+                    clearable /></t-form-item
+              ></t-col>
+              <t-col :xs="24" :sm="12"
+                ><t-form-item label="昵称" name="nickname"
+                  ><t-input v-model="profileForm.nickname" placeholder="请输入昵称" /></t-form-item
+              ></t-col>
+              <t-col :xs="24" :sm="12"
+                ><t-form-item label="手机号码" name="mobile"
+                  ><t-input v-model="profileForm.mobile" placeholder="请输入手机号码" /></t-form-item
+              ></t-col>
+              <t-col :xs="24" :sm="12"
+                ><t-form-item label="电子邮箱" name="email"
+                  ><t-input v-model="profileForm.email" placeholder="请输入邮箱" /></t-form-item
+              ></t-col>
               <t-col :xs="24" :sm="12">
                 <t-form-item label="省/市/区县" name="provinceId">
                   <t-cascader
@@ -166,14 +195,22 @@
                   />
                 </t-form-item>
               </t-col>
-              <t-col :xs="24" :sm="12"><t-form-item label="邮编" name="zipCode"><t-input v-model="profileForm.zipCode" placeholder="请输入邮编" /></t-form-item></t-col>
-              <t-col :xs="24" :sm="12"><t-form-item label="详细地址" name="address"><t-input v-model="profileForm.address" placeholder="请输入详细地址" /></t-form-item></t-col>
+              <t-col :xs="24" :sm="12"
+                ><t-form-item label="邮编" name="zipCode"
+                  ><t-input v-model="profileForm.zipCode" placeholder="请输入邮编" /></t-form-item
+              ></t-col>
+              <t-col :xs="24" :sm="12"
+                ><t-form-item label="详细地址" name="address"
+                  ><t-input v-model="profileForm.address" placeholder="请输入详细地址" /></t-form-item
+              ></t-col>
             </t-row>
           </t-form>
           <template #footer>
             <t-space class="tdesign-starter-action-bar">
               <t-button variant="outline" @click="basicEditVisible = false">取消</t-button>
-              <t-button theme="primary" :loading="updatingProfile" @click="basicProfileFormRef?.submit()">保存</t-button>
+              <t-button theme="primary" :loading="updatingProfile" @click="basicProfileFormRef?.submit()"
+                >保存</t-button
+              >
             </t-space>
           </template>
         </confirm-drawer>
@@ -190,16 +227,39 @@
             @submit="handleUpdateDocumentProfile"
           >
             <t-row :gutter="[24, 24]">
-              <t-col :xs="24" :sm="12"><t-form-item label="证件类型" name="idType"><t-select v-model="profileForm.idType" :options="documentTypeOptions" clearable filterable placeholder="请选择证件类型" /></t-form-item></t-col>
-              <t-col :xs="24" :sm="12"><t-form-item label="证件号码" name="idCard"><t-input v-model="profileForm.idCard" :placeholder="documentNoPlaceholder" /></t-form-item></t-col>
+              <t-col :xs="24" :sm="12"
+                ><t-form-item label="证件类型" name="idType"
+                  ><t-select
+                    v-model="profileForm.idType"
+                    :options="documentTypeOptions"
+                    clearable
+                    filterable
+                    placeholder="请选择证件类型" /></t-form-item
+              ></t-col>
+              <t-col :xs="24" :sm="12"
+                ><t-form-item label="证件号码" name="idCard"
+                  ><t-input v-model="profileForm.idCard" :placeholder="documentNoPlaceholder" /></t-form-item
+              ></t-col>
               <t-col :xs="24" :sm="12">
                 <t-form-item label="证件有效期起" name="idValidFrom">
-                  <t-date-picker v-model="profileForm.idValidFrom" clearable format="YYYY-MM-DD" value-type="YYYY-MM-DD" style="width: 100%" />
+                  <t-date-picker
+                    v-model="profileForm.idValidFrom"
+                    clearable
+                    format="YYYY-MM-DD"
+                    value-type="YYYY-MM-DD"
+                    style="width: 100%"
+                  />
                 </t-form-item>
               </t-col>
               <t-col :xs="24" :sm="12">
                 <t-form-item label="证件有效期止" name="idValidTo">
-                  <t-date-picker v-model="profileForm.idValidTo" clearable format="YYYY-MM-DD" value-type="YYYY-MM-DD" style="width: 100%" />
+                  <t-date-picker
+                    v-model="profileForm.idValidTo"
+                    clearable
+                    format="YYYY-MM-DD"
+                    value-type="YYYY-MM-DD"
+                    style="width: 100%"
+                  />
                 </t-form-item>
               </t-col>
             </t-row>
@@ -207,28 +267,52 @@
           <template #footer>
             <t-space class="tdesign-starter-action-bar">
               <t-button variant="outline" @click="documentEditVisible = false">取消</t-button>
-              <t-button theme="primary" :loading="updatingProfile" @click="documentProfileFormRef?.submit()">保存</t-button>
+              <t-button theme="primary" :loading="updatingProfile" @click="documentProfileFormRef?.submit()"
+                >保存</t-button
+              >
             </t-space>
           </template>
         </confirm-drawer>
 
         <t-card title="更改密码" :bordered="false" class="user-setting-card" style="margin-top: 24px">
-          <t-form ref="passwordFormRef" class="password-form" :data="passwordForm" :rules="passwordRules" label-align="right" label-width="140px" colon @submit="handleSubmitPassword">
-            <t-form-item label="当前密码" name="oldPassword"><t-input v-model="passwordForm.oldPassword" type="password" placeholder="请输入当前密码" /></t-form-item>
-            <t-form-item label="新密码" name="newPassword"><t-input v-model="passwordForm.newPassword" type="password" placeholder="请输入新密码" /></t-form-item>
-            <t-form-item label="确认新密码" name="confirmPassword"><t-input v-model="passwordForm.confirmPassword" type="password" placeholder="请再次输入新密码" /></t-form-item>
-            <t-form-item class="form-submit" label-width="0"><t-button theme="primary" type="submit" :loading="changingPassword">修改密码</t-button></t-form-item>
+          <t-form
+            ref="passwordFormRef"
+            class="password-form"
+            :data="passwordForm"
+            :rules="passwordRules"
+            label-align="right"
+            label-width="140px"
+            colon
+            @submit="handleSubmitPassword"
+          >
+            <t-form-item label="当前密码" name="oldPassword"
+              ><t-input v-model="passwordForm.oldPassword" type="password" placeholder="请输入当前密码"
+            /></t-form-item>
+            <t-form-item label="新密码" name="newPassword"
+              ><t-input v-model="passwordForm.newPassword" type="password" placeholder="请输入新密码"
+            /></t-form-item>
+            <t-form-item label="确认新密码" name="confirmPassword"
+              ><t-input v-model="passwordForm.confirmPassword" type="password" placeholder="请再次输入新密码"
+            /></t-form-item>
+            <t-form-item class="form-submit" label-width="0"
+              ><t-button theme="primary" type="submit" :loading="changingPassword">修改密码</t-button></t-form-item
+            >
           </t-form>
         </t-card>
 
         <t-card title="登录日志" :bordered="false" class="user-setting-card" style="margin-top: 24px">
-          <t-table row-key="id" :data="loginLogs" :columns="loginLogColumns" :loading="loginLogLoading" :pagination="null" />
+          <t-table
+            row-key="id"
+            :data="loginLogs"
+            :columns="loginLogColumns"
+            :loading="loginLogLoading"
+            :pagination="null"
+          />
         </t-card>
       </div>
     </div>
   </div>
 </template>
-
 <script setup lang="ts">
 import type { FormInstanceFunctions, FormRule, PrimaryTableCol, SelectOption, SubmitContext } from 'tdesign-vue-next';
 import { MessagePlugin } from 'tdesign-vue-next';
@@ -421,7 +505,9 @@ const validateDocumentDateRange = (from?: string, to?: string) => !from || !to |
 
 const formatList = (items?: string[]) => (!items || items.length === 0 ? '-' : items.join(' / '));
 
-const displayedRoles = computed(() => (profile.value?.roles?.length ? profile.value.roles : userStore.userInfo?.roles || []));
+const displayedRoles = computed(() =>
+  profile.value?.roles?.length ? profile.value.roles : userStore.userInfo?.roles || [],
+);
 const displayedOrgUnits = computed(() =>
   profile.value?.orgUnitNames?.length ? profile.value.orgUnitNames : userStore.userInfo?.orgUnitNames || [],
 );
@@ -486,7 +572,8 @@ const fallbackCompleteness = computed(() => {
   if (!hasText(profile.value.idValidTo)) missing.add('idValidTo');
 
   const basicComplete = 5 - ['name', 'gender', 'mobile', 'email', 'address'].filter((key) => missing.has(key)).length;
-  const documentComplete = 4 - ['idType', 'idCard', 'idValidFrom', 'idValidTo'].filter((key) => missing.has(key)).length;
+  const documentComplete =
+    4 - ['idType', 'idCard', 'idValidFrom', 'idValidTo'].filter((key) => missing.has(key)).length;
   return {
     missing,
     basicScore: Math.round((basicComplete * 100) / 5),
@@ -496,13 +583,19 @@ const fallbackCompleteness = computed(() => {
 });
 
 const completenessScore = computed(() =>
-  typeof profile.value.completenessScore === 'number' ? profile.value.completenessScore : fallbackCompleteness.value.score,
+  typeof profile.value.completenessScore === 'number'
+    ? profile.value.completenessScore
+    : fallbackCompleteness.value.score,
 );
 const basicInfoScore = computed(() =>
-  typeof profile.value.basicInfoScore === 'number' ? profile.value.basicInfoScore : fallbackCompleteness.value.basicScore,
+  typeof profile.value.basicInfoScore === 'number'
+    ? profile.value.basicInfoScore
+    : fallbackCompleteness.value.basicScore,
 );
 const documentInfoScore = computed(() =>
-  typeof profile.value.documentInfoScore === 'number' ? profile.value.documentInfoScore : fallbackCompleteness.value.documentScore,
+  typeof profile.value.documentInfoScore === 'number'
+    ? profile.value.documentInfoScore
+    : fallbackCompleteness.value.documentScore,
 );
 const incompleteItems = computed(() =>
   Array.isArray(profile.value.incompleteItems) && profile.value.incompleteItems.length > 0
@@ -656,16 +749,21 @@ const syncAreaFromProfile = async (data: UserProfile) => {
     areaValue.value = [];
     return;
   }
-  const province = areaOptions.value.find((item) => item.label === data.province || String(item.value) === data.province);
+  const province = areaOptions.value.find(
+    (item) => item.label === data.province || String(item.value) === data.province,
+  );
   const cities = Array.isArray(province?.children) ? province.children : [];
   const city = cities.find((item) => item.label === data.city || String(item.value) === data.city);
   const districts = Array.isArray(city?.children) ? city.children : [];
-  const districtFromCity = districts.find((item) => item.label === data.district || String(item.value) === data.district);
-  const districtFromProvince = cities.find((item) => item.label === data.district || String(item.value) === data.district);
-  const path = (districtFromCity
-    ? [province, city, districtFromCity]
-    : [province, districtFromProvince]
-  ).filter(Boolean) as AreaOption[];
+  const districtFromCity = districts.find(
+    (item) => item.label === data.district || String(item.value) === data.district,
+  );
+  const districtFromProvince = cities.find(
+    (item) => item.label === data.district || String(item.value) === data.district,
+  );
+  const path = (districtFromCity ? [province, city, districtFromCity] : [province, districtFromProvince]).filter(
+    Boolean,
+  ) as AreaOption[];
 
   if (path.length > 0) {
     areaValue.value = path.map((item) => item.value);
@@ -711,9 +809,27 @@ const basicProfileRules: Record<string, FormRule[]> = {
 };
 
 const documentProfileRules: Record<string, FormRule[]> = {
-  idType: [{ validator: (val: string) => !profileForm.idCard?.trim() || Boolean(normalizeDocumentType(val)), message: '已填写证件号码时，请先选择证件类型', type: 'error' }],
-  idCard: [{ validator: (val: string) => validateDocumentNumber(profileForm.idType, val), message: '证件号码格式与证件类型不匹配', type: 'error' }],
-  idValidTo: [{ validator: (val: string) => validateDocumentDateRange(profileForm.idValidFrom, val), message: '证件有效期止不能早于证件有效期起', type: 'error' }],
+  idType: [
+    {
+      validator: (val: string) => !profileForm.idCard?.trim() || Boolean(normalizeDocumentType(val)),
+      message: '已填写证件号码时，请先选择证件类型',
+      type: 'error',
+    },
+  ],
+  idCard: [
+    {
+      validator: (val: string) => validateDocumentNumber(profileForm.idType, val),
+      message: '证件号码格式与证件类型不匹配',
+      type: 'error',
+    },
+  ],
+  idValidTo: [
+    {
+      validator: (val: string) => validateDocumentDateRange(profileForm.idValidFrom, val),
+      message: '证件有效期止不能早于证件有效期起',
+      type: 'error',
+    },
+  ],
 };
 
 const changingPassword = ref(false);
@@ -721,8 +837,14 @@ const passwordFormRef = ref<FormInstanceFunctions>();
 const passwordForm = reactive<ChangePasswordRequest>({ oldPassword: '', newPassword: '', confirmPassword: '' });
 const passwordRules: Record<string, FormRule[]> = {
   oldPassword: [{ required: true, message: '请输入当前密码', type: 'error' }],
-  newPassword: [{ required: true, message: '请输入新密码', type: 'error' }, { min: 6, max: 20, message: '密码长度应为6-20位', type: 'error' }],
-  confirmPassword: [{ required: true, message: '请确认新密码', type: 'error' }, { validator: (val: string) => val === passwordForm.newPassword, message: '两次输入的密码不一致', type: 'error' }],
+  newPassword: [
+    { required: true, message: '请输入新密码', type: 'error' },
+    { min: 6, max: 20, message: '密码长度应为6-20位', type: 'error' },
+  ],
+  confirmPassword: [
+    { required: true, message: '请确认新密码', type: 'error' },
+    { validator: (val: string) => val === passwordForm.newPassword, message: '两次输入的密码不一致', type: 'error' },
+  ],
 };
 
 const loginLogs = ref<LoginLogRow[]>([]);
@@ -734,8 +856,10 @@ const loginLogColumns: PrimaryTableCol[] = [
   { colKey: 'detail', title: '备注', minWidth: 200, ellipsis: true },
 ];
 
-const loadDictionaries = async (force = false) => Promise.all([genderDict.load(force), areaDict.load(force), documentTypeDict.load(force)]);
-const normalizeGender = (value?: string) => (value === 'secret' && genderDict.items.value.some((item) => item.value === 'unknown') ? 'unknown' : value || '');
+const loadDictionaries = async (force = false) =>
+  Promise.all([genderDict.load(force), areaDict.load(force), documentTypeDict.load(force)]);
+const normalizeGender = (value?: string) =>
+  value === 'secret' && genderDict.items.value.some((item) => item.value === 'unknown') ? 'unknown' : value || '';
 
 const fetchProfile = async () => {
   profileLoading.value = true;
@@ -745,10 +869,28 @@ const fetchProfile = async () => {
     profile.value = res;
     userStore.userInfo = { ...userStore.userInfo, name: res.name || '', avatar: res.avatar || '' };
     Object.assign(profileForm, {
-      name: res.name || '', nickname: res.nickname || '', gender: normalizeGender(res.gender), mobile: res.mobile || '', email: res.email || '',
-      idType: normalizeDocumentType(res.idType), idCard: res.idCard || '', idValidFrom: res.idValidFrom || '', idValidTo: res.idValidTo || '',
-      seat: res.seat || '', provinceId: res.provinceId ?? null, province: res.province || '', cityId: res.cityId ?? null,
-      city: res.city || '', districtId: res.districtId ?? null, district: res.district || '', zipCode: res.zipCode || '', address: res.address || '',
+      name: res.name || '',
+      nickname: res.nickname || '',
+      gender: normalizeGender(res.gender),
+      mobile: res.mobile || '',
+
+      email: res.email || '',
+      idType: normalizeDocumentType(res.idType),
+      idCard: res.idCard || '',
+      idValidFrom: res.idValidFrom || '',
+
+      idValidTo: res.idValidTo || '',
+      seat: res.seat || '',
+      provinceId: res.provinceId ?? null,
+      province: res.province || '',
+
+      cityId: res.cityId ?? null,
+      city: res.city || '',
+      districtId: res.districtId ?? null,
+      district: res.district || '',
+      zipCode: res.zipCode || '',
+
+      address: res.address || '',
       tags: res.tags || '',
     });
     await syncAreaFromProfile(res);
@@ -910,7 +1052,6 @@ onUnmounted(() => {
   if (typeof window !== 'undefined') window.removeEventListener('resize', updateIsMobile);
 });
 </script>
-
 <style lang="less" scoped>
 .user-center-container {
   --user-center-gap: var(--td-starter-gap-lg);
@@ -949,23 +1090,89 @@ onUnmounted(() => {
   }
 
   .summary-card {
-    .summary-user-name { font: var(--td-font-title-large); font-weight: 600; color: var(--td-text-color-primary); }
-    .summary-row { margin-top: 8px; color: var(--td-text-color-secondary); }
-    .score-layout { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 24px; align-items: center; }
-    .score-ring { width: 132px; height: 132px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-    .score-ring-inner { width: 106px; height: 106px; border-radius: 50%; background: var(--td-bg-color-container); display: flex; flex-direction: column; align-items: center; justify-content: center; }
-    .score-value { font: var(--td-font-title-large); color: var(--td-brand-color); font-weight: 600; }
-    .score-label { margin-top: 4px; font: var(--td-font-body-small); color: var(--td-text-color-secondary); }
-    .score-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: start; }
-    .score-column { display: grid; gap: 10px; min-width: 0; }
-    .score-subtotal { display: flex; justify-content: space-between; color: var(--td-text-color-primary); font-weight: 600; }
-    .score-list-item { display: flex; align-items: center; gap: 8px; min-width: 0; color: var(--td-text-color-secondary); }
-    .score-list-item .t-icon { color: var(--td-warning-color); }
-    .score-list-item.done .t-icon { color: var(--td-success-color); }
+    .summary-user-name {
+      font: var(--td-font-title-large);
+      font-weight: 600;
+      color: var(--td-text-color-primary);
+    }
+    .summary-row {
+      margin-top: 8px;
+      color: var(--td-text-color-secondary);
+    }
+    .score-layout {
+      display: grid;
+      grid-template-columns: 150px minmax(0, 1fr);
+      gap: 24px;
+      align-items: center;
+    }
+    .score-ring {
+      width: 132px;
+      height: 132px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .score-ring-inner {
+      width: 106px;
+      height: 106px;
+      border-radius: 50%;
+      background: var(--td-bg-color-container);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .score-value {
+      font: var(--td-font-title-large);
+      color: var(--td-brand-color);
+      font-weight: 600;
+    }
+    .score-label {
+      margin-top: 4px;
+      font: var(--td-font-body-small);
+      color: var(--td-text-color-secondary);
+    }
+    .score-list {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+      align-items: start;
+    }
+    .score-column {
+      display: grid;
+      gap: 10px;
+      min-width: 0;
+    }
+    .score-subtotal {
+      display: flex;
+      justify-content: space-between;
+      color: var(--td-text-color-primary);
+      font-weight: 600;
+    }
+    .score-list-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+      color: var(--td-text-color-secondary);
+    }
+    .score-list-item .t-icon {
+      color: var(--td-warning-color);
+    }
+    .score-list-item.done .t-icon {
+      color: var(--td-success-color);
+    }
   }
   .user-info-card {
     overflow: hidden;
-    .user-avatar { border: 4px solid var(--td-bg-color-container); box-shadow: 0 4px 12px rgb(0 0 0 / 8%); position: relative; cursor: pointer; }
+    .user-avatar {
+      border: 4px solid var(--td-bg-color-container);
+      box-shadow: 0 4px 12px rgb(0 0 0 / 8%);
+      position: relative;
+      cursor: pointer;
+    }
     .avatar-edit-overlay {
       position: absolute;
       inset: 0;
@@ -977,11 +1184,18 @@ onUnmounted(() => {
       background: rgb(0 0 0 / 40%);
       opacity: 0;
     }
-    .user-avatar:hover .avatar-edit-overlay { opacity: 1; }
+    .user-avatar:hover .avatar-edit-overlay {
+      opacity: 1;
+    }
   }
 
   .user-info-card--inline {
-    :deep(.t-card__body) { display: grid; grid-template-columns: minmax(320px, 1.15fr) minmax(0, 1fr); align-items: stretch; gap: 24px; }
+    :deep(.t-card__body) {
+      display: grid;
+      grid-template-columns: minmax(320px, 1.15fr) minmax(0, 1fr);
+      align-items: stretch;
+      gap: 24px;
+    }
     .user-inline-left {
       display: grid;
       grid-template-columns: 80px minmax(0, 1fr);
@@ -991,10 +1205,24 @@ onUnmounted(() => {
       align-items: center;
       text-align: left;
     }
-    .user-inline-left > :first-child { grid-row: 1 / span 2; }
-    .user-inline-name { margin-top: 0; font: var(--td-font-title-large); font-weight: 600; color: var(--td-text-color-primary); }
-    .user-inline-left-meta { margin-top: 0; display: grid; gap: 6px; color: var(--td-text-color-secondary); }
-    .user-inline-left-meta .user-inline-row { justify-content: flex-start; }
+    .user-inline-left > :first-child {
+      grid-row: 1 / span 2;
+    }
+    .user-inline-name {
+      margin-top: 0;
+      font: var(--td-font-title-large);
+      font-weight: 600;
+      color: var(--td-text-color-primary);
+    }
+    .user-inline-left-meta {
+      margin-top: 0;
+      display: grid;
+      gap: 6px;
+      color: var(--td-text-color-secondary);
+    }
+    .user-inline-left-meta .user-inline-row {
+      justify-content: flex-start;
+    }
     .user-inline-right {
       display: flex;
       flex-direction: column;
@@ -1005,23 +1233,55 @@ onUnmounted(() => {
       border-left: 1px solid var(--td-border-level-1-color);
       color: var(--td-text-color-secondary);
     }
-    .user-inline-row { display: flex; align-items: center; gap: 10px; min-width: 0; }
-    .user-inline-row--full { grid-column: 1 / -1; }
-    .user-inline-row > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .user-inline-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+    .user-inline-row--full {
+      grid-column: 1 / -1;
+    }
+    .user-inline-row > span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
   }
 
   .user-setting-card {
-    :deep(.t-card__header) { border-bottom: 1px solid var(--td-border-level-1-color); }
-    .sensitive-title { display: flex; align-items: center; gap: 8px; }
-    .sensitive-toggle { cursor: pointer; color: var(--td-text-color-secondary); line-height: 0; display: inline-flex; }
-    .sensitive-toggle:hover { color: var(--td-text-color-primary); }
+    :deep(.t-card__header) {
+      border-bottom: 1px solid var(--td-border-level-1-color);
+    }
+    .sensitive-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .sensitive-toggle {
+      cursor: pointer;
+      color: var(--td-text-color-secondary);
+      line-height: 0;
+      display: inline-flex;
+    }
+    .sensitive-toggle:hover {
+      color: var(--td-text-color-primary);
+    }
     .form-submit {
       padding-top: 16px;
-      :deep(.t-form__controls-content) { display: flex; justify-content: flex-end; }
+      :deep(.t-form__controls-content) {
+        display: flex;
+        justify-content: flex-end;
+      }
     }
     .password-form {
-      :deep(.t-form__controls) { flex: 1; min-width: 0; }
-      :deep(.t-input) { width: 100%; }
+      :deep(.t-form__controls) {
+        flex: 1;
+        min-width: 0;
+      }
+      :deep(.t-input) {
+        width: 100%;
+      }
     }
     .user-profile-descriptions {
       :deep(.t-descriptions__row) td {
@@ -1041,25 +1301,42 @@ onUnmounted(() => {
   }
 
   @media (max-width: 1200px) {
-    .summary-grid { grid-template-columns: 1fr; }
+    .summary-grid {
+      grid-template-columns: 1fr;
+    }
   }
 
   @media (max-width: 768px) {
     --user-center-gap: var(--td-starter-gap-md);
 
-    .user-center-grid { grid-template-columns: 1fr; }
-    .summary-card .score-layout { grid-template-columns: 1fr; align-items: flex-start; }
-    .summary-card .score-list { grid-template-columns: 1fr; }
-    .user-info-card--inline :deep(.t-card__body) { grid-template-columns: 1fr; }
+    .user-center-grid {
+      grid-template-columns: 1fr;
+    }
+    .summary-card .score-layout {
+      grid-template-columns: 1fr;
+      align-items: flex-start;
+    }
+    .summary-card .score-list {
+      grid-template-columns: 1fr;
+    }
+    .user-info-card--inline :deep(.t-card__body) {
+      grid-template-columns: 1fr;
+    }
     .user-info-card--inline .user-inline-left {
       grid-template-columns: 1fr;
       grid-template-rows: auto;
       justify-items: center;
       text-align: center;
     }
-    .user-info-card--inline .user-inline-left > :first-child { grid-row: auto; }
-    .user-info-card--inline .user-inline-left-meta { justify-items: center; }
-    .user-info-card--inline .user-inline-left-meta .user-inline-row { justify-content: center; }
+    .user-info-card--inline .user-inline-left > :first-child {
+      grid-row: auto;
+    }
+    .user-info-card--inline .user-inline-left-meta {
+      justify-items: center;
+    }
+    .user-info-card--inline .user-inline-left-meta .user-inline-row {
+      justify-content: center;
+    }
     .user-info-card--inline .user-inline-right {
       min-width: 0;
       padding-top: 0;
@@ -1067,8 +1344,12 @@ onUnmounted(() => {
       border-left: none;
       text-align: left;
     }
-    .user-info-card--inline .user-inline-row--full { grid-column: auto; }
-    .user-info-card--inline .user-inline-row { align-items: flex-start; }
+    .user-info-card--inline .user-inline-row--full {
+      grid-column: auto;
+    }
+    .user-info-card--inline .user-inline-row {
+      align-items: flex-start;
+    }
     .user-info-card--inline .user-inline-row > span {
       white-space: normal;
       overflow-wrap: anywhere;

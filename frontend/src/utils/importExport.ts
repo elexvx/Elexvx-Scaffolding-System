@@ -99,7 +99,10 @@ export const downloadBlobResponse = async (response: AxiosResponse<any>, fallbac
   }
 
   if (!contentType) {
-    const peek = await blob.slice(0, 512).text().catch(() => '');
+    const peek = await blob
+      .slice(0, 512)
+      .text()
+      .catch(() => '');
     const message = parseApiErrorMessage(peek);
     if (message) throw new Error(message);
   }

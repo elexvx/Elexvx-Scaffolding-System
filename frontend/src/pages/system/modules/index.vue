@@ -38,7 +38,11 @@
           <template #enabled="{ row }">
             <t-switch
               :value="isInstalled(row.installState) && Boolean(row.enabled)"
-              :disabled="!isInstalled(row.installState) || isActionLoading(row.moduleKey, 'enable') || isActionLoading(row.moduleKey, 'disable')"
+              :disabled="
+                !isInstalled(row.installState) ||
+                isActionLoading(row.moduleKey, 'enable') ||
+                isActionLoading(row.moduleKey, 'disable')
+              "
               @change="(val) => toggleEnabled(row, Boolean(val))"
             />
           </template>
@@ -92,13 +96,7 @@ import { useRoute } from 'vue-router';
 
 import { importExportApi } from '@/api/importExport';
 import type { ModuleRegistryItem } from '@/api/system/module';
-import {
-  disableModule,
-  enableModule,
-  fetchModules,
-  installModule,
-  uninstallModule,
-} from '@/api/system/module';
+import { disableModule, enableModule, fetchModules, installModule, uninstallModule } from '@/api/system/module';
 import { usePermissionStore, useUserStore } from '@/store';
 
 interface ModuleTableRow extends ModuleRegistryItem {
@@ -121,8 +119,7 @@ const installAction = computed(() => importExportApi.modules.installPackageActio
 const refreshNavigation = async () => {
   try {
     await userStore.getUserInfo(true);
-  } catch (_e) {
-  }
+  } catch {}
   try {
     await permissionStore.refreshAsyncRoutes(userStore.userInfo);
   } catch (error: any) {

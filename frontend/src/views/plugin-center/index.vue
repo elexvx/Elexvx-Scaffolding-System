@@ -5,32 +5,35 @@
     <div ref="containerRef" class="plugin-slot" />
   </div>
 </template>
-
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from 'vue'
-import { mountPlugin, unmountPlugin } from '@/plugins/systemjs-loader'
+import { onMounted, onUnmounted, ref } from 'vue';
 
-const containerRef = ref<HTMLElement>()
+import { mountPlugin, unmountPlugin } from '@/plugins/systemjs-loader';
+
+const containerRef = ref<HTMLElement>();
 const warehouseRegistration = {
   pluginId: 'warehouse',
   routePath: '/plugins/warehouse/inbound',
   entryUrl: '/plugins/warehouse/main.js',
   exposedModule: 'warehouseApp',
-}
+};
 
 onMounted(async () => {
   if (containerRef.value) {
-    await mountPlugin(warehouseRegistration, containerRef.value)
+    await mountPlugin(warehouseRegistration, containerRef.value);
   }
-})
+});
 
 onUnmounted(async () => {
   if (containerRef.value) {
-    await unmountPlugin(warehouseRegistration, containerRef.value)
+    await unmountPlugin(warehouseRegistration, containerRef.value);
   }
-})
+});
 </script>
-
 <style scoped>
-.plugin-slot { min-height: 120px; border: 1px dashed #bbb; padding: 12px; }
+.plugin-slot {
+  min-height: 120px;
+  border: 1px dashed #bbb;
+  padding: 12px;
+}
 </style>

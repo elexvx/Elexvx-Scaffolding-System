@@ -57,9 +57,12 @@ export function setTokenExpireTimer(token: string, expiresIn: number) {
   tokenExpireWarnTimer = window.setTimeout(() => {
     notifyTokenExpire();
   }, notifyTime);
-  tokenExpireHardTimer = window.setTimeout(() => {
-    handleTokenExpired();
-  }, Math.max(expiresIn * 1000, 1000));
+  tokenExpireHardTimer = window.setTimeout(
+    () => {
+      handleTokenExpired();
+    },
+    Math.max(expiresIn * 1000, 1000),
+  );
 }
 
 /**

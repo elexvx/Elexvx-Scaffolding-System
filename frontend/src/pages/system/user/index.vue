@@ -101,11 +101,7 @@
         <t-row :gutter="[24, 24]">
           <t-col :xs="24" :sm="12">
             <t-form-item label="账号" name="account">
-              <t-input
-                v-model="form.account"
-                placeholder="如：admin"
-                style="max-width: 500px; width: 100%"
-              />
+              <t-input v-model="form.account" placeholder="如：admin" style="max-width: 500px; width: 100%" />
             </t-form-item>
           </t-col>
           <t-col :xs="24" :sm="12">
@@ -210,8 +206,8 @@
                 :show-all-levels="true"
                 clearable
                 placeholder="请选择省/市/区"
-                @change="handleAreaChange"
                 style="max-width: 500px; width: 100%"
+                @change="handleAreaChange"
               />
             </t-form-item>
           </t-col>
@@ -239,7 +235,11 @@
           </t-col>
           <t-col :xs="24" :sm="12">
             <t-form-item label="证件号码" name="idCard">
-              <t-input v-model="form.idCard" :placeholder="documentNoPlaceholder" style="max-width: 500px; width: 100%" />
+              <t-input
+                v-model="form.idCard"
+                :placeholder="documentNoPlaceholder"
+                style="max-width: 500px; width: 100%"
+              />
             </t-form-item>
           </t-col>
           <t-col :xs="24" :sm="12">
@@ -764,16 +764,21 @@ const syncAreaFromUser = async (data: UserRow) => {
     areaValue.value = [];
     return;
   }
-  const province = areaOptions.value.find((item) => item.label === data.province || String(item.value) === data.province);
+  const province = areaOptions.value.find(
+    (item) => item.label === data.province || String(item.value) === data.province,
+  );
   const cities = Array.isArray(province?.children) ? province.children : [];
   const city = cities.find((item) => item.label === data.city || String(item.value) === data.city);
   const districts = Array.isArray(city?.children) ? city.children : [];
-  const districtFromCity = districts.find((item) => item.label === data.district || String(item.value) === data.district);
-  const districtFromProvince = cities.find((item) => item.label === data.district || String(item.value) === data.district);
-  const path = (districtFromCity
-    ? [province, city, districtFromCity]
-    : [province, districtFromProvince]
-  ).filter(Boolean) as AreaOption[];
+  const districtFromCity = districts.find(
+    (item) => item.label === data.district || String(item.value) === data.district,
+  );
+  const districtFromProvince = cities.find(
+    (item) => item.label === data.district || String(item.value) === data.district,
+  );
+  const path = (districtFromCity ? [province, city, districtFromCity] : [province, districtFromProvince]).filter(
+    Boolean,
+  ) as AreaOption[];
 
   if (path.length > 0) {
     areaValue.value = path.map((item) => item.value);

@@ -27,11 +27,7 @@ export const fetchAreaPath = (areaId: number) =>
     params: { areaId },
   });
 
-export const resolveAreaPath = (params: {
-  province?: string;
-  city?: string;
-  district?: string;
-}) =>
+export const resolveAreaPath = (params: { province?: string; city?: string; district?: string }) =>
   request.get<AreaPathNode[]>({
     url: '/system/area/resolve',
     params,

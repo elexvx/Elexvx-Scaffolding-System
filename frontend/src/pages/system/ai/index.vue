@@ -199,8 +199,8 @@ import { computed, onMounted, reactive, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 import type { AiProvider, AiProviderPayload } from '@/api/system/ai';
-import { fetchModuleList } from '@/api/system/module';
 import { deleteAiProvider, fetchAiProviders, saveAiProvider, testAiProvider, testSavedProvider } from '@/api/system/ai';
+import { fetchModuleList } from '@/api/system/module';
 import ConfirmDrawer from '@/components/ConfirmDrawer.vue';
 import { useDictionary } from '@/hooks/useDictionary';
 import { buildDictOptions, resolveLabel } from '@/utils/dict';

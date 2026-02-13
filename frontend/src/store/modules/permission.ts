@@ -28,7 +28,10 @@ import { getTabsRouterStore } from './tabs-router';
  */
 const normalizePath = (path?: string) => String(path || '').split(/[?#]/)[0];
 
-const normalizeModuleKey = (value: string) => String(value || '').trim().toLowerCase();
+const normalizeModuleKey = (value: string) =>
+  String(value || '')
+    .trim()
+    .toLowerCase();
 
 const normalizeRequiredModules = (value: unknown): string[] => {
   if (!value) return [];
@@ -64,7 +67,9 @@ const isVerificationSettingsRoute = (route: RouteItem) => {
 const filterRoutesByModuleState = (routes: RouteItem[], enabledModuleKeys: Set<string>): RouteItem[] => {
   const result: RouteItem[] = [];
   routes.forEach((route) => {
-    const nextChildren = route.children?.length ? filterRoutesByModuleState(route.children, enabledModuleKeys) : undefined;
+    const nextChildren = route.children?.length
+      ? filterRoutesByModuleState(route.children, enabledModuleKeys)
+      : undefined;
 
     const required = normalizeRequiredModules((route as any)?.meta?.requiredModules);
     const requiredSatisfied = required.length === 0 || required.every((key) => enabledModuleKeys.has(key));
@@ -164,10 +169,7 @@ export const usePermissionStore = defineStore('permission', {
     },
     async buildAsyncRoutes(_userInfo?: UserInfo) {
       try {
-        const [menuListData, moduleDescriptors] = await Promise.all([
-          getMenuList(),
-          fetchModuleList().catch(() => []),
-        ]);
+        const [menuListData, moduleDescriptors] = await Promise.all([getMenuList(), fetchModuleList().catch(() => [])]);
 
         const enabledModuleKeys = new Set(
           (moduleDescriptors || []).filter((m) => m?.enabled).map((m) => normalizeModuleKey(m.key)),
@@ -185,10 +187,7 @@ export const usePermissionStore = defineStore('permission', {
     },
     async refreshAsyncRoutes(_userInfo?: UserInfo) {
       try {
-        const [menuListData, moduleDescriptors] = await Promise.all([
-          getMenuList(),
-          fetchModuleList().catch(() => []),
-        ]);
+        const [menuListData, moduleDescriptors] = await Promise.all([getMenuList(), fetchModuleList().catch(() => [])]);
 
         const enabledModuleKeys = new Set(
           (moduleDescriptors || []).filter((m) => m?.enabled).map((m) => normalizeModuleKey(m.key)),

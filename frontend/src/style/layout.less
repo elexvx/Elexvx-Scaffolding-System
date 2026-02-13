@@ -92,11 +92,15 @@
     overflow-y: auto;
     min-height: 0;
 
-    &-layout-tabs-nav {
+    &-tabs-nav {
       max-width: 100%;
+      position: sticky;
+      top: 0;
+      width: 100%;
       overflow: visible;
       z-index: 100;
       flex-shrink: 0;
+      background-color: var(--td-bg-color-container);
 
       .t-tabs__content {
         display: none;
@@ -217,6 +221,11 @@
       transition: all 0.3s;
     }
   }
+}
+
+
+.tdesign-breadcrumb {
+  margin-bottom: 16px;
 }
 
 .route-tabs-dropdown {

@@ -6,4 +6,3 @@ export function sanitizeHtml(input: string) {
     FORBID_TAGS: ['script', 'style', 'iframe', 'object', 'embed', 'link', 'meta'],
   });
 }
-
