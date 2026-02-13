@@ -5,4 +5,3 @@ backendEntry: backend/plugin.jar
 frontendEntry: /plugins/warehouse/main.js
 permissions:
   - plugin:warehouse:view
-  - plugin:warehouse:print

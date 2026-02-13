@@ -1,3 +1,0 @@
--- Sync marker for:
--- backend/src/main/resources/db/migration/core/V2026021301__console_print_route_seed.sql
--- Use backend script as source of truth for execution.

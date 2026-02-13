@@ -1,9 +1,0 @@
-{
-  "key": "print",
-  "name": "打印中心",
-  "version": "1.0.0",
-  "enabledByDefault": false,
-  "requiredTables": ["print_template", "print_template_version", "print_job"],
-  "frontend": { "type": "static", "basePath": "/modules/print/", "index": "index.html" },
-  "backend": { "type": "node", "startScript": "start", "basePath": "/module-api/print/", "autoInstallDependencies": true }
-}

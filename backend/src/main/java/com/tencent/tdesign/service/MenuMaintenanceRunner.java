@@ -30,10 +30,8 @@ public class MenuMaintenanceRunner implements ApplicationRunner {
     }
 
     runTask("ensureOrgManagementMenuSeeded", menuItemService::ensureOrgManagementMenuSeeded);
-    runTask("ensureConsolePrintMenuSeeded", menuItemService::ensureConsolePrintMenuSeeded);
     runTask("removeObsoleteWatermarkRoute", menuItemService::removeObsoleteWatermarkRoute);
     runTask("removeObsoleteTeamRoute", menuItemService::removeObsoleteTeamRoute);
-    runTask("removeObsoletePrintRoute", menuItemService::removeObsoletePrintRoute);
     runTask("removeObsoleteNotificationRoute", menuItemService::removeObsoleteNotificationRoute);
   }
 

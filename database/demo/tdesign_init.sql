@@ -254,7 +254,6 @@ INSERT INTO `role_permissions` VALUES (1, 'system:ExampleOrder:create');
 INSERT INTO `role_permissions` VALUES (1, 'system:ExampleOrder:delete');
 INSERT INTO `role_permissions` VALUES (1, 'system:ExampleOrder:query');
 INSERT INTO `role_permissions` VALUES (1, 'system:ExampleOrder:update');
-INSERT INTO `role_permissions` VALUES (1, 'system:ExamplePrint:query');
 INSERT INTO `role_permissions` VALUES (1, 'system:MessageSend:create');
 INSERT INTO `role_permissions` VALUES (1, 'system:MessageSend:delete');
 INSERT INTO `role_permissions` VALUES (1, 'system:MessageSend:query');
@@ -344,7 +343,6 @@ INSERT INTO `role_permissions` VALUES (2, 'system:ExampleOrder:create');
 INSERT INTO `role_permissions` VALUES (2, 'system:ExampleOrder:delete');
 INSERT INTO `role_permissions` VALUES (2, 'system:ExampleOrder:query');
 INSERT INTO `role_permissions` VALUES (2, 'system:ExampleOrder:update');
-INSERT INTO `role_permissions` VALUES (2, 'system:ExamplePrint:query');
 INSERT INTO `role_permissions` VALUES (2, 'system:SystemLog:create');
 INSERT INTO `role_permissions` VALUES (2, 'system:SystemLog:delete');
 INSERT INTO `role_permissions` VALUES (2, 'system:SystemLog:query');
@@ -1653,79 +1651,3 @@ ALTER TABLE `watermark_settings` MODIFY COLUMN `rotate` int NOT NULL COMMENT 'ro
 ALTER TABLE `watermark_settings` MODIFY COLUMN `enabled` tinyint NOT NULL COMMENT 'enabled';
 
 -- ----------------------------
--- Seed: Console Print Route
--- ----------------------------
-INSERT INTO `sys_menu_items` (
-  `id`,
-  `parent_id`,
-  `node_type`,
-  `path`,
-  `route_name`,
-  `component`,
-  `redirect`,
-  `title_zh_cn`,
-  `title_en_us`,
-  `icon`,
-  `hidden`,
-  `keep_alive`,
-  `frame_src`,
-  `frame_blank`,
-  `enabled`,
-  `required_modules`,
-  `require_role`,
-  `require_permission`,
-  `order_no`,
-  `version`,
-  `created_at`,
-  `updated_at`,
-  `actions`
-)
-SELECT
-  1044,
-  1040,
-  'PAGE',
-  'print',
-  'ConsolePrint',
-  '/console/print/index',
-  NULL,
-  'Print Center',
-  'Print Center',
-  'print',
-  0,
-  1,
-  NULL,
-  0,
-  1,
-  NULL,
-  NULL,
-  NULL,
-  1,
-  0,
-  '2026-02-13 00:00:00',
-  '2026-02-13 00:00:00',
-  'query'
-WHERE NOT EXISTS (
-  SELECT 1
-  FROM `sys_menu_items`
-  WHERE `route_name` = 'ConsolePrint'
-);
-
-INSERT INTO `role_menus` (`role_id`, `menu_id`)
-SELECT 1, s.`id`
-FROM `sys_menu_items` s
-WHERE s.`route_name` = 'ConsolePrint'
-  AND NOT EXISTS (
-    SELECT 1
-    FROM `role_menus` rm
-    WHERE rm.`role_id` = 1
-      AND rm.`menu_id` = s.`id`
-  );
-
-INSERT INTO `role_permissions` (`role_id`, `permission`)
-SELECT 1, 'system:ConsolePrint:query'
-WHERE NOT EXISTS (
-  SELECT 1
-  FROM `role_permissions`
-  WHERE `role_id` = 1
-    AND `permission` = 'system:ConsolePrint:query'
-);

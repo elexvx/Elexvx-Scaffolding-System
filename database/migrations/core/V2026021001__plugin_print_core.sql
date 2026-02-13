@@ -1,2 +1,0 @@
--- 与 backend/src/main/resources/db/migration/core/V2026021001__plugin_print_core.sql 同步
--- 该目录供 DBA 审核与离线执行使用
