@@ -49,7 +49,7 @@ jobs:
         run: ./scripts/license/check_allowed_licenses.sh
 
       - name: Backend dependency vulnerability scan (OWASP Dependency-Check)
-        uses: dependency-check/Dependency-Check_Action@v3.0.0
+        uses: dependency-check/Dependency-Check_Action@1.1.0
         env:
           JAVA_HOME: /opt/jdk
         with:
