@@ -1,7 +1,0 @@
-id: warehouse
-version: 1.0.0
-vendor: Elexvx
-backendEntry: backend/plugin.jar
-frontendEntry: /plugins/warehouse/main.js
-permissions:
-  - plugin:warehouse:view
