@@ -238,12 +238,6 @@ public class MenuItemService {
     return delete(obsolete.getId(), true);
   }
 
-  @Transactional
-  public boolean removeObsoletePrintRoute() {
-    MenuItemEntity obsolete = menuItemMapper.selectByRouteName("ExamplePrint");
-    if (obsolete == null) return false;
-    return delete(obsolete.getId(), true);
-  }
 
   @Transactional
   public boolean removeObsoleteNotificationRoute() {
@@ -271,13 +265,6 @@ public class MenuItemService {
     return true;
   }
 
-  @Transactional
-  public boolean ensureConsolePrintMenuSeeded() {
-    if (menuItemMapper.count() == 0) return false;
-    if (menuItemMapper.selectByRouteName("ConsolePrint") != null) return false;
-    seedDefaultSidebarMenus(false);
-    return true;
-  }
 
   @Transactional
   public boolean reorder(MenuItemReorderRequest req) {
@@ -1464,26 +1451,6 @@ public class MenuItemService {
           true,
           0,
           "create,update,delete,query"
-        )
-      );
-      list.add(
-        new SeedNode(
-          "console",
-          null,
-          "PAGE",
-          "print",
-          "ConsolePrint",
-          "/console/print/index",
-          null,
-          "Print Center",
-          "Print Center",
-          "print",
-          false,
-          null,
-          false,
-          true,
-          1,
-          "query"
         )
       );
       return list;

@@ -1,4 +1,3 @@
 [
-  "plugin:warehouse:view",
-  "plugin:warehouse:print"
+  "plugin:warehouse:view"
 ]
