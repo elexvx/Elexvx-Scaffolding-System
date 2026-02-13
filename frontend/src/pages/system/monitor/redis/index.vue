@@ -112,7 +112,8 @@ import type { PrimaryTableCol } from 'tdesign-vue-next';
 import { MessagePlugin } from 'tdesign-vue-next';
 import { computed, nextTick, onActivated, onDeactivated, onMounted, onUnmounted, ref } from 'vue';
 
-import { initEChart, type EChartsInstance } from '@/utils/echarts';
+import type { EChartsInstance } from '@/utils/echarts';
+import { initEChart } from '@/utils/echarts';
 import { request } from '@/utils/request';
 
 interface RedisInfo {

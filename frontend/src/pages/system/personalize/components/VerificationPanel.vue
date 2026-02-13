@@ -322,7 +322,9 @@ const emailForm = reactive({
 const moduleDescriptors = ref<ModuleDescriptor[]>([]);
 
 const settingStore = useSettingStore();
-const smsInstalled = computed(() => moduleDescriptors.value.some((item) => item.key === 'sms' && Boolean(item.enabled)));
+const smsInstalled = computed(() =>
+  moduleDescriptors.value.some((item) => item.key === 'sms' && Boolean(item.enabled)),
+);
 const emailInstalled = computed(() =>
   moduleDescriptors.value.some((item) => item.key === 'email' && Boolean(item.enabled)),
 );

@@ -50,7 +50,9 @@ const isExternalFrame = computed(() => /^https?:\/\//i.test(String(props.frameSr
 const iframeSandbox = computed(() =>
   isExternalFrame.value ? 'allow-forms allow-scripts allow-same-origin allow-popups' : undefined,
 );
-const iframeReferrerPolicy = computed(() => (isExternalFrame.value ? 'no-referrer' : 'strict-origin-when-cross-origin'));
+const iframeReferrerPolicy = computed(() =>
+  isExternalFrame.value ? 'no-referrer' : 'strict-origin-when-cross-origin',
+);
 
 function normalizeFrameSrc(src: string) {
   const raw = String(src || '').trim();

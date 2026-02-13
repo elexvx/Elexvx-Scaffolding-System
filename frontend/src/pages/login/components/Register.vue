@@ -354,12 +354,12 @@ const normalizeRegisterErrorMessage = (message: string) => {
   if (!cleaned) return '';
   const lower = cleaned.toLowerCase();
   if (
-    lower.includes('account already exists')
-    || cleaned.includes('账号已存在')
-    || cleaned.includes('数据唯一性冲突')
-    || (lower.includes('duplicate entry') && lower.includes('account'))
-    || (lower.includes('duplicate key') && lower.includes('account'))
-    || (lower.includes('unique constraint') && lower.includes('account'))
+    lower.includes('account already exists') ||
+    cleaned.includes('账号已存在') ||
+    cleaned.includes('数据唯一性冲突') ||
+    (lower.includes('duplicate entry') && lower.includes('account')) ||
+    (lower.includes('duplicate key') && lower.includes('account')) ||
+    (lower.includes('unique constraint') && lower.includes('account'))
   ) {
     return '账号已存在，请更换后重试';
   }

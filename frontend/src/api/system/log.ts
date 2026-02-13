@@ -17,4 +17,3 @@ export function exportOperationLogsCsv(params?: OperationLogExportParams) {
     { isTransformResponse: false, isReturnNativeResponse: true },
   );
 }
-

@@ -8,7 +8,12 @@ import router from '@/router';
 import { getPermissionStore, useAppStore, useNotificationStore, useSettingStore, useUserStore } from '@/store';
 import { PAGE_NOT_FOUND_ROUTE } from '@/utils/route/constant';
 import { clearTokenStorage } from '@/utils/secureToken';
-import { handleTokenExpired, isLocalTokenExpired, resolveTokenExpiresAt, setTokenExpireTimer } from '@/utils/tokenExpire';
+import {
+  handleTokenExpired,
+  isLocalTokenExpired,
+  resolveTokenExpiresAt,
+  setTokenExpireTimer,
+} from '@/utils/tokenExpire';
 
 /**
  * 全局路由守卫（鉴权 / 动态路由 / 进度条 / 异常兜底）。

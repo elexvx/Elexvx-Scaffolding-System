@@ -1,5 +1,6 @@
-import { request } from '@/utils/request';
 import type { AxiosResponse } from 'axios';
+
+import { request } from '@/utils/request';
 
 export interface ModuleDescriptor {
   key: string;

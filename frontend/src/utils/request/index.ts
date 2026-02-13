@@ -30,9 +30,9 @@ let isUnauthorizedRedirecting = false;
 // 濠电姷顣介埀顒€鍟块埀顒€缍婇幃妯诲緞閹邦剙寮烽梺姹囧劤閹槈k婵犵妲呴崹顏堝焵椤掆偓绾绢厾娑甸埀?闂?婵犵數鍋涙径鍥焵椤掑啯鐝柛搴㈢懇閺岋綁锝為鈧俊鎸庣箾閸欏顕滄繛鐓庮煼閹瑩寮堕幐搴㈡闂?闂佽绻愮换鎰亹婢跺瞼绠斿鑸靛姈閻撯偓閻庡箍鍎卞ú銊╁几娣囩惤st 濠电偞娼欓崥瀣┍濞差亝鎲橀悗锝庡枛鐎氬銇勯幒鍡椾壕濠电姭鍋撶痪鐗堢睄ck闂備胶鎳撻崵鏍⒔閸曨垰鏄?闂?Vite 濠电偛顕刊瀵稿緤閸ф绠?
 // 根据环境与配置解析后端 API Host（支持 Vite 多环境部署）。
 const host = resolveApiHost();
-const UNAUTHORIZED_SENTINEL = '\u767b\u5f55\u72b6\u6001\u5df2\u5931\u6548 [401]';
+const UNAUTHORIZED_SENTINEL = '\u767B\u5F55\u72B6\u6001\u5DF2\u5931\u6548 [401]';
 const UNAUTHORIZED_NOTICE_KEY = 'tdesign.auth.invalid.notice';
-const UNAUTHORIZED_NOTICE_TEXT = '\u5f53\u524d\u767b\u5f55\u72b6\u6001\u5931\u6548\uff0c\u8bf7\u91cd\u65b0\u767b\u5f55';
+const UNAUTHORIZED_NOTICE_TEXT = '\u5F53\u524D\u767B\u5F55\u72B6\u6001\u5931\u6548\uFF0C\u8BF7\u91CD\u65B0\u767B\u5F55';
 
 const buildHardLoginHref = (redirect?: string) => {
   const query: Record<string, string> = { _t: String(Date.now()) };
@@ -92,7 +92,9 @@ const transform: AxiosTransform = {
     }
 
     // 濠电偠鎻紞鈧繛澶嬫礋瀵偊濡舵径濠呅曢柟鑹版彧缂嶅棙瀵奸崒鐐茬骇闁冲搫鍊归悡銉︾箾閸欏澧甸柟顖氬暣瀹曠喖顢涘☉娆愮彟闂佽崵濮村ù鍌炲垂椤栨稓鈹嶅┑鐘叉搐缁犳帗銇勯弽銉モ偓妤冪矆婢跺ň鏀介柍銉ュ暱閳ь剙缍婇幃妯诲緞婵炵偓鐓㈤梺鏂ユ櫅閸燁垳绮婚幒妤佺厱闁圭儤鎸鹃幊浣糕攽閻愬弶鍠橀柟顔荤矙婵℃悂鍩￠崘銊ь偧闂佽崵濮抽梽宥夊磹閹惧鈹嶅┑鐘叉搐缁?
-    const errorMsg = message || `闂佽崵濮村ú顓㈠绩闁秵鍎戦柣妤€鐗嗙欢鐐哄级閸偄浜悮婵嬫⒑閹稿海鈽夐柣顓炲€垮顐ｇ節閸曨剙鐝板銈嗙墬缁酣宕? ${code}`;
+    const errorMsg =
+      message ||
+      `闂佽崵濮村ú顓㈠绩闁秵鍎戦柣妤€鐗嗙欢鐐哄级閸偄浜悮婵嬫⒑閹稿海鈽夐柣顓炲€垮顐ｇ節閸曨剙鐝板銈嗙墬缁酣宕? ${code}`;
     throw new Error(`${errorMsg} [${code}]`);
   },
 
@@ -138,7 +140,9 @@ const transform: AxiosTransform = {
       const humanMsg = responseMessage || msg.replace(/\s*\[\d{3}\]\s*$/, '').trim();
       const url = String(axiosError?.config?.url || '');
       if (!isSilent403Path(url)) {
-        MessagePlugin.error(humanMsg || '\u6743\u9650\u4e0d\u8db3\uff0c\u8bf7\u8054\u7cfb\u7ba1\u7406\u5458\u5f00\u901a');
+        MessagePlugin.error(
+          humanMsg || '\u6743\u9650\u4E0D\u8DB3\uFF0C\u8BF7\u8054\u7CFB\u7BA1\u7406\u5458\u5F00\u901A',
+        );
       }
     } else if (code === 422) {
       const humanMsg = responseMessage || msg.replace(/\s*\[\d{3}\]\s*$/, '').trim();
@@ -147,7 +151,7 @@ const transform: AxiosTransform = {
       }
     } else if (code != null && code >= 500) {
       const humanMsg = responseMessage || msg.replace(/\s*\[\d{3}\]\s*$/, '').trim();
-      MessagePlugin.error(humanMsg || '\u670d\u52a1\u5668\u9519\u8bef\uff0c\u8bf7\u7a0d\u540e\u91cd\u8bd5');
+      MessagePlugin.error(humanMsg || '\u670D\u52A1\u5668\u9519\u8BEF\uFF0C\u8BF7\u7A0D\u540E\u91CD\u8BD5');
     }
     // 濠电偞鍨堕幐鍝ョ矓閹绢喖鐤柍褜鍓熼弻銈嗙附婢跺鐩庢繝娈垮枓閺呮繈骞戦崟顓涘亾閸︻厼校缂佷緡鍣ｉ弻娑㈠箳瀹ュ懎绁梺杞扮閿曪箓骞忛悩娲绘晬闁绘劦浜栭崑鎾村緞閹邦収妫冨銈庡亽閸犳氨绮堟径鎰仯濞达絽寮跺▍鍐磼濡ゅ啫鏋涚€规洘绻堥崹楣冨箵閹烘挻娈ㄩ梻浣规た閸犳洖霉閸ヮ剙鍚规繝濠傚枤閸熷懘鏌涘Δ鍐ㄥ壉婵℃煡浜堕弻锝夋倷閸欏妫﹂梺杞扮閿曪箓骞忛悩娲绘晬婵炴垶顭囬崐鎺旂磽娴ｆ彃浜?
     return Promise.reject(e);
@@ -252,7 +256,9 @@ const transform: AxiosTransform = {
       const serverMsg = error?.response?.data?.message;
       const url = String(error?.config?.url || '');
       if (!isSilent403Path(url)) {
-        MessagePlugin.error(serverMsg || '\u6743\u9650\u4e0d\u8db3\uff0c\u8bf7\u8054\u7cfb\u7ba1\u7406\u5458\u5f00\u901a');
+        MessagePlugin.error(
+          serverMsg || '\u6743\u9650\u4E0D\u8DB3\uFF0C\u8BF7\u8054\u7CFB\u7BA1\u7406\u5458\u5F00\u901A',
+        );
       }
     }
 

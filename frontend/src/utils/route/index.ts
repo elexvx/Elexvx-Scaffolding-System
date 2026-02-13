@@ -50,10 +50,7 @@ function getPreferredViewDir(): ViewDir {
 function getViewModulesByDir() {
   if (viewModulesByDir) return viewModulesByDir;
 
-  const modules = import.meta.glob([
-    '/src/pages/**/*.vue',
-    '/src/views/**/*.vue',
-  ]) as Record<string, ViewModuleLoader>;
+  const modules = import.meta.glob(['/src/pages/**/*.vue', '/src/views/**/*.vue']) as Record<string, ViewModuleLoader>;
 
   const byDir: Record<ViewDir, Map<string, ViewModuleLoader>> = {
     pages: new Map(),
