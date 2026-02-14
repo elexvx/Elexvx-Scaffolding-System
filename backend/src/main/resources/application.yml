@@ -96,6 +96,8 @@ tdesign:
       max-file-size-mb: ${TDESIGN_UPLOAD_MAX_FILE_SIZE_MB:100}
   # 安全相关配置（验证码/限流等）
   security:
+    # 兼容开关：是否允许通过 URL query 传递密码（默认 false，建议仅迁移期临时开启）
+    allow-password-in-query: false
     captcha:
       enabled: true # 是否启用验证码（登录流程）
     rate-limit:

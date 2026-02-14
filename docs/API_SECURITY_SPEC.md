@@ -15,6 +15,18 @@ Authorization: Bearer <token>
 URL/query parameters are not accepted for tokens by default. If legacy clients
 must be supported, enable the `allowUrlTokenParam` security setting explicitly.
 
+
+## Password Reset Payload Rule
+
+`POST /system/user/{id}/reset-password` now accepts password from JSON body by default:
+
+```json
+{ "password": "newPassword" }
+```
+
+Passing password in query parameter is deprecated and disabled by default to avoid leaking sensitive data into URL logs/proxies.
+If you are migrating legacy clients, temporarily enable `tdesign.security.allow-password-in-query=true` and switch clients to body payloads as soon as possible.
+
 ## Repeat Submit Guard
 
 Purpose:

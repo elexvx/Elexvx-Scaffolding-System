@@ -110,7 +110,7 @@
 | FT-USER-004 | 更新用户（脱敏字段不覆盖） | 具备 `system:SystemUser:update` | 1）PUT `/system/user/{id}`（把手机号/邮箱传为带 `*` 的脱敏值） | 更新成功；真实字段不被覆盖；再次查询保持原值 | P1 |
 | FT-USER-005 | 删除用户（禁止删除自己） | 具备删除权限 | 1）DELETE `/system/user/{selfId}` | 返回失败提示“不允许删除当前登录用户”；用户仍存在 | P0 |
 | FT-USER-006 | 删除用户（正常删除） | 具备删除权限 | 1）DELETE `/system/user/{id}`（非本人） | 删除成功；列表不可见；相关关联清理符合预期 | P0 |
-| FT-USER-007 | 重置用户密码 | 具备更新权限 | 1）POST `/system/user/{id}/reset-password`（body 或 query 传 password） 2）用新密码登录 | 返回成功；新密码可登录 | P1 |
+| FT-USER-007 | 重置用户密码 | 具备更新权限 | 1）POST `/system/user/{id}/reset-password`（默认仅 body 传 password；query 仅在开启 tdesign.security.allow-password-in-query 后兼容） 2）用新密码登录 | 返回成功；新密码可登录 | P1 |
 | FT-USER-008 | 防重复提交生效 | 写接口具备 @RepeatSubmit | 1）5 秒内重复 POST `/system/user` 或 PUT `/system/user/{id}` | 第二次返回 HTTP 429；不产生重复数据 | P1 |
 
 ### 5.4 角色管理（ROLE）
