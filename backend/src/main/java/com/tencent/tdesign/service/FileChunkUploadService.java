@@ -14,7 +14,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.SequenceInputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -25,7 +24,6 @@ import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Base64;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -258,40 +256,75 @@ public class FileChunkUploadService {
   }
 
   private InputStream openCombinedStream(Path dir, int totalChunks) throws IOException {
-    List<InputStream> inputs = new ArrayList<>();
+    List<Path> chunkFiles = new ArrayList<>();
     for (int i = 0; i < totalChunks; i++) {
       Path chunkFile = dir.resolve(chunkFileName(i));
       if (!Files.exists(chunkFile)) {
         throw new IllegalStateException("缺失的分片: " + i);
       }
-      inputs.add(Files.newInputStream(chunkFile));
+      chunkFiles.add(chunkFile);
     }
-    SequenceInputStream combined = new SequenceInputStream(Collections.enumeration(inputs));
-    return new InputStream() {
-      @Override
-      public int read() throws IOException {
-        return combined.read();
-      }
+    return new LazyChunkSequenceInputStream(chunkFiles);
+  }
 
-      @Override
-      public int read(byte[] b, int off, int len) throws IOException {
-        return combined.read(b, off, len);
-      }
+  private static class LazyChunkSequenceInputStream extends InputStream {
+    private final List<Path> chunkFiles;
+    private int index;
+    private InputStream current;
 
-      @Override
-      public void close() throws IOException {
-        combined.close();
-        for (InputStream in : inputs) {
-          try {
-            in.close();
-          } catch (IOException ignored) {
-          }
-        }
+    private LazyChunkSequenceInputStream(List<Path> chunkFiles) {
+      this.chunkFiles = chunkFiles;
+    }
+
+    @Override
+    public int read() throws IOException {
+      while (true) {
+        InputStream stream = ensureCurrent();
+        if (stream == null) return -1;
+        int value = stream.read();
+        if (value >= 0) return value;
+        switchToNext();
       }
-    };
+    }
+
+    @Override
+    public int read(byte[] b, int off, int len) throws IOException {
+      if (len == 0) return 0;
+      while (true) {
+        InputStream stream = ensureCurrent();
+        if (stream == null) return -1;
+        int count = stream.read(b, off, len);
+        if (count >= 0) return count;
+        switchToNext();
+      }
+    }
+
+    @Override
+    public void close() throws IOException {
+      if (current != null) {
+        current.close();
+        current = null;
+      }
+    }
+
+    private InputStream ensureCurrent() throws IOException {
+      if (current != null) return current;
+      if (index >= chunkFiles.size()) return null;
+      current = Files.newInputStream(chunkFiles.get(index));
+      return current;
+    }
+
+    private void switchToNext() throws IOException {
+      if (current != null) {
+        current.close();
+        current = null;
+      }
+      index++;
+    }
   }
 
   private String chunkFileName(int index) {
+
     return "chunk-" + index;
   }
 

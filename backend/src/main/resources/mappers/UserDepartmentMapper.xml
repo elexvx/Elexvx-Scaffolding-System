@@ -17,6 +17,29 @@
     ORDER BY ou.sort_order ASC, ou.id ASC
   </select>
 
+
+  <select id="selectDepartmentNamesByUserIds" resultType="com.tencent.tdesign.dto.UserIdStringValue">
+    SELECT ud.user_id AS userId, ou.name AS value
+    FROM user_departments ud
+    JOIN org_units ou ON ou.id = ud.department_id
+    WHERE ud.user_id IN
+    <foreach collection="userIds" item="userId" open="(" close=")" separator=",">
+      #{userId}
+    </foreach>
+    ORDER BY ud.user_id ASC, ou.sort_order ASC, ou.id ASC
+  </select>
+
+  <select id="selectDepartmentIdsByUserIds" resultType="com.tencent.tdesign.dto.UserIdLongValue">
+    SELECT ud.user_id AS userId, ud.department_id AS value
+    FROM user_departments ud
+    JOIN org_units ou ON ou.id = ud.department_id
+    WHERE ud.user_id IN
+    <foreach collection="userIds" item="userId" open="(" close=")" separator=",">
+      #{userId}
+    </foreach>
+    ORDER BY ud.user_id ASC, ou.sort_order ASC, ou.id ASC
+  </select>
+
   <delete id="deleteByUserId">
     DELETE FROM user_departments WHERE user_id = #{userId}
   </delete>

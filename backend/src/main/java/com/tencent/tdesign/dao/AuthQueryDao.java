@@ -1,5 +1,6 @@
 package com.tencent.tdesign.dao;
 
+import com.tencent.tdesign.dto.UserIdStringValue;
 import com.tencent.tdesign.entity.MenuItemEntity;
 import com.tencent.tdesign.mapper.AuthQueryMapper;
 import com.tencent.tdesign.mapper.MenuItemMapper;
@@ -30,6 +31,11 @@ public class AuthQueryDao {
 
   public List<String> findRoleNamesByUserId(long userId) {
     return mapper.findRoleNamesByUserId(userId);
+  }
+
+  public List<UserIdStringValue> findRoleNamesByUserIds(Collection<Long> userIds) {
+    if (userIds == null || userIds.isEmpty()) return Collections.emptyList();
+    return mapper.findRoleNamesByUserIds(userIds);
   }
 
   public List<String> findPermissionsByUserId(long userId) {

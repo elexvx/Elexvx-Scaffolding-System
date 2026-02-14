@@ -50,6 +50,29 @@
     WHERE user_id = #{userId}
   </select>
 
+
+  <select id="selectNamesByUserIds" resultType="com.tencent.tdesign.dto.UserIdStringValue">
+    SELECT uou.user_id AS userId, ou.name AS value
+    FROM user_org_units uou
+    JOIN org_units ou ON ou.id = uou.org_unit_id
+    WHERE uou.user_id IN
+    <foreach collection="userIds" item="userId" open="(" close=")" separator=",">
+      #{userId}
+    </foreach>
+    ORDER BY uou.user_id ASC, ou.sort_order ASC, ou.id ASC
+  </select>
+
+  <select id="selectIdsByUserIds" resultType="com.tencent.tdesign.dto.UserIdLongValue">
+    SELECT uou.user_id AS userId, uou.org_unit_id AS value
+    FROM user_org_units uou
+    JOIN org_units ou ON ou.id = uou.org_unit_id
+    WHERE uou.user_id IN
+    <foreach collection="userIds" item="userId" open="(" close=")" separator=",">
+      #{userId}
+    </foreach>
+    ORDER BY uou.user_id ASC, ou.sort_order ASC, ou.id ASC
+  </select>
+
   <select id="selectByIds" resultType="com.tencent.tdesign.entity.OrgUnitEntity">
     <include refid="BaseSelect" />
     WHERE id IN

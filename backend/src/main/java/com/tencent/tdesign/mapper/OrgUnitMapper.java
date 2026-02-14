@@ -1,5 +1,7 @@
 package com.tencent.tdesign.mapper;
 
+import com.tencent.tdesign.dto.UserIdLongValue;
+import com.tencent.tdesign.dto.UserIdStringValue;
 import com.tencent.tdesign.entity.OrgUnitEntity;
 import java.util.Collection;
 import java.util.List;
@@ -11,6 +13,8 @@ public interface OrgUnitMapper {
   List<OrgUnitEntity> selectByUserId(@Param("userId") Long userId);
   List<String> selectNamesByUserId(@Param("userId") Long userId);
   List<Long> selectIdsByUserId(@Param("userId") Long userId);
+  List<UserIdStringValue> selectNamesByUserIds(@Param("userIds") Collection<Long> userIds);
+  List<UserIdLongValue> selectIdsByUserIds(@Param("userIds") Collection<Long> userIds);
   List<OrgUnitEntity> selectByIds(@Param("ids") Collection<Long> ids);
   Integer selectMaxSortOrder(@Param("parentId") Long parentId);
   int insert(OrgUnitEntity entity);
