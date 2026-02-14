@@ -10,11 +10,13 @@ import java.util.Set;
 import java.util.UUID;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 @Service
 public class AuthTokenService {
   private static final String TOKEN_KEY_PREFIX = "auth:token:";
   private static final String ALL_TOKENS_KEY = "auth:tokens";
+  private static final String ALL_TOKENS_ZSET_KEY = "auth:tokens:z";
   private static final String USER_TOKEN_PREFIX = "auth:user:";
   private static final String USER_TOKEN_SUFFIX = ":tokens";
 
@@ -33,7 +35,7 @@ public class AuthTokenService {
     session.setIssuedAt(System.currentTimeMillis());
     session.setExpiresAt(System.currentTimeMillis() + expiresInSeconds * 1000L);
     storeSession(token, session, expiresInSeconds);
-    addUserToken(userId, token, expiresInSeconds);
+    addUserToken(userId, token, expiresInSeconds, session.getExpiresAt());
     return token;
   }
 
@@ -53,7 +55,9 @@ public class AuthTokenService {
     Long ttl = redisTemplate.getExpire(tokenKey(token));
     long expiresIn = ttl != null && ttl > 0 ? ttl : 0L;
     if (expiresIn <= 0) return;
+    session.setExpiresAt(System.currentTimeMillis() + expiresIn * 1000L);
     storeSession(token, session, expiresIn);
+    indexToken(token, session.getExpiresAt());
   }
 
   public void removeToken(String token) {
@@ -64,12 +68,14 @@ public class AuthTokenService {
     }
     redisTemplate.delete(tokenKey(token));
     redisTemplate.opsForSet().remove(ALL_TOKENS_KEY, token);
+    redisTemplate.opsForZSet().remove(ALL_TOKENS_ZSET_KEY, token);
   }
 
   public void removeUserToken(long userId, String token) {
     if (token == null || token.isBlank()) return;
     redisTemplate.delete(tokenKey(token));
     redisTemplate.opsForSet().remove(ALL_TOKENS_KEY, token);
+    redisTemplate.opsForZSet().remove(ALL_TOKENS_ZSET_KEY, token);
     redisTemplate.opsForSet().remove(userKey(userId), token);
   }
 
@@ -86,7 +92,10 @@ public class AuthTokenService {
   }
 
   public List<String> listAllTokens() {
-    Set<Object> tokens = redisTemplate.opsForSet().members(ALL_TOKENS_KEY);
+    long now = System.currentTimeMillis();
+    lazyMigrateLegacyTokens(now);
+    pruneExpired(now);
+    Set<Object> tokens = redisTemplate.opsForZSet().rangeByScore(ALL_TOKENS_ZSET_KEY, now, Double.POSITIVE_INFINITY);
     List<String> list = new ArrayList<>();
     if (tokens != null) {
       for (Object tokenObj : tokens) {
@@ -117,12 +126,45 @@ public class AuthTokenService {
     }
   }
 
-  private void addUserToken(long userId, String token, long expiresInSeconds) {
+  private void addUserToken(long userId, String token, long expiresInSeconds, long expiresAtMs) {
     redisTemplate.opsForSet().add(userKey(userId), token);
     redisTemplate.opsForSet().add(ALL_TOKENS_KEY, token);
+    indexToken(token, expiresAtMs);
     Long currentTtl = redisTemplate.getExpire(userKey(userId));
     if (currentTtl == null || currentTtl < expiresInSeconds) {
       redisTemplate.expire(userKey(userId), Duration.ofSeconds(expiresInSeconds));
+    }
+  }
+
+  private void indexToken(String token, long expiresAtMs) {
+    if (!StringUtils.hasText(token)) {
+      return;
+    }
+    long normalizedExpiresAt = expiresAtMs > 0 ? expiresAtMs : System.currentTimeMillis();
+    redisTemplate.opsForZSet().add(ALL_TOKENS_ZSET_KEY, token, normalizedExpiresAt);
+  }
+
+  private void pruneExpired(long now) {
+    redisTemplate.opsForZSet().removeRangeByScore(ALL_TOKENS_ZSET_KEY, Double.NEGATIVE_INFINITY, now);
+  }
+
+  private void lazyMigrateLegacyTokens(long now) {
+    Set<Object> legacyTokens = redisTemplate.opsForSet().members(ALL_TOKENS_KEY);
+    if (legacyTokens == null || legacyTokens.isEmpty()) {
+      return;
+    }
+    for (Object tokenObj : legacyTokens) {
+      if (tokenObj == null) {
+        continue;
+      }
+      String token = String.valueOf(tokenObj);
+      AuthSession session = getSession(token);
+      if (session == null || session.getExpiresAt() <= now) {
+        redisTemplate.opsForSet().remove(ALL_TOKENS_KEY, token);
+        redisTemplate.opsForZSet().remove(ALL_TOKENS_ZSET_KEY, token);
+        continue;
+      }
+      indexToken(token, session.getExpiresAt());
     }
   }
 

@@ -116,3 +116,12 @@ springdoc:
   swagger-ui:
     enabled: false
 ```
+
+
+## 安全与会话存储迁移说明（PR#2）
+
+- 密码重置接口 `POST /system/user/{id}/reset-password` 默认仅支持 JSON body 传 `password`，避免密码出现在 URL/query。
+- 如需兼容历史客户端，可临时开启 `tdesign.security.allow-password-in-query=true`，并尽快完成客户端迁移后关闭。
+- 在线会话 token 索引从 `auth:tokens`(Set) 迁移到 `auth:tokens:z`(ZSET, score=expiresAtMs)。
+- 迁移策略为懒迁移：`listAllTokens` 会在读取时把旧集合中的有效 token 转入 ZSET，并清理失效 token。
+- 回滚策略：新版本仍会写入旧 `auth:tokens` 集合作为兼容；回滚后旧版本仍可读取。

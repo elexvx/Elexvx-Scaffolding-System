@@ -1,5 +1,7 @@
 package com.tencent.tdesign.service;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.tencent.tdesign.dto.UiSettingRequest;
 import com.tencent.tdesign.entity.SecurityCaptchaSetting;
 import com.tencent.tdesign.entity.SecurityPasswordPolicy;
@@ -8,13 +10,18 @@ import com.tencent.tdesign.entity.SecurityTokenSetting;
 import com.tencent.tdesign.mapper.SecurityCaptchaSettingMapper;
 import com.tencent.tdesign.mapper.SecurityPasswordPolicyMapper;
 import com.tencent.tdesign.mapper.SecurityTokenSettingMapper;
+import java.time.Duration;
 import org.springframework.stereotype.Service;
 
 @Service
 public class SecuritySettingService {
+  private static final String CACHE_KEY = "security:setting";
+
   private final SecurityTokenSettingMapper tokenMapper;
   private final SecurityCaptchaSettingMapper captchaMapper;
   private final SecurityPasswordPolicyMapper passwordMapper;
+  private final Cache<String, SecuritySetting> settingCache =
+    Caffeine.newBuilder().expireAfterWrite(Duration.ofSeconds(15)).maximumSize(1).build();
 
   public SecuritySettingService(
       SecurityTokenSettingMapper tokenMapper,
@@ -26,29 +33,7 @@ public class SecuritySettingService {
   }
 
   public SecuritySetting getOrCreate() {
-    SecuritySetting out = new SecuritySetting();
-    SecurityTokenSetting token = getOrCreateToken();
-    out.setSessionTimeoutMinutes(token.getSessionTimeoutMinutes());
-    out.setTokenTimeoutMinutes(token.getTokenTimeoutMinutes());
-    out.setTokenRefreshGraceMinutes(token.getTokenRefreshGraceMinutes());
-    out.setAllowUrlTokenParam(token.getAllowUrlTokenParam());
-
-    SecurityCaptchaSetting captcha = getOrCreateCaptcha();
-    out.setCaptchaEnabled(captcha.getCaptchaEnabled());
-    out.setCaptchaType(captcha.getCaptchaType());
-    out.setDragCaptchaWidth(captcha.getDragCaptchaWidth());
-    out.setDragCaptchaHeight(captcha.getDragCaptchaHeight());
-    out.setDragCaptchaThreshold(captcha.getDragCaptchaThreshold());
-    out.setImageCaptchaLength(captcha.getImageCaptchaLength());
-    out.setImageCaptchaNoiseLines(captcha.getImageCaptchaNoiseLines());
-
-    SecurityPasswordPolicy policy = getOrCreatePasswordPolicy();
-    out.setPasswordMinLength(policy.getPasswordMinLength());
-    out.setPasswordRequireUppercase(policy.getPasswordRequireUppercase());
-    out.setPasswordRequireLowercase(policy.getPasswordRequireLowercase());
-    out.setPasswordRequireSpecial(policy.getPasswordRequireSpecial());
-    out.setPasswordAllowSequential(policy.getPasswordAllowSequential());
-    return out;
+    return settingCache.get(CACHE_KEY, key -> loadOrCreate());
   }
 
   public boolean applyRequest(UiSettingRequest req) {
@@ -145,7 +130,36 @@ public class SecuritySettingService {
       changed = true;
     }
 
+    if (changed) {
+      settingCache.invalidate(CACHE_KEY);
+    }
     return changed;
+  }
+
+  private SecuritySetting loadOrCreate() {
+    SecuritySetting out = new SecuritySetting();
+    SecurityTokenSetting token = getOrCreateToken();
+    out.setSessionTimeoutMinutes(token.getSessionTimeoutMinutes());
+    out.setTokenTimeoutMinutes(token.getTokenTimeoutMinutes());
+    out.setTokenRefreshGraceMinutes(token.getTokenRefreshGraceMinutes());
+    out.setAllowUrlTokenParam(token.getAllowUrlTokenParam());
+
+    SecurityCaptchaSetting captcha = getOrCreateCaptcha();
+    out.setCaptchaEnabled(captcha.getCaptchaEnabled());
+    out.setCaptchaType(captcha.getCaptchaType());
+    out.setDragCaptchaWidth(captcha.getDragCaptchaWidth());
+    out.setDragCaptchaHeight(captcha.getDragCaptchaHeight());
+    out.setDragCaptchaThreshold(captcha.getDragCaptchaThreshold());
+    out.setImageCaptchaLength(captcha.getImageCaptchaLength());
+    out.setImageCaptchaNoiseLines(captcha.getImageCaptchaNoiseLines());
+
+    SecurityPasswordPolicy policy = getOrCreatePasswordPolicy();
+    out.setPasswordMinLength(policy.getPasswordMinLength());
+    out.setPasswordRequireUppercase(policy.getPasswordRequireUppercase());
+    out.setPasswordRequireLowercase(policy.getPasswordRequireLowercase());
+    out.setPasswordRequireSpecial(policy.getPasswordRequireSpecial());
+    out.setPasswordAllowSequential(policy.getPasswordAllowSequential());
+    return out;
   }
 
   private SecurityTokenSetting getOrCreateToken() {

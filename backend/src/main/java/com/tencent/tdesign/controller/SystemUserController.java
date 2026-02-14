@@ -11,6 +11,7 @@ import com.tencent.tdesign.vo.PageResult;
 import com.tencent.tdesign.vo.UserListItem;
 import jakarta.validation.Valid;
 import java.util.Map;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -26,10 +27,16 @@ import org.springframework.web.bind.annotation.RestController;
 public class SystemUserController {
   private final UserAdminService userAdminService;
   private final AuthContext authContext;
+  private final boolean allowPasswordInQuery;
 
-  public SystemUserController(UserAdminService userAdminService, AuthContext authContext) {
+  public SystemUserController(
+    UserAdminService userAdminService,
+    AuthContext authContext,
+    @Value("${tdesign.security.allow-password-in-query:false}") boolean allowPasswordInQuery
+  ) {
     this.userAdminService = userAdminService;
     this.authContext = authContext;
+    this.allowPasswordInQuery = allowPasswordInQuery;
   }
 
   @GetMapping("/page")
@@ -84,13 +91,20 @@ public class SystemUserController {
   public ApiResponse<Boolean> resetPassword(
     @PathVariable long id,
     @RequestBody(required = false) Map<String, Object> body,
+    @Deprecated(since = "1.0.1", forRemoval = false)
     @RequestParam(required = false) String password
   ) {
     PermissionUtil.check("system:SystemUser:update");
-    String newPassword = password;
-    if (newPassword == null && body != null) {
+    if (password != null && !allowPasswordInQuery) {
+      throw new IllegalArgumentException("不允许通过 URL 参数传递密码，请改为 JSON body: {\"password\": \"...\"}");
+    }
+    String newPassword = null;
+    if (body != null) {
       Object value = body.get("password");
       if (value != null) newPassword = String.valueOf(value);
+    }
+    if (newPassword == null && allowPasswordInQuery) {
+      newPassword = password;
     }
     return ApiResponse.success(userAdminService.resetPassword(id, newPassword));
   }
