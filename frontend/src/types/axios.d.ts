@@ -52,6 +52,10 @@ export interface RequestOptions {
    */
   joinTime?: boolean;
   /**
+   * 请求去重配置
+   */
+  dedupe?: RequestDedupeOptions;
+  /**
    * 是否携带Token
    */
   withToken?: boolean;
@@ -86,6 +90,29 @@ export interface RequestOptions {
   debounce?: {
     delay: number;
   };
+}
+
+export type RequestDedupeStrategy = 'cancelPrevious' | 'cancelCurrent';
+
+export interface RequestDedupeOptions {
+  /**
+   * 是否启用请求去重
+   */
+  enabled?: boolean;
+  /**
+   * 重复请求处理策略
+   * cancelPrevious: 取消前一个并继续当前请求
+   * cancelCurrent: 取消当前请求并保留前一个请求
+   */
+  strategy?: RequestDedupeStrategy;
+  /**
+   * 去重时间窗口（毫秒）
+   */
+  windowMs?: number;
+  /**
+   * 白名单 URL（匹配到则跳过去重）
+   */
+  skipUrls?: Array<string | RegExp>;
 }
 
 export interface Result<T = any> {
