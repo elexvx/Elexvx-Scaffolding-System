@@ -2,6 +2,8 @@ package com.tencent.tdesign.service;
 
 import com.tencent.tdesign.dao.AuthQueryDao;
 import com.tencent.tdesign.dto.UserCreateRequest;
+import com.tencent.tdesign.dto.UserIdLongValue;
+import com.tencent.tdesign.dto.UserIdStringValue;
 import com.tencent.tdesign.dto.UserUpdateRequest;
 import com.tencent.tdesign.entity.UserEntity;
 import com.tencent.tdesign.mapper.OrgUnitMapper;
@@ -14,6 +16,7 @@ import com.tencent.tdesign.util.SensitiveMaskUtil;
 import com.tencent.tdesign.vo.PageResult;
 import com.tencent.tdesign.vo.UserListItem;
 import com.tencent.tdesign.annotation.AiFunction;
+import jakarta.annotation.PostConstruct;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -21,6 +24,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.stereotype.Service;
 
@@ -45,6 +49,7 @@ public class UserAdminService {
   private final PasswordPolicyService passwordPolicyService;
   private final AuthContext authContext;
   private final AuthTokenService authTokenService;
+  private final boolean guidBackfillOnStartup;
 
   public UserAdminService(
     UserMapper userMapper,
@@ -57,7 +62,8 @@ public class UserAdminService {
     PermissionFacade permissionFacade,
     PasswordPolicyService passwordPolicyService,
     AuthContext authContext,
-    AuthTokenService authTokenService
+    AuthTokenService authTokenService,
+    @Value("${tdesign.user.guid.backfill-on-startup:false}") boolean guidBackfillOnStartup
   ) {
     this.userMapper = userMapper;
     this.roleMapper = roleMapper;
@@ -70,7 +76,31 @@ public class UserAdminService {
     this.passwordPolicyService = passwordPolicyService;
     this.authContext = authContext;
     this.authTokenService = authTokenService;
+    this.guidBackfillOnStartup = guidBackfillOnStartup;
   }
+
+  @PostConstruct
+  public void backfillMissingGuidsOnStartup() {
+    if (!guidBackfillOnStartup) return;
+    backfillMissingGuids();
+  }
+
+  @Transactional
+  public int backfillMissingGuids() {
+    int updated = 0;
+    List<Long> userIds = userMapper.selectAllIds();
+    for (Long userId : userIds) {
+      if (userId == null) continue;
+      UserEntity user = userMapper.selectById(userId);
+      if (user == null) continue;
+      if (user.getGuid() != null && !user.getGuid().isBlank()) continue;
+      user.setGuid(java.util.UUID.randomUUID().toString());
+      saveUser(user);
+      updated++;
+    }
+    return updated;
+  }
+
 
   @AiFunction(
     name = "queryUser",
@@ -96,14 +126,18 @@ public class UserAdminService {
     List<UserEntity> rows =
       userMapper.selectPage(kw, mobileKeyword, orgUnitId, departmentId, status, startTime, endTime, offset, safeSize);
     long total = userMapper.countByKeyword(kw, mobileKeyword, orgUnitId, departmentId, status, startTime, endTime);
+    List<Long> userIds = rows.stream().map(UserEntity::getId).filter(Objects::nonNull).toList();
+    UserRelatedData relatedData = loadUserRelatedData(userIds);
+
     List<UserListItem> list = new ArrayList<>();
     for (UserEntity u : rows) {
       UserListItem item = toListItem(u);
-      item.setRoles(authDao.findRoleNamesByUserId(Objects.requireNonNull(u.getId())));
-      item.setOrgUnitNames(orgUnitMapper.selectNamesByUserId(u.getId()));
-      item.setOrgUnitIds(orgUnitMapper.selectIdsByUserId(u.getId()));
-      item.setDepartmentNames(userDepartmentMapper.selectDepartmentNamesByUserId(u.getId()));
-      item.setDepartmentIds(userDepartmentMapper.selectDepartmentIdsByUserId(u.getId()));
+      Long userId = u.getId();
+      item.setRoles(relatedData.roles().getOrDefault(userId, List.of()));
+      item.setOrgUnitNames(relatedData.orgUnitNames().getOrDefault(userId, List.of()));
+      item.setOrgUnitIds(relatedData.orgUnitIds().getOrDefault(userId, List.of()));
+      item.setDepartmentNames(relatedData.departmentNames().getOrDefault(userId, List.of()));
+      item.setDepartmentIds(relatedData.departmentIds().getOrDefault(userId, List.of()));
       list.add(item);
     }
     return new PageResult<>(list, total);
@@ -116,12 +150,13 @@ public class UserAdminService {
   )
   public UserListItem get(long id) {
     UserEntity u = Optional.ofNullable(userMapper.selectById(id)).orElseThrow(() -> new IllegalArgumentException("用户不存在"));
+    UserRelatedData relatedData = loadUserRelatedData(List.of(id));
     UserListItem item = toListItem(u);
-    item.setRoles(authDao.findRoleNamesByUserId(id));
-    item.setOrgUnitNames(orgUnitMapper.selectNamesByUserId(id));
-    item.setOrgUnitIds(orgUnitMapper.selectIdsByUserId(id));
-    item.setDepartmentNames(userDepartmentMapper.selectDepartmentNamesByUserId(id));
-    item.setDepartmentIds(userDepartmentMapper.selectDepartmentIdsByUserId(id));
+    item.setRoles(relatedData.roles().getOrDefault(id, List.of()));
+    item.setOrgUnitNames(relatedData.orgUnitNames().getOrDefault(id, List.of()));
+    item.setOrgUnitIds(relatedData.orgUnitIds().getOrDefault(id, List.of()));
+    item.setDepartmentNames(relatedData.departmentNames().getOrDefault(id, List.of()));
+    item.setDepartmentIds(relatedData.departmentIds().getOrDefault(id, List.of()));
     return item;
   }
 
@@ -428,7 +463,6 @@ public class UserAdminService {
   }
 
   private UserListItem toListItem(UserEntity u) {
-    ensureGuid(u);
     UserListItem item = new UserListItem();
     item.setId(u.getId());
     item.setGuid(u.getGuid());
@@ -459,6 +493,38 @@ public class UserAdminService {
     item.setStatus(u.getStatus());
     item.setCreatedAt(u.getCreatedAt());
     return item;
+  }
+
+  private UserRelatedData loadUserRelatedData(List<Long> userIds) {
+    if (userIds == null || userIds.isEmpty()) {
+      return new UserRelatedData(java.util.Map.of(), java.util.Map.of(), java.util.Map.of(), java.util.Map.of(), java.util.Map.of());
+    }
+    java.util.Map<Long, List<String>> roles = groupStringValues(authDao.findRoleNamesByUserIds(userIds));
+    java.util.Map<Long, List<String>> orgUnitNames = groupStringValues(orgUnitMapper.selectNamesByUserIds(userIds));
+    java.util.Map<Long, List<Long>> orgUnitIds = groupLongValues(orgUnitMapper.selectIdsByUserIds(userIds));
+    java.util.Map<Long, List<String>> departmentNames = groupStringValues(userDepartmentMapper.selectDepartmentNamesByUserIds(userIds));
+    java.util.Map<Long, List<Long>> departmentIds = groupLongValues(userDepartmentMapper.selectDepartmentIdsByUserIds(userIds));
+    return new UserRelatedData(roles, orgUnitNames, orgUnitIds, departmentNames, departmentIds);
+  }
+
+  private java.util.Map<Long, List<String>> groupStringValues(List<UserIdStringValue> rows) {
+    java.util.Map<Long, List<String>> result = new java.util.LinkedHashMap<>();
+    if (rows == null) return result;
+    for (UserIdStringValue row : rows) {
+      if (row == null || row.getUserId() == null || row.getValue() == null) continue;
+      result.computeIfAbsent(row.getUserId(), key -> new ArrayList<>()).add(row.getValue());
+    }
+    return result;
+  }
+
+  private java.util.Map<Long, List<Long>> groupLongValues(List<UserIdLongValue> rows) {
+    java.util.Map<Long, List<Long>> result = new java.util.LinkedHashMap<>();
+    if (rows == null) return result;
+    for (UserIdLongValue row : rows) {
+      if (row == null || row.getUserId() == null || row.getValue() == null) continue;
+      result.computeIfAbsent(row.getUserId(), key -> new ArrayList<>()).add(row.getValue());
+    }
+    return result;
   }
 
   private void validateOrgDepartmentSelection(List<Long> orgUnitIds, List<Long> departmentIds) {
@@ -495,6 +561,14 @@ public class UserAdminService {
     }
     return user;
   }
+
+  private record UserRelatedData(
+    java.util.Map<Long, List<String>> roles,
+    java.util.Map<Long, List<String>> orgUnitNames,
+    java.util.Map<Long, List<Long>> orgUnitIds,
+    java.util.Map<Long, List<String>> departmentNames,
+    java.util.Map<Long, List<Long>> departmentIds
+  ) {}
 
   private void ensureGuid(UserEntity user) {
     if (user.getGuid() != null && !user.getGuid().isBlank()) return;

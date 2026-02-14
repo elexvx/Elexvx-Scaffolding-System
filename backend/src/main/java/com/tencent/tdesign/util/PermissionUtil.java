@@ -2,6 +2,7 @@ package com.tencent.tdesign.util;
 
 import com.tencent.tdesign.security.AccessControlService;
 import com.tencent.tdesign.security.AuthContext;
+import com.tencent.tdesign.security.PermissionCache;
 import com.tencent.tdesign.service.PermissionFacade;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,16 +14,19 @@ public final class PermissionUtil {
   private static AccessControlService accessControlService;
   private static PermissionFacade permissionFacade;
   private static AuthContext authContext;
+  private static PermissionCache permissionCache;
 
   @Autowired
   public PermissionUtil(
     AccessControlService accessControlService,
     PermissionFacade permissionFacade,
-    AuthContext authContext
+    AuthContext authContext,
+    PermissionCache permissionCache
   ) {
     PermissionUtil.accessControlService = accessControlService;
     PermissionUtil.permissionFacade = permissionFacade;
     PermissionUtil.authContext = authContext;
+    PermissionUtil.permissionCache = permissionCache;
   }
 
   public static void check(String permission) {
@@ -30,8 +34,7 @@ public final class PermissionUtil {
     if (permission == null || permission.isBlank()) {
       throw new IllegalArgumentException("permission 不能为空");
     }
-    long userId = authContext.requireUserId();
-    if (permissionFacade.isAdminAccount(userId)) return;
+    if (permissionCache.isAdmin()) return;
     accessControlService.checkPermission(permission);
   }
 
@@ -40,10 +43,9 @@ public final class PermissionUtil {
     if (permissions == null || permissions.length == 0) {
       throw new IllegalArgumentException("permissions 不能为空");
     }
-    long userId = authContext.requireUserId();
-    if (permissionFacade.isAdminAccount(userId)) return;
+    if (permissionCache.isAdmin()) return;
 
-    List<String> effective = permissionFacade.getEffectivePermissions(userId);
+    List<String> effective = List.copyOf(permissionCache.getPermissions());
     for (String p : permissions) {
       if (p == null || p.isBlank()) continue;
       if (effective.contains(p)) return;
@@ -53,14 +55,13 @@ public final class PermissionUtil {
 
   public static void checkAdmin() {
     ensureInitialized();
-    long userId = authContext.requireUserId();
-    if (!permissionFacade.isAdminAccount(userId)) {
+    if (!permissionCache.isAdmin()) {
       throw new AccessDeniedException("权限不足，请联系管理员开通");
     }
   }
 
   private static void ensureInitialized() {
-    if (accessControlService == null || permissionFacade == null || authContext == null) {
+    if (accessControlService == null || permissionFacade == null || authContext == null || permissionCache == null) {
       throw new IllegalStateException("PermissionUtil not initialized");
     }
   }

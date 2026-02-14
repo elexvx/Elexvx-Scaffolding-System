@@ -387,7 +387,6 @@ public class ObjectStorageService {
         object.close();
       } catch (Exception ignore) {
       }
-      client.shutdown();
     });
     return FileStream.range(input, range.length(), total, defaultContentType(contentType, objectKey));
   }
@@ -601,7 +600,6 @@ public class ObjectStorageService {
       log.warn("Object storage service B test failed", e);
       throw new IllegalArgumentException("腾讯云 COS 连接失败: " + e.getMessage());
     } finally {
-      client.shutdown();
     }
   }
 
@@ -616,7 +614,6 @@ public class ObjectStorageService {
 
   private void safeShutdown(OSS client) {
     try {
-      client.shutdown();
     } catch (Exception ignore) {
     }
   }

@@ -17,6 +17,17 @@
     WHERE user_id = #{userId}
   </select>
 
+
+  <select id="findRoleNamesByUserIds" resultType="com.tencent.tdesign.dto.UserIdStringValue">
+    SELECT user_id AS userId, role AS value
+    FROM user_roles
+    WHERE user_id IN
+    <foreach collection="userIds" item="userId" open="(" close=")" separator=",">
+      #{userId}
+    </foreach>
+    ORDER BY user_id ASC, role ASC
+  </select>
+
   <select id="findPermissionsByUserId" resultType="string">
     SELECT DISTINCT rp.permission
     FROM user_roles ur

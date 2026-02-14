@@ -1,5 +1,6 @@
 package com.tencent.tdesign.mapper;
 
+import com.tencent.tdesign.dto.UserIdStringValue;
 import java.util.Collection;
 import java.util.List;
 import org.apache.ibatis.annotations.Param;
@@ -7,6 +8,7 @@ import org.apache.ibatis.annotations.Param;
 public interface AuthQueryMapper {
   int deleteRoleMenusByMenuIds(@Param("menuIds") Collection<Long> menuIds);
   List<String> findRoleNamesByUserId(@Param("userId") long userId);
+  List<UserIdStringValue> findRoleNamesByUserIds(@Param("userIds") Collection<Long> userIds);
   List<String> findPermissionsByUserId(@Param("userId") long userId);
   List<String> findPermissionsByRoleNames(@Param("roleNames") Collection<String> roleNames);
   List<String> findPermissionsByRoleId(@Param("roleId") long roleId);
